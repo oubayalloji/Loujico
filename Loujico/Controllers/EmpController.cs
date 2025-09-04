@@ -40,10 +40,11 @@ namespace Loujico.Controllers
             }
             try
             {
+                var username = UserManager.GetUserName(User);
+                var userId = UserManager.GetUserId(User);
+                emp.CreatedBy = username;
                 await ClsEmployees.Add(emp);
                 // من هون 
-                var username = UserManager.GetUserName(User);
-                var userId = UserManager.GetUserId(User);              
                 await ClsLogs.Add("Error", $"{emp.FirstName} added to the System by {username} ", userId);
                 // لهون هو تسجيل الlog
                 return Ok(new ApiResponse<String>
@@ -88,7 +89,7 @@ namespace Loujico.Controllers
                 emp.UpdatedBy = username;
                 await ClsEmployees.Edit(emp);
                 // من هون 
-                await ClsLogs.Add("Error", $"{emp.FirstName} added to the System by {username} ", userId);
+                await ClsLogs.Add("Error", $"{emp.FirstName} updated to the System by {username} ", userId);
                 // لهون هو تسجيل الlog
                 return Ok(new ApiResponse<String>
                 {
