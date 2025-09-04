@@ -35,10 +35,10 @@ public partial class TbCustomer
 
     public bool IsDeleted { get; set; }
 
-    public int? CreatedBy { get; set; }
 
-    public int? UpdatedBy { get; set; }
+    public String? CreatedBy { get; set; }
 
+    public String? UpdatedBy { get; set; }
     public virtual ICollection<TbCustomersProduct> TbCustomersProducts { get; set; } = new List<TbCustomersProduct>();
 
     public virtual ICollection<TbInvoice> TbInvoices { get; set; } = new List<TbInvoice>();

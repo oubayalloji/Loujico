@@ -14,6 +14,9 @@ public partial class TbFile
     public string FileName { get; set; } = null!;
 
     public string? FileType { get; set; }
+    public bool IsDeleted { get; set; }
+
+
 
     public DateTime UploadedAt { get; set; }
 

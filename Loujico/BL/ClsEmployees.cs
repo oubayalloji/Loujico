@@ -7,7 +7,7 @@ namespace Loujico.BL
     {
         public Task<List<TbEmployee>> GetAllEmployees(int id);
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id);
-
+        public Task<bool> Edit(TbEmployee employee);
         public Task<TbEmployee> GetEmployeeById(int id);
         public Task<bool> Add(TbEmployee employee);
         public Task<bool> Delete(int id);
@@ -68,6 +68,7 @@ namespace Loujico.BL
             try
             {
                 employee.UpdatedAt = DateTime.Now;
+                
                 CTX.Entry(employee).State = EntityState.Modified;
                 await CTX.SaveChangesAsync();
                 return true;

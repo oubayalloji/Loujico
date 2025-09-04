@@ -27,9 +27,9 @@ public partial class TbInvoice : IValidatableObject
 
     public bool IsDeleted { get; set; }
 
-    public int? CreatedBy { get; set; }
+    public String? CreatedBy { get; set; }
 
-    public int? UpdatedBy { get; set; }
+    public String? UpdatedBy { get; set; }
 
     public virtual TbCustomer? Customer { get; set; }
 

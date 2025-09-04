@@ -23,8 +23,8 @@ namespace Loujico.Controllers
             ClsLogs = clsLogs;
             UserManager = userManager;
         }
-        [HttpPost("AddEmp")]
-        public async Task<ActionResult<ApiResponse<string>>> AddEmp([FromForm] TbEmployee emp)
+        [HttpPost("Add")]
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbEmployee emp)
         {
 
             if (!ModelState.IsValid)
@@ -40,11 +40,15 @@ namespace Loujico.Controllers
             }
             try
             {
-                CTX.TbEmployees.Add(emp);
-                await CTX.SaveChangesAsync();
+                await ClsEmployees.Add(emp);
+                // من هون 
+                var username = UserManager.GetUserName(User);
+                var userId = UserManager.GetUserId(User);              
+                await ClsLogs.Add("Error", $"{emp.FirstName} added to the System by {username} ", userId);
+                // لهون هو تسجيل الlog
                 return Ok(new ApiResponse<String>
                 {
-                    Data = "Done",
+                   Success=true,
                     Message = "Done"
 
                 });
@@ -61,6 +65,51 @@ namespace Loujico.Controllers
 
 
         }
+
+        [HttpPatch("Edit")]
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] TbEmployee emp)
+        {
+
+            if (!ModelState.IsValid)
+            {
+
+                return BadRequest(new ApiResponse<String>
+                {
+
+                    Message = "wronge"
+
+                });
+
+            }
+            try
+            {
+                var username = UserManager.GetUserName(User);
+                var userId = UserManager.GetUserId(User);
+                emp.UpdatedBy = username;
+                await ClsEmployees.Edit(emp);
+                // من هون 
+                await ClsLogs.Add("Error", $"{emp.FirstName} added to the System by {username} ", userId);
+                // لهون هو تسجيل الlog
+                return Ok(new ApiResponse<String>
+                {
+                    Success = true,
+                    Message = "Done"
+
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbEmployee>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
+
+        }
+
         [HttpGet("GetAllEmployees/{id}")]
         public async Task<ActionResult<ApiResponse<List<TbEmployee>>>> GetAllEmployees(int id)
         {
@@ -90,10 +139,16 @@ namespace Loujico.Controllers
             try
             {
                 await ClsEmployees.Delete(id);
-                var userid = UserManager.GetUserId(User);
-                await ClsLogs.Add("CRUD", "Delete", userid);
+                var Emp =  await ClsEmployees.GetEmployeeById(id);
+
+                // من هون 
+                var username = UserManager.GetUserName(User);
+                var userId = UserManager.GetUserId(User);
+                await ClsLogs.Add("Error", $"{Emp.FirstName} Deleted from the System by {username} ", userId);
+                // لهون هو تسجيل الlog  
                 return Ok(new ApiResponse<String>
                 {
+                    Success = true,
                     Data = "done"
                 });
             }
@@ -119,6 +174,7 @@ namespace Loujico.Controllers
 
                 return Ok(new ApiResponse<TbEmployee>
                 {
+                    Success = true,
                     Data = Employee
                 });
             }

@@ -16,10 +16,15 @@ public partial class TbProduct
     public string? BillingCycle { get; set; }
 
     public bool IsActive { get; set; }
+    public bool IsDeleted { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+
+    public String? CreatedBy { get; set; }
+
+    public String? UpdatedBy { get; set; }
 
     public virtual ICollection<TbCustomersProduct> TbCustomersProducts { get; set; } = new List<TbCustomersProduct>();
 

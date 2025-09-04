@@ -15,6 +15,12 @@ namespace Loujico
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddScoped<IEmployees,ClsEmployees>();
+            builder.Services.AddScoped<IProject, ClsProject>();
+            builder.Services.AddScoped<Ilog, ClsLogs>();
+            builder.Services.AddScoped<IProducts, ClsProducts>();
+            builder.Services.AddScoped<IHistory, ClsHistory>();
+            builder.Services.AddScoped<ICustomers, ClsCustomers>();
+            builder.Services.AddScoped<IInvoices, ClsInvoices>();
             builder.Services.AddDbContext<CompanySystemContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")),
         ServiceLifetime.Scoped);
@@ -62,8 +68,7 @@ namespace Loujico
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddMemoryCache();
-            builder.Services.AddScoped<IProject,ClsProject>();
-            builder.Services.AddScoped<Ilog,ClsLogs>();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

@@ -17,10 +17,10 @@ namespace Loujico.BL
     public class ClsProject : IProject
     {
         CompanySystemContext CTX;
-        ClsLogs ClsLogs { get; set; }
+        Ilog ClsLogs;
         const int pageSize = 10;
 
-        public ClsProject(CompanySystemContext companySystemContext, ClsLogs clsLogs)
+        public ClsProject(CompanySystemContext companySystemContext, Ilog clsLogs)
         {
             CTX = companySystemContext;
             ClsLogs = clsLogs;

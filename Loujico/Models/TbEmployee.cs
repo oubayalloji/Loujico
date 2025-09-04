@@ -39,9 +39,9 @@ public partial class TbEmployee
 
     public bool IsDeleted { get; set; }
 
-    public int? CreatedBy { get; set; }
+    public String? CreatedBy { get; set; }
 
-    public int? UpdatedBy { get; set; }
+    public String? UpdatedBy { get; set; }
 
     public virtual ICollection<TbProductsEmployee>? TbProductsEmployees { get; set; } = new List<TbProductsEmployee>();
 
