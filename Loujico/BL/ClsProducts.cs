@@ -1,14 +1,16 @@
-﻿using Loujico.Models;
+﻿using Loujico.BL;
+using Loujico.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
 namespace Loujico.BL
 {
     public interface IProducts
     {
-        public Task<List<TbProduct>> GetAllProductsAsync(int id);
-        public Task<TbProduct?> GetProductByIdAsync(int id);
-        public Task<bool> AddProductAsync(TbProduct product);
-        public Task<bool> DeleteAsync(int id);
+        public Task<List<TbProduct>> GetAllProducts(int id);
+        public Task<TbProduct?> GetProductById(int id);
+        public Task<bool> Add(TbProduct product);
+        public Task<bool> Delete(int id);
     }
 
     public class ClsProducts : IProducts
@@ -21,7 +23,7 @@ namespace Loujico.BL
             CTX = companySystemContext;
         }
 
-        public async Task<List<TbProduct>> GetAllProductsAsync(int id)
+        public async Task<List<TbProduct>> GetAllProducts(int id)
         {
             try
             {
@@ -38,7 +40,7 @@ namespace Loujico.BL
             }
         }
 
-        public async Task<TbProduct?> GetProductByIdAsync(int id)
+        public async Task<TbProduct?> GetProductById(int id)
         {
             return await CTX.TbProducts
                             .Include(p => p.TbCustomersProducts)
@@ -46,7 +48,7 @@ namespace Loujico.BL
                             .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
         }
 
-        public async Task<bool> AddProductAsync(TbProduct product)
+        public async Task<bool> Add(TbProduct product)
         {
             try
             {
@@ -69,7 +71,7 @@ namespace Loujico.BL
             }
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> Delete(int id)
         {
             try
             {
