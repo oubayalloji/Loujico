@@ -11,6 +11,9 @@ namespace Loujico.BL
         public Task<TbEmployee> GetEmployeeById(int id);
         public Task<bool> Add(TbEmployee employee);
         public Task<bool> Delete(int id);
+        public Task<bool> DeActive(int id);
+        public Task<string> IsPresent(int id);
+
     }
 
     public class ClsEmployees : IEmployees
@@ -139,6 +142,44 @@ namespace Loujico.BL
             {
                 await ClsLogs.Add("Error", ex.Message, null);
                 return new List<TbHistory>();
+            }
+        }
+        public async Task<bool> DeActive(int id)
+        {
+            try
+            {
+                var employee = await CTX.TbEmployees.FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
+                if (employee == null)
+                    return false;
+
+                employee.IsPresent = false;
+                CTX.Entry(employee).State = EntityState.Modified;
+                await CTX.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return false;
+            }
+        }
+        public async Task<string> IsPresent(int id)
+        {
+            try
+            {
+                var employee = await CTX.TbEmployees.FirstOrDefaultAsync(e => e.Id == id);
+                if (employee == null || employee.IsDeleted || employee.IsPresent)
+                    return "الموظف غير موجود أو مفعّل مسبقًا";
+
+                employee.IsPresent = true;
+                CTX.Entry(employee).State = EntityState.Modified;
+                await CTX.SaveChangesAsync();
+                return "تم التفعيل";
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return "خطأ أثناء التفعيل";
             }
         }
     }
