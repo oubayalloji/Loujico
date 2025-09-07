@@ -27,7 +27,7 @@ namespace Loujico.Controllers
         [HttpPost("LogIn")]
         [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<string>>> LogIn([FromForm] LogInModel model)
-        {
+         {
             try
             {
                 ApiResponse<string> response = new ApiResponse<string>();

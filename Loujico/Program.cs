@@ -3,6 +3,7 @@ using Loujico.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
@@ -53,7 +54,20 @@ namespace Loujico
                    }
                };
            });
-           builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend",
+                    policy =>
+                    {
+                        policy.WithOrigins("http://192.168.1.4:5179") // Ãæ ÇáÜ origin ÈÊÇÚ React
+                              .AllowAnyMethod()
+                              .AllowAnyHeader()
+                              .AllowCredentials();
+                    });
+            });
+
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
                 options.Password.RequiredLength = 10;
                 options.Password.RequireNonAlphanumeric = true;
@@ -78,17 +92,17 @@ namespace Loujico
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
+          //  app.UseHttpsRedirection();
 
 
             app.UseStaticFiles();
 
             app.UseRouting();
-      //      app.UseCors("AllowFrontend");
+            app.UseCors("AllowFrontend");
+         
 
             app.UseAuthentication();
             app.UseAuthorization();
-
             app.MapControllers();
 
             app.Run();
