@@ -1,16 +1,10 @@
-﻿// من هون 
-using Loujico.BL;
+﻿using Loujico.BL;
 using Loujico.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-
-var username = UserManager.GetUserName(User);
-var userId = UserManager.GetUserId(User);
-await ClsLogs.Add("Error", $"{Customer.CustomerName} Deleted from the System by {username} ", userId);
-// لهون هو تسجيل الlog  
-return Ok(new ApiResponse<String>
+namespace Loujico.Controllers
 {
-<<<<<<< HEAD
     [Route("api/[controller]")]
     [ApiController]
     public class CustomerController : ControllerBase
@@ -54,20 +48,18 @@ return Ok(new ApiResponse<String>
                     Message = "Done"
 
                 });
-                
-=======
-    Data = "done"
-});
->>>>>>> oby
+
             }
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
-return BadRequest(new ApiResponse<List<TbCustomer>>
-{
-    Message = ex.Message,
+                return BadRequest(new ApiResponse<List<TbCustomer>>
+                {
+                    Message = ex.Message,
+                });
+            }
+        }
 
-<<<<<<< HEAD
         [HttpPatch("Edit")]
         public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] TbCustomer Customer)
         {
@@ -87,7 +79,7 @@ return BadRequest(new ApiResponse<List<TbCustomer>>
                 var userId = UserManager.GetUserId(User);
                 Customer.UpdatedBy = username;
                 await ClsCustomers.Edit(Customer);
-                await ClsLogs.Add("Error", $"{Customer.CustomerName} updated to the System by {username} ", userId);
+                await ClsLogs.Add("Error", $"id : {Customer.Id} with name :{Customer.CustomerName} updated to the System by {username} ", userId);
                 return Ok(new ApiResponse<String>
                 {
 
@@ -136,7 +128,6 @@ return BadRequest(new ApiResponse<List<TbCustomer>>
             {
                 var Customer = await ClsCustomers.GetById(id);
                 await ClsCustomers.Delete(id);
-
                 // من هون 
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
@@ -155,21 +146,11 @@ return BadRequest(new ApiResponse<List<TbCustomer>>
                     Message = ex.Message,
 
                 });
-=======
-});
->>>>>>> oby
             }
         }
         [HttpGet("GetById/{id}")]
-public async Task<ActionResult<ApiResponse<string>>> GetById(int id)
-{
-    try
-    {
-        var Customerloyee = await ClsCustomers.GetById(id);
-
-        return Ok(new ApiResponse<TbCustomer>
+        public async Task<ActionResult<ApiResponse<string>>> GetById(int id)
         {
-<<<<<<< HEAD
             try
             {
                 var Customerloyee = await ClsCustomers.GetById(id);
@@ -190,21 +171,5 @@ public async Task<ActionResult<ApiResponse<string>>> GetById(int id)
             }
 
         }
-=======
-            Data = Customerloyee
-        });
->>>>>>> oby
-    }
-    catch (Exception ex)
-    {
-        await ClsLogs.Add("Error", ex.Message, null);
-        return BadRequest(new ApiResponse<List<TbCustomer>>
-        {
-            Message = ex.Message,
-
-        });
-    }
-
-}
     }
 }

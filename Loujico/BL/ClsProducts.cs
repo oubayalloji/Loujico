@@ -8,7 +8,7 @@ namespace Loujico.BL
     public interface IProducts
     {
         public Task<List<TbProduct>> GetAllProducts(int id);
-        public Task<TbProduct> GetProductById(int id);
+        public Task<TbProduct?> GetProductById(int id);
         public Task<bool> Add(TbProduct product);
         public Task<bool> Edit(TbProduct product);
         public Task<bool> Delete(int id);
@@ -17,7 +17,6 @@ namespace Loujico.BL
     public class ClsProducts : IProducts
     {
         CompanySystemContext CTX;
-        Ilog ClsLogs;
         const int pageSize = 10;
         Ilog ClsLogs;
 
@@ -48,8 +47,10 @@ namespace Loujico.BL
             try
             {
                 return await CTX.TbProducts
-                                .Where(p => p.IsActive && p.IsDeleted).Skip((id - 1) * pageSize)
+                                .Where(p => p.IsActive).Skip((id - 1) * pageSize)
                                 .Take(pageSize)
+                                .Include(p => p.TbCustomersProducts)
+                                .Include(p => p.TbProductsEmployees)
                                 .ToListAsync();
             }
             catch (Exception ex)
@@ -59,9 +60,8 @@ namespace Loujico.BL
             }
         }
 
-        public async Task<TbProduct> GetProductById(int id)
+        public async Task<TbProduct?> GetProductById(int id)
         {
-<<<<<<< HEAD
             try
             {
                 return await CTX.TbProducts
@@ -73,28 +73,6 @@ namespace Loujico.BL
             {
                 await ClsLogs.Add("Error", ex.Message, null);
                 return null;
-=======
-            return await CTX.TbProducts
-                            .Include(p => p.TbCustomersProducts)
-                            .Include(p => p.TbProductsEmployees)
-                            .FirstOrDefaultAsync(p => p.Id == id && p.IsActive && p.IsDeleted==true);
-        }
-        public async Task<bool> Edit(TbProduct product)
-        {
-            try
-            {
-                product.UpdatedAt = DateTime.Now;
-
-                CTX.Entry(product).State = EntityState.Modified;
-                await CTX.SaveChangesAsync();
-                return true;
-            }
-            catch (Exception ex)
-            {
-
-                await ClsLogs.Add("Error", ex.Message, null);
-                return false;
->>>>>>> oby
             }
         }
 
@@ -102,7 +80,11 @@ namespace Loujico.BL
         {
             try
             {
-               
+                if (string.IsNullOrEmpty(product.ProductName))
+                    return false;
+
+                if (string.IsNullOrEmpty(product.ProductDescription))
+                    return false;
 
                 product.CreatedAt = DateTime.Now;
                 product.IsActive = true;
@@ -126,23 +108,6 @@ namespace Loujico.BL
                 if (product == null)
                     return false;
 
-                product.IsDeleted = false;
-                await CTX.SaveChangesAsync();
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-        public async Task<bool> DeActive(int id)
-        {
-            try
-            {
-                var product = await CTX.TbProducts.FirstOrDefaultAsync(p => p.Id == id);
-                if (product == null)
-                    return false;
-
                 product.IsActive = false;
                 await CTX.SaveChangesAsync();
                 return true;
@@ -151,23 +116,6 @@ namespace Loujico.BL
             {
                 await ClsLogs.Add("Error", ex.Message, null);
                 return false;
-            }
-        }
-        public async Task<String> Active(int id)
-        {
-            try
-            {
-                var product = await CTX.TbProducts.FirstOrDefaultAsync(p => p.Id == id);
-                if (product == null || !product.IsDeleted || !product.IsActive)
-                    return "product not found";
-                
-                product.IsActive = true;
-                await CTX.SaveChangesAsync();
-                return "Done";
-            }
-            catch
-            {
-                return "false";
             }
         }
     }

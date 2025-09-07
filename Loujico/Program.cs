@@ -57,13 +57,12 @@ namespace Loujico
 
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowFrontend",
+                options.AddPolicy("AllowAll",
                     policy =>
                     {
-                        policy.WithOrigins("http://192.168.1.4:5179") // Ãæ ÇáÜ origin ÈÊÇÚ React
+                        policy.AllowAnyOrigin()
                               .AllowAnyMethod()
-                              .AllowAnyHeader()
-                              .AllowCredentials();
+                              .AllowAnyHeader();
                     });
             });
 
@@ -98,8 +97,8 @@ namespace Loujico
             app.UseStaticFiles();
 
             app.UseRouting();
-            app.UseCors("AllowFrontend");
-         
+            app.UseCors("AllowAll");
+
 
             app.UseAuthentication();
             app.UseAuthorization();
