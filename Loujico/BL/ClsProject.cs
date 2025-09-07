@@ -11,7 +11,7 @@ namespace Loujico.BL
         public Task<bool> Add(TbProject project);
         public Task<bool> Edit(TbProject project);
         public Task<bool> Delete(int id);
-
+        public Task<List<TbHistory>> LstEditHistory(int Pageid, int id);
 
     }
 
@@ -20,11 +20,13 @@ namespace Loujico.BL
         CompanySystemContext CTX;
         Ilog ClsLogs;
         const int pageSize = 10;
+        IHistory ClsHistory;
 
-        public ClsProject(CompanySystemContext companySystemContext, Ilog clsLogs)
+        public ClsProject(CompanySystemContext companySystemContext, Ilog clsLogs, IHistory clsHistory)
         {
             CTX = companySystemContext;
             ClsLogs = clsLogs;
+            ClsHistory = clsHistory;
         }
         public async Task<bool> Edit(TbProject project)
         {
@@ -41,25 +43,6 @@ namespace Loujico.BL
 
                 await ClsLogs.Add("Error", ex.Message, null);
                 return false;
-            }
-        }
-        public async Task<List<TbProject>> GetAll(int id)
-        {
-            try
-            {
-                var lstProj = await CTX.TbProjects
-                                            .Where(e => !e.IsDeleted).Skip((id - 1) * pageSize)
-                                            .Take(pageSize)
-                                            .ToListAsync();
-                return lstProj;
-            }
-            catch (Exception ex)
-            {
-
-                await ClsLogs.Add("Error", ex.Message, null);
-                return new List<TbProject>();
-
-
             }
         }
 
@@ -180,6 +163,26 @@ namespace Loujico.BL
                     return false;
                 }
             
+        }
+        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id)
+        {
+            try
+            {
+                var LstProject = await ClsHistory.GetAllHistory(Pageid, id, "TbProject");
+                if (LstProject != null)
+                {
+                    return new List<TbHistory>();
+                }
+                else
+                {
+                    return LstProject;
+                }
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return new List<TbHistory>();
+            }
         }
     }
 }

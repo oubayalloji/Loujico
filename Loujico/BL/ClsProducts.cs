@@ -12,6 +12,7 @@ namespace Loujico.BL
         public Task<bool> Add(TbProduct product);
         public Task<bool> Edit(TbProduct product);
         public Task<bool> Delete(int id);
+        public Task<List<TbHistory>> LstEditHistory(int Pageid, int id);
     }
 
     public class ClsProducts : IProducts
@@ -19,11 +20,13 @@ namespace Loujico.BL
         CompanySystemContext CTX;
         const int pageSize = 10;
         Ilog ClsLogs;
+        IHistory ClsHistory;
 
-        public ClsProducts(CompanySystemContext companySystemContext, Ilog clsLogs)
+        public ClsProducts(CompanySystemContext companySystemContext, Ilog clsLogs, IHistory clsHistory)
         {
             CTX = companySystemContext;
             ClsLogs = clsLogs;
+            ClsHistory = clsHistory;
         }
         public async Task<bool> Edit(TbProduct product)
         {
@@ -118,5 +121,28 @@ namespace Loujico.BL
                 return false;
             }
         }
+<<<<<<< HEAD
+=======
+        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id)
+        {
+            try
+            {
+                var LstProduct = await ClsHistory.GetAllHistory(Pageid, id, "TbProduct");
+                if (LstProduct != null)
+                {
+                    return new List<TbHistory>();
+                }
+                else
+                {
+                    return LstProduct;
+                }
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return new List<TbHistory>();
+            }
+        }
+>>>>>>> origin/boss
     }
 }

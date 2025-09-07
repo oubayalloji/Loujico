@@ -20,5 +20,5 @@ public partial class TbFile
 
     public DateTime UploadedAt { get; set; }
 
-    public int? UploadedBy { get; set; }
+    public string? UploadedBy { get; set; }
 }

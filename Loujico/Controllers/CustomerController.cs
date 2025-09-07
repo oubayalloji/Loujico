@@ -12,14 +12,16 @@ namespace Loujico.Controllers
         CompanySystemContext CTX;
         ICustomers ClsCustomers;
         Ilog ClsLogs;
+        IHistory ClsHistory;
         UserManager<ApplicationUser> UserManager;
-        public CustomerController(CompanySystemContext cTX, ICustomers clsCustomers, Ilog clsLogs, UserManager<ApplicationUser> userManager)
+        public CustomerController(CompanySystemContext cTX, ICustomers clsCustomers, Ilog clsLogs, UserManager<ApplicationUser> userManager, IHistory clsHistory)
         {
 
             CTX = cTX;
             ClsCustomers = clsCustomers;
             ClsLogs = clsLogs;
             UserManager = userManager;
+            ClsHistory = clsHistory;
         }
         [HttpPost("Add")]
         public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbCustomer Customer)
@@ -171,5 +173,22 @@ namespace Loujico.Controllers
             }
 
         }
+<<<<<<< HEAD
+=======
+        [HttpGet("EditHistory/{page}/{id}")]
+        public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory(int page, int id)
+        {
+            try
+            {
+                var history = await ClsCustomers.LstEditHistory(page, id);
+                return Ok(new ApiResponse<List<TbHistory>> { Data = history });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbHistory>> { Message = ex.Message });
+            }
+        }
+>>>>>>> origin/boss
     }
 }

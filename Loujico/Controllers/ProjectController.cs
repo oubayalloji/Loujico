@@ -14,15 +14,16 @@ namespace Loujico.Controllers
     {
         IProject ClsProject;
         Ilog ClsLogs;
+        IHistory ClsHistory;
         CompanySystemContext CTX;
         UserManager<ApplicationUser> UserManager;
-        public ProjectController(IProject clsProject, CompanySystemContext context, UserManager<ApplicationUser> _UserManager,Ilog ilog)
+        public ProjectController(IProject clsProject, CompanySystemContext context, UserManager<ApplicationUser> userManager, Ilog ilog, IHistory clsHistory)
         {
             ClsLogs = ilog;
             ClsProject = clsProject;
             CTX = context;
-            UserManager = _UserManager;
-
+            UserManager = userManager;
+            ClsHistory = clsHistory;
 
         }
         [HttpPost("add")]
@@ -198,8 +199,20 @@ namespace Loujico.Controllers
                 });
             }
 
-
-
+        }
+        [HttpGet("EditHistory/{page}/{id}")]
+        public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory(int page, int id)
+        {
+            try
+            {
+                var history = await ClsProject.LstEditHistory(page, id);
+                return Ok(new ApiResponse<List<TbHistory>> { Data = history });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbHistory>> { Message = ex.Message });
+            }
         }
     }
 }

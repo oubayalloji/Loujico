@@ -14,14 +14,17 @@ namespace Loujico.Controllers
         CompanySystemContext CTX;
         IEmployees ClsEmployees;
         Ilog ClsLogs;
+        IHistory ClsHistory;
+        IFiles ClsFiles;
         UserManager<ApplicationUser> UserManager;
-        public EmpController(CompanySystemContext cTX, IEmployees clsEmployees, Ilog clsLogs, UserManager<ApplicationUser> userManager)
+        public EmpController(CompanySystemContext cTX, IEmployees clsEmployees, Ilog clsLogs, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles)
         {
-
             CTX = cTX;
             ClsEmployees = clsEmployees;
             ClsLogs = clsLogs;
             UserManager = userManager;
+            ClsHistory = clsHistory;
+            ClsFiles = clsFiles;
         }
         [HttpPost("Add")]
         public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbEmployee emp)
@@ -187,10 +190,20 @@ namespace Loujico.Controllers
 
                 });
             }
-
-
-
+        }
+        [HttpGet("EditHistory/{page}/{id}")]
+        public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory(int page, int id)
+        {
+            try
+            {
+                var history = await ClsEmployees.LstEditHistory(page, id);
+                return Ok(new ApiResponse<List<TbHistory>> { Data = history });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbHistory>> { Message = ex.Message });
+            }
         }
     }
 }
-//تيست

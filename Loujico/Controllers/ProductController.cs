@@ -13,16 +13,15 @@ namespace Loujico.Controllers
     {
         IProducts ClsProducts;
         Ilog ClsLogs;
+        IHistory ClsHistory;
         CompanySystemContext CTX;
         UserManager<ApplicationUser> UserManager;
-        public ProductController(IProducts ClsProducts, CompanySystemContext context, UserManager<ApplicationUser> _UserManager)
+        public ProductController(IProducts ClsProducts, CompanySystemContext context, UserManager<ApplicationUser> userManager, IHistory clsHistory)
         {
-
             ClsProducts = ClsProducts;
             CTX = context;
-            UserManager = _UserManager;
-
-
+            UserManager = userManager;
+            ClsHistory = clsHistory;
         }
         [HttpPost("Add")]
         [Authorize]
@@ -135,6 +134,20 @@ namespace Loujico.Controllers
             }
 
 
+        }
+        [HttpGet("EditHistory/{page}/{id}")]
+        public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory(int page, int id)
+        {
+            try
+            {
+                var history = await ClsProducts.LstEditHistory(page, id);
+                return Ok(new ApiResponse<List<TbHistory>> { Data = history });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbHistory>> { Message = ex.Message });
+            }
         }
     }
 }
