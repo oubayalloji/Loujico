@@ -1,10 +1,16 @@
-﻿using Loujico.BL;
+﻿// من هون 
+using Loujico.BL;
 using Loujico.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-namespace Loujico.Controllers
+
+var username = UserManager.GetUserName(User);
+var userId = UserManager.GetUserId(User);
+await ClsLogs.Add("Error", $"{Customer.CustomerName} Deleted from the System by {username} ", userId);
+// لهون هو تسجيل الlog  
+return Ok(new ApiResponse<String>
 {
+<<<<<<< HEAD
     [Route("api/[controller]")]
     [ApiController]
     public class CustomerController : ControllerBase
@@ -49,17 +55,19 @@ namespace Loujico.Controllers
 
                 });
                 
+=======
+    Data = "done"
+});
+>>>>>>> oby
             }
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<List<TbCustomer>>
-                {
-                    Message = ex.Message,
-                });
-            }
-        }
+return BadRequest(new ApiResponse<List<TbCustomer>>
+{
+    Message = ex.Message,
 
+<<<<<<< HEAD
         [HttpPatch("Edit")]
         public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] TbCustomer Customer)
         {
@@ -147,11 +155,21 @@ namespace Loujico.Controllers
                     Message = ex.Message,
 
                 });
+=======
+});
+>>>>>>> oby
             }
         }
         [HttpGet("GetById/{id}")]
-        public async Task<ActionResult<ApiResponse<string>>> GetById(int id)
+public async Task<ActionResult<ApiResponse<string>>> GetById(int id)
+{
+    try
+    {
+        var Customerloyee = await ClsCustomers.GetById(id);
+
+        return Ok(new ApiResponse<TbCustomer>
         {
+<<<<<<< HEAD
             try
             {
                 var Customerloyee = await ClsCustomers.GetById(id);
@@ -172,5 +190,21 @@ namespace Loujico.Controllers
             }
 
         }
+=======
+            Data = Customerloyee
+        });
+>>>>>>> oby
+    }
+    catch (Exception ex)
+    {
+        await ClsLogs.Add("Error", ex.Message, null);
+        return BadRequest(new ApiResponse<List<TbCustomer>>
+        {
+            Message = ex.Message,
+
+        });
+    }
+
+}
     }
 }
