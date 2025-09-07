@@ -10,6 +10,7 @@ namespace Loujico.BL
         public Task<List<TbProduct>> GetAllProducts(int id);
         public Task<TbProduct?> GetProductById(int id);
         public Task<bool> Add(TbProduct product);
+        public Task<bool> Edit(TbProduct product);
         public Task<bool> Delete(int id);
     }
 
@@ -17,12 +18,30 @@ namespace Loujico.BL
     {
         CompanySystemContext CTX;
         const int pageSize = 10;
+        Ilog ClsLogs;
 
-        public ClsProducts(CompanySystemContext companySystemContext)
+        public ClsProducts(CompanySystemContext companySystemContext, Ilog clsLogs)
         {
             CTX = companySystemContext;
+            ClsLogs = clsLogs;
         }
+        public async Task<bool> Edit(TbProduct product)
+        {
+            try
+            {
+                product.UpdatedAt = DateTime.Now;
 
+                CTX.Entry(product).State = EntityState.Modified;
+                await CTX.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+
+                await ClsLogs.Add("Error", ex.Message, null);
+                return false;
+            }
+        }
         public async Task<List<TbProduct>> GetAllProducts(int id)
         {
             try
@@ -34,18 +53,27 @@ namespace Loujico.BL
                                 .Include(p => p.TbProductsEmployees)
                                 .ToListAsync();
             }
-            catch
+            catch (Exception ex)
             {
-                return new List<TbProduct>();
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
             }
         }
 
         public async Task<TbProduct?> GetProductById(int id)
         {
-            return await CTX.TbProducts
-                            .Include(p => p.TbCustomersProducts)
-                            .Include(p => p.TbProductsEmployees)
-                            .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
+            try
+            {
+                return await CTX.TbProducts
+                                .Include(p => p.TbCustomersProducts)
+                                .Include(p => p.TbProductsEmployees)
+                                .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
         }
 
         public async Task<bool> Add(TbProduct product)
@@ -65,8 +93,9 @@ namespace Loujico.BL
 
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                await ClsLogs.Add("Error", ex.Message, null);
                 return false;
             }
         }
@@ -83,8 +112,9 @@ namespace Loujico.BL
                 await CTX.SaveChangesAsync();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                await ClsLogs.Add("Error", ex.Message, null);
                 return false;
             }
         }

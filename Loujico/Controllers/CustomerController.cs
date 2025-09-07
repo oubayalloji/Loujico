@@ -45,7 +45,6 @@ namespace Loujico.Controllers
                 // لهون هو تسجيل الlog
                 return Ok(new ApiResponse<String>
                 {
-                    Success = true,
                     Message = "Done"
 
                 });
@@ -83,7 +82,7 @@ namespace Loujico.Controllers
                 await ClsLogs.Add("Error", $"{Customer.CustomerName} updated to the System by {username} ", userId);
                 return Ok(new ApiResponse<String>
                 {
-                    Success = true,
+
                     Message = "Done"
 
                 });
@@ -137,7 +136,6 @@ namespace Loujico.Controllers
                 // لهون هو تسجيل الlog  
                 return Ok(new ApiResponse<String>
                 {
-                    Success = true,
                     Data = "done"
                 });
             }
@@ -160,7 +158,6 @@ namespace Loujico.Controllers
 
                 return Ok(new ApiResponse<TbCustomer>
                 {
-                    Success = true,
                     Data = Customerloyee
                 });
             }

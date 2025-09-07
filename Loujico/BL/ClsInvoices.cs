@@ -4,10 +4,10 @@ namespace Loujico.BL
 {
     public interface IInvoices
     {
-        public Task<List<TbInvoice>> GetAllInvoicesAsync(int id);
-        public Task<TbInvoice> GetInvoiceByIdAsync(int id);
-        public Task<bool> AddInvoiceAsync(TbInvoice invoice);
-        public Task<bool> DeleteAsync(int id);
+        public Task<List<TbInvoice>> GetAll(int id);
+        public Task<TbInvoice> GetById(int id);
+        public Task<bool> Add(TbInvoice invoice);
+        public Task<bool> Delete(int id);
     }
     public class ClsInvoices : IInvoices
     {
@@ -17,7 +17,7 @@ namespace Loujico.BL
         {
             CTX = companySystemContext;
         }
-        public async Task<List<TbInvoice>> GetAllInvoicesAsync(int id)
+        public async Task<List<TbInvoice>> GetAll(int id)
         {
             try
             {
@@ -34,14 +34,14 @@ namespace Loujico.BL
                 return new List<TbInvoice>();
             }
         }
-        public async Task<TbInvoice> GetInvoiceByIdAsync(int id)
+        public async Task<TbInvoice> GetById(int id)
         {
             return await CTX.TbInvoices
                             .Include(i => i.Customer)
                             .Include(i => i.Project)
                             .FirstOrDefaultAsync(i => i.Id == id && !i.IsDeleted);
         }
-        public async Task<bool> AddInvoiceAsync(TbInvoice invoice)
+        public async Task<bool> Add(TbInvoice invoice)
         {
             try
             {
@@ -56,7 +56,7 @@ namespace Loujico.BL
                 return false;
             }
         }
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> Delete(int id)
         {
             try
             {

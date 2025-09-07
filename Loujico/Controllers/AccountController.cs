@@ -28,70 +28,79 @@ namespace Loujico.Controllers
         [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<string>>> LogIn([FromForm] LogInModel model)
         {
-            ApiResponse<string> response = new ApiResponse<string>();
-
-            if (!ModelState.IsValid)//
+            try
             {
-                return BadRequest(new
+                ApiResponse<string> response = new ApiResponse<string>();
+
+                if (!ModelState.IsValid)//
                 {
-                    Status = 400,
-                    Message = "Invalid input data",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
+                    return BadRequest(new
+                    {
+                        Status = 400,
+                        Message = "Invalid input data",
+                        Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
+                    });
+                }
+
+                var user = await userManager.FindByEmailAsync(model.email);
+                if (user == null || !await userManager.CheckPasswordAsync(user, model.Password))
+                {
+
+                    return NotFound(new ApiResponse<String>
+                    {
+                        Data = "Not Found",
+                        Message = "خطأ في البريد الإلكتروني أو كلمة المرور",
+
+
+                    });
+                }
+                if (user.IsDeleted == true)
+                {
+                    return NotFound(new ApiResponse<String>
+                    {
+                        Data = "Not Found",
+                        Message = "المستخدم محذوف",
+
+
+                    });
+                }
+                var roles = await userManager.GetRolesAsync(user);
+                if (roles.Contains("Admin"))
+                {
+                    user.LastVisit = DateTime.Now;
+                    await userManager.UpdateAsync(user);
+                    await ClsLogs.Add(user.Id, "LogIn", $"{user.UserName} has logged in");
+                    return Ok(new ApiResponse<String>
+                    {
+                        Data = await GenerateToken(user),
+                        Message = "Welcome Admin",
+                        Role = "Admin"
+
+                    });
+                }
+                else
+                {
+                    user.LastVisit = DateTime.Now;
+                    await userManager.UpdateAsync(user);
+                    return Ok(new ApiResponse<String>
+                    {
+                        Data = await GenerateToken(user),
+                        Message = $"Welcome {user.UserName} ",
+                        Role = "User"
+
+                    });
+
+                }
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<object>
+                {
+                    Message = ex.Message,
+
                 });
             }
-
-            var user = await userManager.FindByEmailAsync(model.email);
-            if (user == null || !await userManager.CheckPasswordAsync(user, model.Password))
-            {
-
-                return NotFound(new ApiResponse<String>
-                {
-                    Data = "Not Found",
-                    Message = "خطأ في البريد الإلكتروني أو كلمة المرور",
-                    Success = false
-
-                });
-            }
-            if (user.IsDeleted == true)
-            {
-                return NotFound(new ApiResponse<String>
-                {
-                    Data = "Not Found",
-                    Message = "المستخدم محذوف",
-                    Success = false
-
-                });
-            }
-            var roles = await userManager.GetRolesAsync(user);
-            if (roles.Contains("Admin"))
-            {
-                user.LastVisit = DateTime.Now;
-                await userManager.UpdateAsync(user);
-                await ClsLogs.Add(user.Id, "LogIn", $"{user.UserName} has logged in");
-                return Ok(new ApiResponse<String>
-                {
-                    Data = await GenerateToken(user),
-                    Message = "Welcome Admin",
-                    Success = true,
-                    IsAdmin = true
-
-                });
-            }
-            else
-            {
-                user.LastVisit = DateTime.Now;
-                await userManager.UpdateAsync(user);
-                return Ok(new ApiResponse<String>
-                {
-                    Data = await GenerateToken(user),
-                    Message = $"Welcome {user.UserName} ",
-                    Success = true,
-                    IsAdmin = false
-
-                });
-
-            }
-
 
         }
         [HttpPost("Register")]
@@ -177,15 +186,12 @@ namespace Loujico.Controllers
             }
             catch (Exception ex)
             {
-                // تسجيل الخطأ
-                /*   _logger.LogError(ex, "Error during user registration");
-                return StatusCode(500, new
-                                   {
-                                       Status = 500,
-                                       Message = "An error occurred while processing your request",
-                                       DetailedError = _env.IsDevelopment() ? ex.Message : null
-                                   });*/
-                return Ok();
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<object>
+                {
+                    Message = ex.Message,
+
+                });
             }
         }
         private async Task<string> GenerateToken(ApplicationUser user)

@@ -9,11 +9,13 @@ namespace Loujico.BL
     }
     public class ClsHistory : IHistory
     {
+        Ilog ClsLogs;
         CompanySystemContext CTX;
         const int pageSize = 10;
-        public ClsHistory(CompanySystemContext companySystemContext)
+        public ClsHistory(CompanySystemContext companySystemContext, Ilog clsLogs)
         {
             CTX = companySystemContext;
+            ClsLogs = clsLogs;
         }
 
         public async Task<List<TbHistory>> GetAllHistory(int id, int RecordId, string TableName)
@@ -27,15 +29,24 @@ namespace Loujico.BL
                                 .OrderByDescending(h => h.ActionTime)
                                 .ToListAsync();
             }
-            catch
+            catch (Exception ex)
             {
-                return new List<TbHistory>();
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
             }
         }
         public async Task<TbHistory> GetHistoryById(int id)
         {
-            return await CTX.TbHistories
-                            .FirstOrDefaultAsync(h => h.Id == id);
+            try
+            {
+                return await CTX.TbHistories
+                                .FirstOrDefaultAsync(h => h.Id == id);
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
         }
     }
 }

@@ -16,7 +16,7 @@ namespace Loujico.Controllers
 
             return Ok(new ApiResponse<String>
             {
-                Success = true,
+            
                 Message = "تم جلب المستخدم بنجاح",
                 Data = "Hello"
             });

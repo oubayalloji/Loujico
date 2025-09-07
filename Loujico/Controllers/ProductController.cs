@@ -119,7 +119,7 @@ namespace Loujico.Controllers
 
                 return Ok(new ApiResponse<String>
                 {
-                    Success = true,
+                 
                     Message = "Done"
 
                 });

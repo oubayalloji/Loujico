@@ -101,7 +101,7 @@ namespace Loujico.Controllers
                 // لهون هو تسجيل الlog
                 return Ok(new ApiResponse<String>
                 {
-                    Success = true,
+                   
                     Message = "Done"
 
                 });
@@ -157,7 +157,7 @@ namespace Loujico.Controllers
                 // لهون هو تسجيل الlog  
                 return Ok(new ApiResponse<String>
                 {
-                    Success = true,
+               
                     Data = "done"
                 });
             }
@@ -184,7 +184,7 @@ namespace Loujico.Controllers
 
                 return Ok(new ApiResponse<AddProjectModel>
                 {
-                    Success = true,
+                 
                     Data = Employee
                 });
             }
