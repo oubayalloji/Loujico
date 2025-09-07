@@ -8,10 +8,15 @@ namespace Loujico.BL
         public Task<TbInvoice> GetById(int id);
         public Task<bool> Add(TbInvoice invoice);
         public Task<bool> Delete(int id);
+        public Task<bool> Edit(TbInvoice invoice);
+        public Task<List<TbHistory>> LstEditHistory(int Pageid, int id);
+
     }
     public class ClsInvoices : IInvoices
     {
         CompanySystemContext CTX;
+        Ilog ClsLogs;
+        IHistory ClsHistory;
         const int pageSize = 10;
         public ClsInvoices(CompanySystemContext companySystemContext)
         {
@@ -71,6 +76,41 @@ namespace Loujico.BL
             catch
             {
                 return false;
+            }
+        }
+        public async Task<bool> Edit(TbInvoice invoice)
+        {
+            try
+            {
+                invoice.UpdatedAt = DateTime.Now;
+                CTX.Entry(invoice).State = EntityState.Modified;
+                await CTX.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return false;
+            }
+        }
+        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id)
+        {
+            try
+            {
+                var LstInvoice = await ClsHistory.GetAllHistory(Pageid, id, "TbInvoices");
+                if (LstInvoice != null)
+                {
+                    return new List<TbHistory>();
+                }
+                else
+                {
+                    return LstInvoice;
+                }
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return new List<TbHistory>();
             }
         }
     }
