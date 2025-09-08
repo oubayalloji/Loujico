@@ -3,6 +3,8 @@ using Loujico.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace Loujico.Controllers
 {
@@ -27,7 +29,7 @@ namespace Loujico.Controllers
             ClsFiles = clsFiles;
         }
         [HttpPost("Add")]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbEmployee emp)
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbEmployee emp,List<EmployeeFile>? Data )
         {
 
             if (!ModelState.IsValid)
@@ -71,7 +73,7 @@ namespace Loujico.Controllers
         }
 
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] TbEmployee emp)
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] TbEmployee emp)
         {
 
             if (!ModelState.IsValid)
@@ -180,6 +182,27 @@ namespace Loujico.Controllers
                 {
                     Data = Employee
                 });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbEmployee>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+        }  [HttpGet("Get")]
+        public async Task<ActionResult<ApiResponse<List<TbHistory>>>> Get()
+        {
+            try
+            {
+            var emp=     CTX.TbHistories.ToList();
+                return Ok(new  ApiResponse < List < TbHistory >>
+                {
+                    Data = emp
+                });
+
             }
             catch (Exception ex)
             {

@@ -52,8 +52,6 @@ namespace Loujico.BL
                 return await CTX.TbProducts
                                 .Where(p => p.IsActive).Skip((id - 1) * pageSize)
                                 .Take(pageSize)
-                                .Include(p => p.TbCustomersProducts)
-                                .Include(p => p.TbProductsEmployees)
                                 .ToListAsync();
             }
             catch (Exception ex)
@@ -111,7 +109,7 @@ namespace Loujico.BL
                 if (product == null)
                     return false;
 
-                product.IsActive = false;
+                product.IsDeleted = true;
                 await CTX.SaveChangesAsync();
                 return true;
             }
@@ -120,8 +118,12 @@ namespace Loujico.BL
                 await ClsLogs.Add("Error", ex.Message, null);
                 return false;
             }
+<<<<<<< HEAD
         } 
 
+=======
+        }
+>>>>>>> origin/boss
         public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id)
         {
             try
@@ -142,6 +144,9 @@ namespace Loujico.BL
                 return new List<TbHistory>();
             }
         }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/boss
     }
 }

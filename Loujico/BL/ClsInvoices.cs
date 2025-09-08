@@ -34,8 +34,10 @@ namespace Loujico.BL
                                 .Include(i => i.Project)
                                 .ToListAsync();
             }
-            catch
+            catch (Exception ex)
             {
+
+                await ClsLogs.Add("Error", ex.Message, null);
                 return new List<TbInvoice>();
             }
         }
@@ -56,9 +58,11 @@ namespace Loujico.BL
                 await CTX.SaveChangesAsync();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
-                return false;
+
+                await ClsLogs.Add("Error", ex.Message, null);
+                return  false;
             }
         }
         public async Task<bool> Delete(int id)
@@ -73,8 +77,10 @@ namespace Loujico.BL
                 await CTX.SaveChangesAsync();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+
+                await ClsLogs.Add("Error", ex.Message, null);
                 return false;
             }
         }
