@@ -1,5 +1,7 @@
 ﻿using Loujico.BL;
 using Loujico.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +13,8 @@ namespace Loujico.Controllers
 
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+
     public class EmpController : ControllerBase
     {
         CompanySystemContext CTX;
@@ -29,7 +33,7 @@ namespace Loujico.Controllers
             ClsFiles = clsFiles;
         }
         [HttpPost("Add")]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbEmployee emp, [FromForm]  List<EmployeeFile>? Data )
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbEmployee emp, [FromForm]  List<FileModel>? Data )
         {
 
             if (!ModelState.IsValid)
