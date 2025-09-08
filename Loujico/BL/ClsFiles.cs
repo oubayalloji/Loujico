@@ -7,7 +7,9 @@ namespace Loujico.BL
 {
     public interface IFiles
     {
-        public Task<bool> Add(IFormFile uploadedFile, TbFile fileMeta, string folderPath);
+        public  Task<string> UploadImage(List<IFormFile> files, string folderName);
+
+        public  Task<bool> Add(EmployeeFile file, string folderPath, int Id, string EntityType);
         public Task<bool> Delete(int id);
     }
 
@@ -22,27 +24,24 @@ namespace Loujico.BL
             ClsLogs = clsLogs;
         }
 
-        public async Task<bool> Add(IFormFile uploadedFile, TbFile fileMeta, string folderPath)
+        public async Task<bool> Add(EmployeeFile file, string folderPath, int Id , string EntityType)
         {
             try
             {
-                // 1. توليد اسم فريد للملف
-                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(uploadedFile.FileName);
-                var fullPath = Path.Combine(folderPath, fileName);
-
-                // 2. حفظ الملف على السيرفر
-                using (var stream = new FileStream(fullPath, FileMode.Create))
-                {
-                    await uploadedFile.CopyToAsync(stream);
-                }
-
+                TbFile tbFile = new TbFile() ;
+                string doc = await UploadImage(file.Files, folderPath);
                 // 3. حفظ البيانات الوصفية في قاعدة البيانات
-                fileMeta.FileName = fileName;
-                fileMeta.FileType = uploadedFile.ContentType;
-                fileMeta.UploadedAt = DateTime.Now;
-                fileMeta.IsDeleted = false;
+              
 
-                await CTX.TbFiles.AddAsync(fileMeta);
+                tbFile.EntityId = Id; 
+                tbFile.EntityType=EntityType; 
+                
+                tbFile.FileName = doc;
+                tbFile.FileType = file.fileType;
+                tbFile.UploadedAt = DateTime.Now;
+
+
+                await CTX.TbFiles.AddAsync(tbFile);
                 await CTX.SaveChangesAsync();
                 return true;
             }
@@ -79,7 +78,7 @@ namespace Loujico.BL
                 if (file.Length > 0)
                 {
                     string imageName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-                    string path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderName, imageName);
+                    string path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot","Upload", folderName, imageName);
 
                     using (var stream = new FileStream(path, FileMode.Create))
                     {
@@ -91,7 +90,7 @@ namespace Loujico.BL
             }
             return "";
         }
-        public async Task<string> DeleteImageAsync(string imageName)
+      /*  public async Task<string> DeleteImageAsync(string imageName)
         {
             try
             {
@@ -120,7 +119,7 @@ namespace Loujico.BL
             {
                 return $"حدث خطأ غير متوقع: {ex.Message}";
             }
-        }
+        }*/
     }
 }
 

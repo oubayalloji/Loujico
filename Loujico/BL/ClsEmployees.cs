@@ -8,7 +8,8 @@ namespace Loujico.BL
         public Task<List<TbEmployee>> GetAllEmployees(int id);
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id);
         public Task<bool> Edit(TbEmployee employee);
-        public Task<TbEmployee> GetEmployeeById(int id);
+        public Task<ShowEmployeeModel> GetById(int id);
+
         public Task<bool> Add(TbEmployee employee);
         public Task<bool> Delete(int id);
         public Task<string> DeActive(int id);
@@ -105,22 +106,42 @@ namespace Loujico.BL
             }
         }
 
-        public async Task<TbEmployee> GetEmployeeById(int id)
+        public async Task<ShowEmployeeModel> GetById(int id)
         {
             try
             {
-                return await CTX.TbEmployees.Where(a => a.IsDeleted == false)
-                                .Include(e => e.TbProjectsEmployees)
-                                .Include(e => e.TbProductsEmployees)
-                                .FirstOrDefaultAsync(e => e.Id == id);
+                // 1) جيب الموظف مع علاقاته
+                var employee = await CTX.TbEmployees
+                    .Include(e => e.TbProjectsEmployees)
+                    .Include(e => e.TbProductsEmployees)
+                    .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
+
+                if (employee == null)
+                    return new ShowEmployeeModel();
+
+                // 2) جيب الملفات الخاصة بالموظف
+                var files = await CTX.TbFiles
+                    .Where(f => f.EntityId == employee.Id && f.EntityType == tableName.Employee && !f.IsDeleted)
+                    .ToListAsync();
+
+                // 3) جهّز الـ ViewModel
+                var result = new ShowEmployeeModel
+                {
+                    Employee = employee,
+                    Files = files,
+                    Projects = employee.TbProjectsEmployees?.ToList() ?? new List<TbProjectsEmployee>(),
+                    Products = employee.TbProductsEmployees?.ToList() ?? new List<TbProductsEmployee>()
+                };
+
+                return result;
             }
             catch (Exception ex)
             {
-
                 await ClsLogs.Add("Error", ex.Message, null);
-                return new TbEmployee();
+                return new ShowEmployeeModel();
             }
         }
+
 
         public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id)
         {

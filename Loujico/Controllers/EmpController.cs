@@ -29,7 +29,7 @@ namespace Loujico.Controllers
             ClsFiles = clsFiles;
         }
         [HttpPost("Add")]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbEmployee emp,List<EmployeeFile>? Data )
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbEmployee emp, [FromForm]  List<EmployeeFile>? Data )
         {
 
             if (!ModelState.IsValid)
@@ -45,13 +45,22 @@ namespace Loujico.Controllers
             }
             try
             {
+               
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
                 emp.CreatedBy = username;
                 await ClsEmployees.Add(emp);
                 // من هون 
                 await ClsLogs.Add("Error", $"{emp.FirstName} added to the System by {username} ", userId);
+
                 // لهون هو تسجيل الlog
+                if (Data!= null)
+                {
+                    foreach (var item in Data)
+                    {
+                      await  ClsFiles.Add(item, "Employees", emp.Id, tableName.Employee);
+                    }
+                }
                 return Ok(new ApiResponse<String>
                 {
                  
@@ -145,12 +154,12 @@ namespace Loujico.Controllers
             try
             {
                 await ClsEmployees.Delete(id);
-                var Emp =  await ClsEmployees.GetEmployeeById(id);
+                var Emp =  await ClsEmployees.GetById(id);
 
                 // من هون 
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                await ClsLogs.Add("Error", $"{Emp.FirstName} Deleted from the System by {username} ", userId);
+                await ClsLogs.Add("Error", $"{Emp.Employee.FirstName} Deleted from the System by {username} ", userId);
                 // لهون هو تسجيل الlog  
                 return Ok(new ApiResponse<String>
                 {
@@ -176,9 +185,9 @@ namespace Loujico.Controllers
         {
             try
             {
-                var Employee = await ClsEmployees.GetEmployeeById(id);
+                var Employee = await ClsEmployees.GetById(id);
 
-                return Ok(new ApiResponse<TbEmployee>
+                return Ok(new ApiResponse<ShowEmployeeModel>
                 {
                     Data = Employee
                 });

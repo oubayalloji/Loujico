@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\Upload\Employees\" />
     <Folder Include="wwwroot\Upload\Customers\" />
+    <Folder Include="wwwroot\Upload\Employees\" />
     <Folder Include="wwwroot\Upload\Invoices\" />
   </ItemGroup>
 
