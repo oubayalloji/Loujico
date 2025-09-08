@@ -11,8 +11,8 @@ namespace Loujico.BL
         public Task<TbEmployee> GetEmployeeById(int id);
         public Task<bool> Add(TbEmployee employee);
         public Task<bool> Delete(int id);
-        public Task<bool> DeActive(int id);
-        public Task<string> IsPresent(int id);
+        public Task<string> DeActive(int id);
+        public Task<string> Active(int id);
 
     }
 
@@ -128,7 +128,7 @@ namespace Loujico.BL
             {
 
                 var LstEmployee = await ClsHistory.GetAllHistory(Pageid, id, "TbEmployees");
-                if (LstEmployee != null)
+                if (LstEmployee == null)
                 {
                     return new List<TbHistory>();
 
@@ -144,30 +144,31 @@ namespace Loujico.BL
                 return new List<TbHistory>();
             }
         }
-        public async Task<bool> DeActive(int id)
+        public async Task<string> DeActive(int id)
         {
             try
             {
                 var employee = await CTX.TbEmployees.FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
-                if (employee == null)
-                    return false;
+                if (employee == null || employee.IsDeleted || !employee.IsPresent)
+                    return "الموظف غير موجود أو معطل مسبقًا";
+
 
                 employee.IsPresent = false;
                 CTX.Entry(employee).State = EntityState.Modified;
                 await CTX.SaveChangesAsync();
-                return true;
+                return "تم التعطيل";
             }
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
-                return false;
+                return "خطأ أثناء التعطيل";
             }
         }
-        public async Task<string> IsPresent(int id)
+        public async Task<string> Active(int id)
         {
             try
             {
-                var employee = await CTX.TbEmployees.FirstOrDefaultAsync(e => e.Id == id);
+                var employee = await CTX.TbEmployees.FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
                 if (employee == null || employee.IsDeleted || employee.IsPresent)
                     return "الموظف غير موجود أو مفعّل مسبقًا";
 
