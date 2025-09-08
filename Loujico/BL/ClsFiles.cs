@@ -9,7 +9,7 @@ namespace Loujico.BL
     {
         public  Task<string> UploadImage(List<IFormFile> files, string folderName);
 
-        public  Task<bool> Add(EmployeeFile file, string folderPath, int Id, string EntityType);
+        public  Task<bool> Add(FileModel file, string folderPath, int Id, string EntityType);
         public Task<bool> Delete(int id);
     }
 
@@ -24,7 +24,7 @@ namespace Loujico.BL
             ClsLogs = clsLogs;
         }
 
-        public async Task<bool> Add(EmployeeFile file, string folderPath, int Id , string EntityType)
+        public async Task<bool> Add(FileModel file, string folderPath, int Id , string EntityType)
         {
             try
             {
