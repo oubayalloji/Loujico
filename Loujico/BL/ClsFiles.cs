@@ -30,9 +30,7 @@ namespace Loujico.BL
             {
                 TbFile tbFile = new TbFile() ;
                 string doc = await UploadImage(file.Files, folderPath);
-                // 3. حفظ البيانات الوصفية في قاعدة البيانات
               
-
                 tbFile.EntityId = Id; 
                 tbFile.EntityType=EntityType; 
                 
