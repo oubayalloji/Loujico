@@ -120,9 +120,8 @@ namespace Loujico.BL
                 await ClsLogs.Add("Error", ex.Message, null);
                 return false;
             }
-        }
-<<<<<<< HEAD
-=======
+        } 
+
         public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id)
         {
             try
@@ -143,6 +142,6 @@ namespace Loujico.BL
                 return new List<TbHistory>();
             }
         }
->>>>>>> origin/boss
+
     }
 }

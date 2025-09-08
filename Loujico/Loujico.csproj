@@ -20,4 +20,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\Upload\Employees\" />
+    <Folder Include="wwwroot\Upload\Customers\" />
+    <Folder Include="wwwroot\Upload\Invoices\" />
+  </ItemGroup>
+
 </Project>

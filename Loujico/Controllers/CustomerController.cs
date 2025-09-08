@@ -173,8 +173,7 @@ namespace Loujico.Controllers
             }
 
         }
-<<<<<<< HEAD
-=======
+
         [HttpGet("EditHistory/{page}/{id}")]
         public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory(int page, int id)
         {
@@ -189,6 +188,6 @@ namespace Loujico.Controllers
                 return BadRequest(new ApiResponse<List<TbHistory>> { Message = ex.Message });
             }
         }
->>>>>>> origin/boss
+
     }
 }

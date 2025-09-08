@@ -170,7 +170,6 @@ namespace Loujico.BL
                 var employee = await CTX.TbEmployees.FirstOrDefaultAsync(e => e.Id == id);
                 if (employee == null || employee.IsDeleted || employee.IsPresent)
                     return "الموظف غير موجود أو مفعّل مسبقًا";
-
                 employee.IsPresent = true;
                 CTX.Entry(employee).State = EntityState.Modified;
                 await CTX.SaveChangesAsync();
