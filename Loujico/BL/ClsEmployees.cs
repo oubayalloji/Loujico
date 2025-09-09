@@ -117,7 +117,7 @@ namespace Loujico.BL
                     .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
 
                 if (employee == null)
-                    return new ShowEmployeeModel();
+                    return null;
 
                 // 2) جيب الملفات الخاصة بالموظف
                 var files = await CTX.TbFiles
@@ -138,7 +138,7 @@ namespace Loujico.BL
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
-                return new ShowEmployeeModel();
+                return null;
             }
         }
 

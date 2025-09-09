@@ -152,13 +152,20 @@ namespace Loujico.Controllers
 
             }
         }
-        [HttpDelete("Delete")]
+        [HttpDelete("Delete/{id}")]
         public async Task<ActionResult<ApiResponse<string>>> Delete(int id)
         {
             try
             {
-                await ClsEmployees.Delete(id);
                 var Emp =  await ClsEmployees.GetById(id);
+                if (Emp == null)
+                {
+                    return NotFound(new ApiResponse<List<TbEmployee>>
+                    {
+                        Message = "الموظف غير موجد",
+                    });
+                }
+                await ClsEmployees.Delete(id);
 
                 // من هون 
                 var username = UserManager.GetUserName(User);
@@ -180,9 +187,6 @@ namespace Loujico.Controllers
 
                 });
             }
-
-
-
         }
         [HttpGet("GetById/{id}")]
         public async Task<ActionResult<ApiResponse<string>>> GetById(int id)
@@ -205,28 +209,7 @@ namespace Loujico.Controllers
 
                 });
             }
-        }  [HttpGet("Get")]
-        public async Task<ActionResult<ApiResponse<List<TbHistory>>>> Get()
-        {
-            try
-            {
-            var emp=     CTX.TbHistories.ToList();
-                return Ok(new  ApiResponse < List < TbHistory >>
-                {
-                    Data = emp
-                });
-
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<List<TbEmployee>>
-                {
-                    Message = ex.Message,
-
-                });
-            }
-        }
+        } 
         [HttpGet("EditHistory/{page}/{id}")]
         public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory(int page, int id)
         {
