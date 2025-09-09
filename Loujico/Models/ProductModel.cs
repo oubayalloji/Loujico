@@ -1,9 +1,8 @@
 ﻿namespace Loujico.Models
 {
-    public class CustomerModel
+    public class ProductModel
     {
-        public TbCustomer Customer { get; set; }
+        public TbProduct Product { get; set; }
         public List<TbFile> Files { get; set; } = new();
-       
     }
 }

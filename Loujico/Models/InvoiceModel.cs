@@ -1,9 +1,9 @@
 ﻿namespace Loujico.Models
 {
-    public class CustomerModel
+    public class InvoiceModel
     {
-        public TbCustomer Customer { get; set; }
+        public TbInvoice Invoice { get; set; }
         public List<TbFile> Files { get; set; } = new();
-       
+
     }
 }

@@ -17,82 +17,63 @@ namespace Loujico.Controllers
         IProducts ClsProducts;
         Ilog ClsLogs;
         IHistory ClsHistory;
+        IFiles ClsFiles;
         CompanySystemContext CTX;
         UserManager<ApplicationUser> UserManager;
-        public ProductController(IProducts ClsProducts, CompanySystemContext context, UserManager<ApplicationUser> userManager, IHistory clsHistory)
+        public ProductController(IProducts ClsProducts, CompanySystemContext context, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles)
         {
             ClsProducts = ClsProducts;
             CTX = context;
             UserManager = userManager;
             ClsHistory = clsHistory;
+            ClsFiles = clsFiles;
         }
         [HttpPost("Add")]
         [Authorize]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbProduct prod)
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbProduct prod, [FromForm] List<FileModel>? Data)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ApiResponse<string> { Message = "wronge" });
+            }
+
             try
             {
-                if (!ModelState.IsValid)
+                var username = UserManager.GetUserName(User);
+                var userId = UserManager.GetUserId(User);
+                prod.CreatedBy = username;
+                await ClsProducts.Add(prod);
+                await ClsLogs.Add("Error", $"{prod.Id} added to the System by {username}", userId);
+                if (Data != null)
                 {
-
-                    return BadRequest(new ApiResponse<String>
+                    foreach (var item in Data)
                     {
-
-                        Message = "wronge"
-
-
-                    });
-
+                        await ClsFiles.Add(item, "Products", prod.Id, tableName.product);
+                    }
                 }
-                if (await ClsProducts.Add(prod))
-                {
-                    return Ok(new ApiResponse<String>
-                    {
-
-                        Message = "Product added successfully"
-
-                    });
-                }
-                else
-                {
-                    return Ok(new ApiResponse<String>
-                    {
-
-                        Message = "failed"
-
-                    });
-                }
+                return Ok(new ApiResponse<string> { Message = "Done" });
             }
+
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<string> { Message = ex.Message });
             }
+        
         }
-        public ActionResult<ApiResponse<TbProduct>> Show(int id)
+
+        [HttpGet("GetById/{id}")]
+        public async Task<ActionResult<ApiResponse<ProductModel>>> GetById(int id)
         {
             try
             {
-                if (!ModelState.IsValid)
-                {
-
-                    return BadRequest(new ApiResponse<String>
-                    {
-                        Data = "wronge",
-                        Message = "wronge"
-
-                    });
-
-                }
-                return BadRequest(new ApiResponse<String>
-                {
-                    Data = "wronge",
-                    Message = "wronge"
-
-                });
+                var invoice = await ClsProducts.GetById(id);
+                return Ok(new ApiResponse<ProductModel> { Data = invoice });
             }
             catch (Exception ex)
             {
-                return BadRequest();
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<InvoiceModel> { Message = ex.Message });
             }
         }
         [HttpPatch("Edit")]

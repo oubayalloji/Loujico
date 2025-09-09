@@ -5,7 +5,7 @@ namespace Loujico.BL
     public interface IInvoices
     {
         public Task<List<TbInvoice>> GetAll(int id);
-        public Task<TbInvoice> GetById(int id);
+        public Task<InvoiceModel> GetById(int id);
         public Task<bool> Add(TbInvoice invoice);
         public Task<bool> Delete(int id);
         public Task<bool> Edit(TbInvoice invoice);
@@ -36,17 +36,40 @@ namespace Loujico.BL
             }
             catch (Exception ex)
             {
-
                 await ClsLogs.Add("Error", ex.Message, null);
-                return new List<TbInvoice>();
+                return null;
             }
         }
-        public async Task<TbInvoice> GetById(int id)
+        public async Task<InvoiceModel> GetById(int id)
         {
-            return await CTX.TbInvoices
-                            .Include(i => i.Customer)
-                            .Include(i => i.Project)
-                            .FirstOrDefaultAsync(i => i.Id == id && !i.IsDeleted);
+            try
+            {
+
+                var invoice = await CTX.TbInvoices
+                                .Include(i => i.Customer)
+                                .Include(i => i.Project)
+                                .FirstOrDefaultAsync(i => i.Id == id && !i.IsDeleted);
+                if (invoice == null)
+                {
+                    return null;
+                }
+                var files = await CTX.TbFiles
+                      .Where(f => f.EntityId == invoice.Id && f.EntityType == tableName.invoice && !f.IsDeleted)
+                      .ToListAsync();
+                var result = new InvoiceModel
+                {
+                    Invoice = invoice,
+                    Files = files,
+
+                };
+                return result;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+
         }
         public async Task<bool> Add(TbInvoice invoice)
         {
@@ -116,7 +139,7 @@ namespace Loujico.BL
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
-                return new List<TbHistory>();
+                return null;
             }
         }
     }

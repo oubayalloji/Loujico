@@ -21,19 +21,21 @@ namespace Loujico.Controllers
         IInvoices ClsInvoices;
         Ilog ClsLogs;
         IHistory ClsHistory;
+        IFiles ClsFiles;
         UserManager<ApplicationUser> UserManager;
 
-        public InvoicesController(CompanySystemContext cTX, IInvoices clsInvoices, Ilog clsLogs, IHistory clsHistory, UserManager<ApplicationUser> userManager)
+        public InvoicesController(CompanySystemContext cTX, IInvoices clsInvoices, Ilog clsLogs, IHistory clsHistory, UserManager<ApplicationUser> userManager, IFiles clsFiles)
         {
             CTX = cTX;
             ClsInvoices = clsInvoices;
             ClsLogs = clsLogs;
             ClsHistory = clsHistory;
             UserManager = userManager;
+            ClsFiles = clsFiles;
         }
 
         [HttpPost("Add")]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbInvoice invoice)
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbInvoice invoice, [FromForm] List<FileModel>? Data)
         {
             if (!ModelState.IsValid)
             {
@@ -47,9 +49,16 @@ namespace Loujico.Controllers
                 invoice.CreatedBy = username;
                 await ClsInvoices.Add(invoice);
                 await ClsLogs.Add("Error", $"{invoice.Id} added to the System by {username}", userId);
-
+                if (Data != null)
+                {
+                    foreach (var item in Data)
+                    {
+                        await ClsFiles.Add(item, "Invoices", invoice.Id, tableName.invoice);
+                    }
+                }
                 return Ok(new ApiResponse<string> { Message = "Done" });
             }
+
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
@@ -91,7 +100,7 @@ namespace Loujico.Controllers
                 await ClsInvoices.Delete(id);
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                await ClsLogs.Add("Error", $"{invoice.Id} Deleted from the System by {username}", userId);
+                await ClsLogs.Add("Error", $"{invoice.Invoice.Id} Deleted from the System by {username}", userId);
 
                 return Ok(new ApiResponse<string> { Data = "done" });
             }
@@ -117,17 +126,17 @@ namespace Loujico.Controllers
         }
 
         [HttpGet("GetById/{id}")]
-        public async Task<ActionResult<ApiResponse<TbInvoice>>> GetById(int id)
+        public async Task<ActionResult<ApiResponse<InvoiceModel>>> GetById(int id)
         {
             try
             {
                 var invoice = await ClsInvoices.GetById(id);
-                return Ok(new ApiResponse<TbInvoice> { Data = invoice });
+                return Ok(new ApiResponse<InvoiceModel> { Data = invoice });
             }
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<TbInvoice> { Message = ex.Message });
+                return BadRequest(new ApiResponse<InvoiceModel> { Message = ex.Message });
             }
         }
         [HttpGet("EditHistory/{page}/{id}")]

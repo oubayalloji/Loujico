@@ -8,7 +8,7 @@ namespace Loujico.BL
     public interface IProducts
     {
         public Task<List<TbProduct>> GetAllProducts(int id);
-        public Task<TbProduct?> GetProductById(int id);
+        public Task<ProductModel?> GetById(int id);
         public Task<bool> Add(TbProduct product);
         public Task<bool> Edit(TbProduct product);
         public Task<bool> Delete(int id);
@@ -61,14 +61,28 @@ namespace Loujico.BL
             }
         }
 
-        public async Task<TbProduct?> GetProductById(int id)
+        public async Task<ProductModel?> GetById(int id)
         {
             try
             {
-                return await CTX.TbProducts
+                var Product = await CTX.TbProducts
                                 .Include(p => p.TbCustomersProducts)
                                 .Include(p => p.TbProductsEmployees)
                                 .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
+                if (Product == null)
+                {
+                    return null;
+                }
+                var files = await CTX.TbFiles
+                    .Where(f => f.EntityId == Product.Id && f.EntityType == tableName.product && !f.IsDeleted)
+                    .ToListAsync();
+                var result = new ProductModel
+                {
+                    Product = Product,
+                    Files = files,
+
+                };
+                return result;
             }
             catch (Exception ex)
             {
@@ -81,12 +95,6 @@ namespace Loujico.BL
         {
             try
             {
-                if (string.IsNullOrEmpty(product.ProductName))
-                    return false;
-
-                if (string.IsNullOrEmpty(product.ProductDescription))
-                    return false;
-
                 product.CreatedAt = DateTime.Now;
                 product.IsActive = true;
                 await CTX.TbProducts.AddAsync(product);
@@ -126,7 +134,7 @@ namespace Loujico.BL
                 var LstProduct = await ClsHistory.GetAllHistory(Pageid, id, "TbProduct");
                 if (LstProduct != null)
                 {
-                    return new List<TbHistory>();
+                    return null;
                 }
                 else
                 {
@@ -136,7 +144,7 @@ namespace Loujico.BL
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
-                return new List<TbHistory>();
+                return null;
             }
         }
     }

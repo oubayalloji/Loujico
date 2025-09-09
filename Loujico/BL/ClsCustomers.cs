@@ -5,7 +5,7 @@ namespace Loujico.BL
     public interface ICustomers
     {
         public Task<List<TbCustomer>> GetAll(int id);
-        public Task<TbCustomer> GetById(int id);
+        public Task<CustomerModel> GetById(int id);
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id);
         public Task<bool> Edit(TbCustomer customer);
         public Task<bool> Add(TbCustomer customer);
@@ -33,18 +33,42 @@ namespace Loujico.BL
                                 .Take(pageSize)
                                 .ToListAsync();
             }
-            catch
+            catch (Exception ex)
             {
-                return new List<TbCustomer>();
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
             }
         }
-        public async Task<TbCustomer?> GetById(int id)
+        public async Task<CustomerModel> GetById(int id)
         {
-            return await CTX.TbCustomers
-                            .Include(c => c.TbCustomersProducts)
-                            .Include(c => c.TbProjects)
-                            .Include(c => c.TbInvoices)
-                            .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
+            try
+            {
+                var cus = await CTX.TbCustomers
+                                .Include(c => c.TbCustomersProducts)
+                                .Include(c => c.TbProjects)
+                                .Include(c => c.TbInvoices)
+                                .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
+                if (cus == null)
+                {
+                    return null;
+                }
+                var files = await CTX.TbFiles
+                      .Where(f => f.EntityId == cus.Id && f.EntityType == tableName.Employee && !f.IsDeleted)
+                      .ToListAsync();
+                var result = new CustomerModel
+                {
+                    Customer = cus,
+                    Files = files,
+
+                };
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
         }
         public async Task<bool> Add(TbCustomer customer)
         {
@@ -110,7 +134,7 @@ namespace Loujico.BL
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
-                return new List<TbHistory>();
+                return null;
             }
         }
     }

@@ -129,8 +129,7 @@ namespace Loujico.BL
                 {
                     Employee = employee,
                     Files = files,
-                    Projects = employee.TbProjectsEmployees?.ToList() ?? new List<TbProjectsEmployee>(),
-                    Products = employee.TbProductsEmployees?.ToList() ?? new List<TbProductsEmployee>()
+               
                 };
 
                 return result;

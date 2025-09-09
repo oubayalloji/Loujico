@@ -18,7 +18,8 @@ namespace Loujico.Controllers
         Ilog ClsLogs;
         IHistory ClsHistory;
         UserManager<ApplicationUser> UserManager;
-        public CustomerController(CompanySystemContext cTX, ICustomers clsCustomers, Ilog clsLogs, UserManager<ApplicationUser> userManager, IHistory clsHistory)
+        IFiles ClsFiles;
+        public CustomerController(CompanySystemContext cTX, ICustomers clsCustomers, Ilog clsLogs, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles)
         {
 
             CTX = cTX;
@@ -26,9 +27,10 @@ namespace Loujico.Controllers
             ClsLogs = clsLogs;
             UserManager = userManager;
             ClsHistory = clsHistory;
+            ClsFiles = clsFiles;
         }
         [HttpPost("Add")]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbCustomer Customer)
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbCustomer Customer, [FromForm] List<FileModel>? Data)
         {
 
             if (!ModelState.IsValid)
@@ -49,6 +51,13 @@ namespace Loujico.Controllers
                 // من هون 
                 await ClsLogs.Add("Error", $"{Customer.CustomerName} added to the System by {username} ", userId);
                 // لهون هو تسجيل الlog
+                if (Data != null)
+                {
+                    foreach (var item in Data)
+                    {
+                        await ClsFiles.Add(item, "Customers", Customer.Id, tableName.Customer);
+                    }
+                }
                 return Ok(new ApiResponse<String>
                 {
                     Message = "Done"
@@ -137,7 +146,7 @@ namespace Loujico.Controllers
                 // من هون 
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                await ClsLogs.Add("Error", $"{Customer.CustomerName} Deleted from the System by {username} ", userId);
+                await ClsLogs.Add("Error", $"{Customer.Customer.CustomerName} Deleted from the System by {username} ", userId);
                 // لهون هو تسجيل الlog  
                 return Ok(new ApiResponse<String>
                 {
@@ -161,7 +170,7 @@ namespace Loujico.Controllers
             {
                 var Customerloyee = await ClsCustomers.GetById(id);
 
-                return Ok(new ApiResponse<TbCustomer>
+                return Ok(new ApiResponse<CustomerModel>
                 {
                     Data = Customerloyee
                 });
