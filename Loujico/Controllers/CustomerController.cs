@@ -76,7 +76,7 @@ namespace Loujico.Controllers
         }
 
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] TbCustomer Customer)
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] TbCustomer Customer, [FromForm] List<FileModel>? Data)
         {
 
             if (!ModelState.IsValid)
@@ -95,6 +95,15 @@ namespace Loujico.Controllers
                 Customer.UpdatedBy = username;
                 await ClsCustomers.Edit(Customer);
                 await ClsLogs.Add("Error", $"id : {Customer.Id} with name :{Customer.CustomerName} updated to the System by {username} ", userId);
+                if (Data != null)
+                {
+                    foreach (var item in Data)
+                    {
+                        await ClsFiles.Add(item, "Customers", Customer.Id, tableName.Customer);
+                        await ClsLogs.Add("CRUD", $"file {item.fileType} added to : {Customer.CustomerName} by {username} ", userId);
+
+                    }
+                }
                 return Ok(new ApiResponse<String>
                 {
 
@@ -135,6 +144,37 @@ namespace Loujico.Controllers
                 });
 
             }
+        }
+        [HttpDelete("DeleteFile/{id}")]
+        public async Task<ActionResult<ApiResponse<string>>> DeleteFile(int id)
+        {
+            try
+            {
+                var file = await ClsFiles.GetById(id, tableName.Customer);
+                await ClsFiles.Delete(id, tableName.Customer);
+
+                // من هون 
+                var username = UserManager.GetUserName(User);
+                var userId = UserManager.GetUserId(User);
+                await ClsLogs.Add("Error", $"file {file.FileType} for {file.EntityId} in table{file.EntityType} Deleted from the System by {username} ", userId);
+                // لهون هو تسجيل الlog  
+                return Ok(new ApiResponse<String>
+                {
+                    Data = "done"
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbProject>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
+
+
         }
         [HttpDelete("Delete/{id}")]
         public async Task<ActionResult<ApiResponse<string>>> Delete(int id)

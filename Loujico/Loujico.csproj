@@ -24,6 +24,7 @@
     <Folder Include="wwwroot\Upload\Customers\" />
     <Folder Include="wwwroot\Upload\Employees\" />
     <Folder Include="wwwroot\Upload\Invoices\" />
+    <Folder Include="wwwroot\Upload\Projects\" />
     <Folder Include="wwwroot\Upload\Products\" />
   </ItemGroup>
 

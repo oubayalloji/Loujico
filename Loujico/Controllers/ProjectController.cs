@@ -15,22 +15,23 @@ namespace Loujico.Controllers
 
     public class ProjectController : ControllerBase
     {
+        IFiles ClsFiles;
         IProject ClsProject;
         Ilog ClsLogs;
         IHistory ClsHistory;
         CompanySystemContext CTX;
         UserManager<ApplicationUser> UserManager;
-        public ProjectController(IProject clsProject, CompanySystemContext context, UserManager<ApplicationUser> userManager, Ilog ilog, IHistory clsHistory)
+        public ProjectController(IProject clsProject, CompanySystemContext context, UserManager<ApplicationUser> userManager, Ilog ilog, IHistory clsHistory, IFiles clsFiles)
         {
             ClsLogs = ilog;
             ClsProject = clsProject;
             CTX = context;
             UserManager = userManager;
             ClsHistory = clsHistory;
-
+            ClsFiles = clsFiles;
         }
         [HttpPost("Add")]
-        public async Task<IActionResult> Add([FromBody] AddProjectModel dto)
+        public async Task<IActionResult> Add([FromBody] AddProjectModel dto, [FromForm] List<FileModel>? Data)
         {
             try { 
                 if (!ModelState.IsValid)
@@ -62,8 +63,14 @@ namespace Loujico.Controllers
 
             CTX.TbProjects.Add(project);
             await CTX.SaveChangesAsync();
-
-            return Ok(new { project.Id, message = "تمت إضافة المشروع بنجاح" });
+                if (Data != null)
+                {
+                    foreach (var item in Data)
+                    {
+                        await ClsFiles.Add(item, "Projects", dto.Id, tableName.projectt);
+                    }
+                }
+                return Ok(new { project.Id, message = "تمت إضافة المشروع بنجاح" });
         }
 
             catch (Exception ex)
@@ -80,7 +87,7 @@ namespace Loujico.Controllers
         }
 
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] TbProject proj)
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] TbProject proj, [FromForm] List<FileModel>? Data)
         {
 
             if (!ModelState.IsValid)
@@ -103,6 +110,15 @@ namespace Loujico.Controllers
                 // من هون 
                 await ClsLogs.Add("Error", $"{proj.Title} updated to the System by {username} ", userId);
                 // لهون هو تسجيل الlog
+                if (Data != null)
+                {
+                    foreach (var item in Data)
+                    {
+                        await ClsFiles.Add(item, "Projects", proj.Id, tableName.projectt);
+                        await ClsLogs.Add("CRUD", $"file {item.fileType} added to : {proj.Title} by {username} ", userId);
+
+                    }
+                }
                 return Ok(new ApiResponse<String>
                 {
                    
@@ -145,6 +161,37 @@ namespace Loujico.Controllers
                 });
 
             }
+        }
+        [HttpDelete("DeleteImg/{id}")]
+        public async Task<ActionResult<ApiResponse<string>>> DeleteFile(int id)
+        {
+            try
+            {
+                var file = await ClsFiles.GetById(id, tableName.projectt);
+                await ClsFiles.Delete(id, tableName.projectt);
+
+                // من هون 
+                var username = UserManager.GetUserName(User);
+                var userId = UserManager.GetUserId(User);
+                await ClsLogs.Add("Error", $"file {file.FileType} for {file.EntityId} in table{file.EntityType} Deleted from the System by {username} ", userId);
+                // لهون هو تسجيل الlog  
+                return Ok(new ApiResponse<String>
+                {
+                    Data = "done"
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbProject>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
+
+
         }
         [HttpDelete("Delete")]
         public async Task<ActionResult<ApiResponse<string>>> Delete(int id)
