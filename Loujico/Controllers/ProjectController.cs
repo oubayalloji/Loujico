@@ -29,7 +29,7 @@ namespace Loujico.Controllers
             ClsHistory = clsHistory;
 
         }
-        [HttpPost("add")]
+        [HttpPost("Add")]
         public async Task<IActionResult> Add([FromBody] AddProjectModel dto)
         {
             try { 
@@ -146,18 +146,18 @@ namespace Loujico.Controllers
 
             }
         }
-        [HttpDelete("Delete")]
+        [HttpDelete("Delete/{id}")]
         public async Task<ActionResult<ApiResponse<string>>> Delete(int id)
         {
             try
             {
-                var Emp = await ClsProject.GetById(id);
+                var project = await ClsProject.GetById(id);
                 await ClsProject.Delete(id);
 
                 // من هون 
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                await ClsLogs.Add("Error", $"{Emp.Title} Deleted from the System by {username} ", userId);
+                await ClsLogs.Add("Error", $"{project.Title} Deleted from the System by {username} ", userId);
                 // لهون هو تسجيل الlog  
                 return Ok(new ApiResponse<String>
                 {
@@ -168,7 +168,7 @@ namespace Loujico.Controllers
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<List<TbProject>>
+                return BadRequest(new ApiResponse<List<string>>
                 {
                     Message = ex.Message,
 
@@ -184,12 +184,12 @@ namespace Loujico.Controllers
         {
             try
             {
-                var Employee = await ClsProject.GetById(id);
+                var projectloyee = await ClsProject.GetById(id);
 
                 return Ok(new ApiResponse<AddProjectModel>
                 {
                  
-                    Data = Employee
+                    Data = projectloyee
                 });
             }
             catch (Exception ex)
