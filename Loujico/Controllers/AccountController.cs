@@ -263,7 +263,7 @@ namespace Loujico.Controllers
 
 
 
-        [HttpPost]
+        [HttpPost("Save")]
         public async Task<ActionResult<ApiResponse<String>>> Save([FromBody]VmEditUser model)
         {
             ApiResponse<List<String>> response = new ApiResponse<List<String>>();

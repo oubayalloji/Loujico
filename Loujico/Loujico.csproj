@@ -22,10 +22,14 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\Upload\Customers\" />
-    <Folder Include="wwwroot\Upload\Employees\" />
+    <Folder Include="wwwroot\Upload\Employees\NewFolder\" />
     <Folder Include="wwwroot\Upload\Invoices\" />
+<<<<<<< HEAD
     <Folder Include="wwwroot\Upload\Projects\" />
     <Folder Include="wwwroot\Upload\Products\" />
+=======
+    <Folder Include="wwwroot\Upload\Products\NewFolder\" />
+>>>>>>> oby
   </ItemGroup>
 
 </Project>

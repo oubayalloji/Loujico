@@ -50,7 +50,7 @@ namespace Loujico.BL
             try
             {
                 var Prod = await CTX.TbProducts
-                                .Where(p => p.IsActive).Skip((id - 1) * count)
+                                .Where(p => p.IsActive && !p.IsDeleted).Skip((id - 1) * count)
                                 .Take(count)
                                 .ToListAsync();
                 if (Prod == null)
@@ -73,7 +73,7 @@ namespace Loujico.BL
                 var Product = await CTX.TbProducts
                                 .Include(p => p.TbCustomersProducts)
                                 .Include(p => p.TbProductsEmployees)
-                                .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
+                                .FirstOrDefaultAsync(p => p.Id == id && p.IsActive && !p.IsDeleted);
                 if (Product == null)
                 {
                     return null;
