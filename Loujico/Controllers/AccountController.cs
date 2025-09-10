@@ -21,7 +21,7 @@ namespace Loujico.Controllers
         private readonly UserManager<ApplicationUser> userManager;
         Ilog ClsLogs;
         public AccountController(IConfiguration _configuration, UserManager<ApplicationUser> manager, Ilog clsLogs)
-        {
+        {  
 
             configuration = _configuration;
             userManager = manager;
@@ -106,8 +106,43 @@ namespace Loujico.Controllers
             }
 
         }
+        [HttpGet("UserList")]
+      
+        public async Task<ActionResult<ApiResponse<List<VmUserRoles>>>> UserList()
+        {
+            try 
+            {
+                var users = userManager.Users.ToList();
+                var userRolesViewModel = new List<VmUserRoles>();
+
+                foreach (var user in users)
+                {
+                    var roles = await userManager.GetRolesAsync(user);
+                    userRolesViewModel.Add(new VmUserRoles
+                    {
+                        userid = user.Id,
+                        username = user.UserName,
+                        roles = roles,
+                        Email = user.Email
+
+                    });
+                }
+
+                return Ok(new ApiResponse<List<VmUserRoles>> { Data = userRolesViewModel });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<VmUserRoles>>
+                {
+                    Message = ex.Message,
+
+                });
+
+            }
+        }
         [HttpPost("Register")]
-        [AllowAnonymous]
+      
         public async Task<IActionResult> Register([FromForm] Register model)
         {
             // التحقق من صحة النموذج
@@ -197,6 +232,85 @@ namespace Loujico.Controllers
                 });
             }
         }
+
+        [HttpDelete("Delete")]
+  
+        public async Task<ActionResult<ApiResponse<String>>> Delete(string userid)
+        {
+            try
+            {
+                var user = await userManager.FindByIdAsync(userid);
+                var DeleteUser = await userManager.DeleteAsync(user);
+                return Ok(new ApiResponse<String>
+                {
+                    Data ="Done",
+                    Message ="Done"
+
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<String>>
+                {
+                    Message = ex.Message,
+
+                });
+
+            }
+
+        }
+
+
+
+        [HttpPost]
+        public async Task<ActionResult<ApiResponse<String>>> Save([FromBody]VmEditUser model)
+        {
+            ApiResponse<List<String>> response = new ApiResponse<List<String>>();
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(response.Message ="validate Error");
+            }
+
+            var user = await userManager.FindByIdAsync(model.userid);
+            if (user == null)
+            {
+                return NotFound(response.Message = "Not Found");
+            }
+
+            user.UserName = model.username;
+            user.Email = model.Email;
+
+
+
+            var currentRoles = await userManager.GetRolesAsync(user);
+            var selectedRole = model.selectedRole;
+
+            foreach (var role in currentRoles)
+            {
+                await userManager.RemoveFromRoleAsync(user, role);
+            }
+
+            if (!string.IsNullOrEmpty(selectedRole))
+            {
+                await userManager.AddToRoleAsync(user, selectedRole);
+            }
+
+            var result = await  userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                return Ok(response.Message = "Done") ;
+            }
+
+        
+            return Ok( response);
+        }
+
+
+
+
+
+
         private async Task<string> GenerateToken(ApplicationUser user)
         {
             // الحصول على أدوار المستخدم (مثل "Admin")
