@@ -86,7 +86,7 @@ namespace Loujico.Controllers
         }
 
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] TbEmployee emp)
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] TbEmployee emp, [FromForm] List<FileModel>? Data)
         {
 
             if (!ModelState.IsValid)
@@ -107,7 +107,16 @@ namespace Loujico.Controllers
                 emp.UpdatedBy = username;
                 await ClsEmployees.Edit(emp);
                 // من هون 
-                await ClsLogs.Add("Error", $"{emp.FirstName} updated to the System by {username} ", userId);
+                await ClsLogs.Add("Error", $"{emp.FirstName} {emp.LastName} updated to the System by {username} ", userId);
+                if (Data != null)
+                {
+                    foreach (var item in Data)
+                    {
+                        await ClsFiles.Add(item, "Employees", emp.Id, tableName.Employee);
+                        await ClsLogs.Add("CRUD", $"file {item.fileType} added to : {emp.FirstName} {emp.LastName} by {username} ", userId);
+
+                    }
+                }
                 // لهون هو تسجيل الlog
                 return Ok(new ApiResponse<String>
                 {
@@ -187,6 +196,35 @@ namespace Loujico.Controllers
 
                 });
             }
+        }
+        [HttpDelete("DeleteImg/{id}")]
+        public async Task<ActionResult<ApiResponse<string>>> DeleteFile(int id)
+        {
+            try
+            {
+                var file = await ClsFiles.GetById(id, tableName.Employee);
+                await ClsFiles.Delete(id, tableName.Employee);
+
+                // من هون 
+                var username = UserManager.GetUserName(User);
+                var userId = UserManager.GetUserId(User);
+                await ClsLogs.Add("Error", $"file {file.FileType} for {file.EntityId} in table{file.EntityType} Deleted from the System by {username} ", userId);
+                // لهون هو تسجيل الlog  
+                return Ok(new ApiResponse<String>
+                {
+                    Data = "done"
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbEmployee>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
         }
         [HttpGet("GetById/{id}")]
         public async Task<ActionResult<ApiResponse<string>>> GetById(int id)
