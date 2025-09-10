@@ -80,7 +80,7 @@ namespace Loujico.Controllers
             }
         }
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] TbProduct Product)
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] TbProduct Product, [FromForm] List<FileModel>? Data)
         {
 
             if (!ModelState.IsValid)
@@ -102,6 +102,15 @@ namespace Loujico.Controllers
                 await ClsProducts.Edit(Product);
 
                 await ClsLogs.Add("Error", $"id : {Product.Id} with name : {Product.ProductName} updated to the System by {username} ", userId);
+                if (Data != null)
+                {
+                    foreach (var item in Data)
+                    {
+                        await ClsFiles.Add(item, "Products", Product.Id, tableName.product);
+                        await ClsLogs.Add("CRUD", $"file {item.fileType} added to : {Product.ProductName} by {username} ", userId);
+
+                    }
+                }
 
                 return Ok(new ApiResponse<String>
                 {
@@ -122,7 +131,7 @@ namespace Loujico.Controllers
 
 
         }
-        [HttpGet("EditHistory/{page}/{id}")]
+        [HttpGet("EditHistory/{page}/{id}")] 
         public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory(int page, int id)
         {
             try
@@ -136,7 +145,37 @@ namespace Loujico.Controllers
                 return BadRequest(new ApiResponse<List<TbHistory>> { Message = ex.Message });
             }
         }
-        [HttpDelete("Delete/{id}")]
+        [HttpDelete("DeleteImg/{id}")]
+        public async Task<ActionResult<ApiResponse<string>>> DeleteFile(int id)
+        {
+            try
+            {
+               var file= await ClsFiles.GetById(id,tableName.product);
+                await ClsFiles.Delete(id,tableName.product);
+
+                // من هون 
+                var username = UserManager.GetUserName(User);
+                var userId = UserManager.GetUserId(User);
+                await ClsLogs.Add("Error", $"file {file.FileType} for {file.EntityId} in table{file.EntityType} Deleted from the System by {username} ", userId);
+                // لهون هو تسجيل الlog  
+                return Ok(new ApiResponse<String>
+                {
+                    Data = "done"
+                });
+            }
+            catch (Exception ex) 
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbProject>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
+
+
+        } [HttpDelete("Delete/{id}")]
         public async Task<ActionResult<ApiResponse<string>>> Delete(int id)
         {
             try
@@ -154,7 +193,7 @@ namespace Loujico.Controllers
                     Data = "done"
                 });
             }
-            catch (Exception ex)
+            catch (Exception ex) 
             {
                 await ClsLogs.Add("Error", ex.Message, null);
                 return BadRequest(new ApiResponse<List<TbProject>>

@@ -10,7 +10,8 @@ namespace Loujico.BL
         public  Task<string> UploadImage(List<IFormFile> files, string folderName);
 
         public  Task<bool> Add(FileModel file, string folderPath, int Id, string EntityType);
-        public Task<bool> Delete(int id);
+        public Task<bool> Delete(int id, string EntityType);
+        public Task<TbFile> GetById(int id, string EntityType);
     }
 
     public class ClsFiles : IFiles
@@ -50,11 +51,11 @@ namespace Loujico.BL
             }
         }
 
-        public async Task<bool> Delete(int id)
+        public async Task<bool> Delete(int id, string EntityType)
         {
             try
             {
-                var file = await CTX.TbFiles.FirstOrDefaultAsync(f => f.Id == id);
+                var file = await CTX.TbFiles.FirstOrDefaultAsync(f => f.EntityId == id && f.EntityType==EntityType);
                 if (file == null)
                     return false;
 
@@ -69,6 +70,23 @@ namespace Loujico.BL
                 return false;
             }
         }
+
+        public async Task<TbFile> GetById(int id, string EntityType)
+        {
+            try
+            {
+                var file = await CTX.TbFiles.FirstOrDefaultAsync(f => f.EntityId == id && f.EntityType == EntityType);
+                if (file == null)
+                    return null;
+                return file;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        }
+
         public async Task<string> UploadImage(List<IFormFile> files,string folderName)
         {
             foreach (var file in files)
