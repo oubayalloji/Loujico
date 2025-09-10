@@ -7,12 +7,12 @@ namespace Loujico.BL
 {
     public interface IProducts
     {
-        public Task<List<TbProduct>> GetAllProducts(int id);
+        public Task<List<TbProduct>> GetAllProducts(int id, int count);
         public Task<ProductModel?> GetById(int id);
         public Task<bool> Add(TbProduct product);
         public Task<bool> Edit(TbProduct product);
         public Task<bool> Delete(int id);
-        public Task<List<TbHistory>> LstEditHistory(int Pageid, int id);
+        public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
     }
 
     public class ClsProducts : IProducts
@@ -45,13 +45,13 @@ namespace Loujico.BL
                 return false;
             }
         }
-        public async Task<List<TbProduct>> GetAllProducts(int id)
+        public async Task<List<TbProduct>> GetAllProducts(int id, int count)
         {
             try
             {
                 var Prod = await CTX.TbProducts
-                                .Where(p => p.IsActive).Skip((id - 1) * pageSize)
-                                .Take(pageSize)
+                                .Where(p => p.IsActive).Skip((id - 1) * count)
+                                .Take(count)
                                 .ToListAsync();
                 if (Prod == null)
                 {
@@ -132,11 +132,11 @@ namespace Loujico.BL
                 return false;
             }
         }
-        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id)
+        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count)
         {
             try
             {
-                var LstProduct = await ClsHistory.GetAllHistory(Pageid, id, "TbProduct");
+                var LstProduct = await ClsHistory.GetAllHistory(Pageid, id, "TbProduct", count);
                 if (LstProduct != null)
                 {
                     return null;

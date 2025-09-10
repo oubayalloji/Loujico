@@ -7,11 +7,11 @@ namespace Loujico.BL
     public interface IProject
     {
         public  Task<AddProjectModel> GetById(int id);
-        public  Task<List<object>> Pagintion(int id);
+        public  Task<List<object>> Pagintion(int id, int count);
         public Task<bool> Add(TbProject project);
         public Task<bool> Edit(TbProject project);
         public Task<bool> Delete(int id);
-        public Task<List<TbHistory>> LstEditHistory(int Pageid, int id);
+        public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
 
     }
 
@@ -80,14 +80,14 @@ namespace Loujico.BL
         }
 
 
-        public async Task<List<object>> Pagintion(int id)
+        public async Task<List<object>> Pagintion(int id, int count)
         {
             try
             {
                 var projects = await CTX.TbProjects
                     .Where(p => !p.IsDeleted)
-                    .Skip((id - 1) * pageSize)
-                    .Take(pageSize)
+                    .Skip((id - 1) * count)
+                    .Take(count)
                     .Select(p => new
                     {
                         p.Id,
@@ -164,11 +164,11 @@ namespace Loujico.BL
                 }
             
         }
-        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id)
+        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count)
         {
             try
             {
-                var LstProject = await ClsHistory.GetAllHistory(Pageid, id, "TbProject");
+                var LstProject = await ClsHistory.GetAllHistory(Pageid, id, "TbProject", count);
                 if (LstProject != null)
                 {
                     return new List<TbHistory>();

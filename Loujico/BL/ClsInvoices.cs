@@ -4,12 +4,12 @@ namespace Loujico.BL
 {
     public interface IInvoices
     {
-        public Task<List<TbInvoice>> GetAll(int id);
+        public Task<List<TbInvoice>> GetAll(int id, int count);
         public Task<InvoiceModel> GetById(int id);
         public Task<bool> Add(TbInvoice invoice);
         public Task<bool> Delete(int id);
         public Task<bool> Edit(TbInvoice invoice);
-        public Task<List<TbHistory>> LstEditHistory(int Pageid, int id);
+        public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
 
     }
     public class ClsInvoices : IInvoices
@@ -22,14 +22,14 @@ namespace Loujico.BL
         {
             CTX = companySystemContext;
         }
-        public async Task<List<TbInvoice>> GetAll(int id)
+        public async Task<List<TbInvoice>> GetAll(int id, int count)
         {
             try
             {
                 return await CTX.TbInvoices
                                 .Where(i => !i.IsDeleted)
-                                .Skip((id - 1) * pageSize)
-                                .Take(pageSize)
+                                .Skip((id - 1) * count)
+                                .Take(count)
                                 .Include(i => i.Customer)
                                 .Include(i => i.Project)
                                 .ToListAsync();
@@ -122,11 +122,11 @@ namespace Loujico.BL
                 return false;
             }
         }
-        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id)
+        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count)
         {
             try
             {
-                var LstInvoice = await ClsHistory.GetAllHistory(Pageid, id, "TbInvoices");
+                var LstInvoice = await ClsHistory.GetAllHistory(Pageid, id, "TbInvoices", count);
                 if (LstInvoice != null)
                 {
                     return new List<TbHistory>();

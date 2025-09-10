@@ -4,7 +4,7 @@ namespace Loujico.BL
 {
     public interface IHistory
     {
-        public Task<List<TbHistory>> GetAllHistory(int id, int RecordId, string TableName);
+        public Task<List<TbHistory>> GetAllHistory(int id, int RecordId, string TableName,int count);
         public Task<TbHistory> GetHistoryById(int id);
     }
     public class ClsHistory : IHistory
@@ -18,14 +18,14 @@ namespace Loujico.BL
             ClsLogs = clsLogs;
         }
 
-        public async Task<List<TbHistory>> GetAllHistory(int id, int RecordId, string TableName)
+        public async Task<List<TbHistory>> GetAllHistory(int id, int RecordId, string TableName, int count)
         {
             try
             {
                 return await CTX.TbHistories
                                 .Where(a => a.RecordId == RecordId && a.TableName == TableName)
-                                .Skip((id - 1) * pageSize)
-                                .Take(pageSize)
+                                .Skip((id - 1) * count)
+                                .Take(count)
                                 .OrderByDescending(h => h.ActionTime)
                                 .ToListAsync();
             }

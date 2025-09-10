@@ -129,8 +129,8 @@ namespace Loujico.Controllers
 
         }
 
-        [HttpGet("GetAll/{PageId}")]
-        public async Task<ActionResult<ApiResponse<List<TbEmployee>>>> GetAllEmployees(int PageId)
+        [HttpGet("GetAll")]
+        public async Task<ActionResult<ApiResponse<List<TbEmployee>>>> GetAllEmployees([FromQuery] int Page, [FromQuery] int Count)
         {
 
             try
@@ -138,7 +138,7 @@ namespace Loujico.Controllers
 
                 return Ok(new ApiResponse<List<TbEmployee>>
                 {
-                    Data = await ClsEmployees.GetAllEmployees(PageId)
+                    Data = await ClsEmployees.GetAllEmployees(Page,Count)
                 });
             }
             catch (Exception ex)
@@ -210,12 +210,12 @@ namespace Loujico.Controllers
                 });
             }
         } 
-        [HttpGet("EditHistory/{PageId}/{id}")]
-        public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory(int PageId, int id)
+        [HttpGet("EditHistory")]
+        public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory([FromQuery] int page, [FromQuery] int id, [FromQuery] int Count)
         {
             try
             {
-                var history = await ClsEmployees.LstEditHistory(PageId, id);
+                var history = await ClsEmployees.LstEditHistory(page, id,Count);
                 return Ok(new ApiResponse<List<TbHistory>> { Data = history });
             }
             catch (Exception ex)

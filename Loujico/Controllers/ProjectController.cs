@@ -122,13 +122,13 @@ namespace Loujico.Controllers
 
 
         }
-        [HttpGet("GetAll/{id}")]
-        public async Task<ActionResult<ApiResponse<List<object>>>> GetAll(int id)
+        [HttpGet("GetAll")]
+        public async Task<ActionResult<ApiResponse<List<object>>>> GetAll([FromQuery] int Page, [FromQuery] int Count)
         {
 
             try
             {
-                var fin = await ClsProject.Pagintion(id);
+                var fin = await ClsProject.Pagintion(Page,Count);
 
                 return Ok(new ApiResponse<List<object>>
                 {
@@ -146,7 +146,7 @@ namespace Loujico.Controllers
 
             }
         }
-        [HttpDelete("Delete/{id}")]
+        [HttpDelete("Delete")]
         public async Task<ActionResult<ApiResponse<string>>> Delete(int id)
         {
             try
@@ -203,12 +203,12 @@ namespace Loujico.Controllers
             }
 
         }
-        [HttpGet("EditHistory/{page}/{id}")]
-        public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory(int page, int id)
+        [HttpGet("EditHistory")]
+        public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory([FromQuery]int page,[FromQuery] int id,[FromQuery] int count)
         {
             try
             {
-                var history = await ClsProject.LstEditHistory(page, id);
+                var history = await ClsProject.LstEditHistory(page, id, count);
                 return Ok(new ApiResponse<List<TbHistory>> { Data = history });
             }
             catch (Exception ex)

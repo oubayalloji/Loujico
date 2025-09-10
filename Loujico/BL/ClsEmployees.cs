@@ -5,8 +5,8 @@ namespace Loujico.BL
 {
     public interface IEmployees
     {
-        public Task<List<TbEmployee>> GetAllEmployees(int id);
-        public Task<List<TbHistory>> LstEditHistory(int Pageid, int id);
+        public Task<List<TbEmployee>> GetAllEmployees(int id, int count);
+        public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
         public Task<bool> Edit(TbEmployee employee);
         public Task<ShowEmployeeModel> GetById(int id);
 
@@ -30,13 +30,13 @@ namespace Loujico.BL
             ClsLogs = clsLogs;
         }
 
-        public async Task<List<TbEmployee>> GetAllEmployees(int id)
+        public async Task<List<TbEmployee>> GetAllEmployees(int id, int count)
         {
             try
             {
                 var lstEmployees = await CTX.TbEmployees
-                                            .Where(e => !e.IsDeleted).Skip((id - 1) * pageSize)
-                                            .Take(pageSize)
+                                            .Where(e => !e.IsDeleted).Skip((id - 1) * count)
+                                            .Take(count)
                                             .ToListAsync();
                 return lstEmployees;
             }
@@ -142,12 +142,12 @@ namespace Loujico.BL
         }
 
 
-        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id)
+        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id,int count)
         {
             try
             {
 
-                var LstEmployee = await ClsHistory.GetAllHistory(Pageid, id, "TbEmployees");
+                var LstEmployee = await ClsHistory.GetAllHistory(Pageid, id, "TbEmployees", count);
                 if (LstEmployee == null)
                 {
                     return new List<TbHistory>();

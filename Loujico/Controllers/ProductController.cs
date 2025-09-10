@@ -131,12 +131,12 @@ namespace Loujico.Controllers
 
 
         }
-        [HttpGet("EditHistory/{page}/{id}")] 
-        public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory(int page, int id)
+        [HttpGet("EditHistory")] 
+        public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory([FromQuery] int page, [FromQuery] int id, [FromQuery] int count)
         {
             try
             {
-                var history = await ClsProducts.LstEditHistory(page, id);
+                var history = await ClsProducts.LstEditHistory(page, id, count);
                 return Ok(new ApiResponse<List<TbHistory>> { Data = history });
             }
             catch (Exception ex)
@@ -206,13 +206,13 @@ namespace Loujico.Controllers
 
 
         }
-        [HttpGet("GetAll/{PageId}")]
-        public async Task<ActionResult<ApiResponse<List<TbProduct>>>> GetAllEmployees(int PageId)
+        [HttpGet("GetAll")]
+        public async Task<ActionResult<ApiResponse<List<TbProduct>>>> GetAllEmployees([FromQuery] int Page, [FromQuery] int Count)
         {
 
             try
             {
-                var Products = await ClsProducts.GetAllProducts(PageId);
+                var Products = await ClsProducts.GetAllProducts(Page,Count);
                 if (Products==null)
                 {
                     return NotFound(new ApiResponse<List<TbProduct>> { Message ="There is no projects"});

@@ -4,9 +4,9 @@ namespace Loujico.BL
 {
     public interface ICustomers
     {
-        public Task<List<TbCustomer>> GetAll(int id);
+        public Task<List<TbCustomer>> GetAll(int id,int count);
         public Task<CustomerModel> GetById(int id);
-        public Task<List<TbHistory>> LstEditHistory(int Pageid, int id);
+        public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
         public Task<bool> Edit(TbCustomer customer);
         public Task<bool> Add(TbCustomer customer);
         public Task<bool> Delete(int id);
@@ -24,13 +24,13 @@ namespace Loujico.BL
             ClsHistory = clsHistory;
         }
 
-        public async Task<List<TbCustomer>> GetAll(int id)
+        public async Task<List<TbCustomer>> GetAll(int id,int count)
         {
             try
             {
                 return await CTX.TbCustomers
-                                .Where(x => !x.IsDeleted).Skip((id - 1) * pageSize)
-                                .Take(pageSize)
+                                .Where(x => !x.IsDeleted).Skip((id - 1) * count)
+                                .Take(count)
                                 .ToListAsync();
             }
             catch (Exception ex)
@@ -116,11 +116,11 @@ namespace Loujico.BL
                 return false;
             }
         }
-        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id)
+        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id,int Count)
         {
             try
             {
-                var LstCustomer = await ClsHistory.GetAllHistory(Pageid, id, "TbCustomer");
+                var LstCustomer = await ClsHistory.GetAllHistory(Pageid, id, "TbCustomer",Count);
                 if (LstCustomer == null)
                 {
                     return new List<TbHistory>();

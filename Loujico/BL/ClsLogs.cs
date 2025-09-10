@@ -8,7 +8,7 @@ namespace Loujico.BL
     public interface Ilog
     {
         public Task<string> Add(string ActionType, string Action, String? Userid);
-        public Task<List<TbLog>> Paginition(int id);
+        public Task<List<TbLog>> Paginition(int id, int count);
 
 
 
@@ -44,12 +44,12 @@ namespace Loujico.BL
                 return ex.Message;
             }
         }
-        public async Task<List<TbLog>> Paginition(int id)
+        public async Task<List<TbLog>> Paginition(int id, int count)
         {
             try
             {
-                var LstCars = await CTX.TbLogs.Where(a => a.TimeStamp >= DateTime.Now.AddMonths(-3)).Skip((id - 1) * pageSize)
-                .Take(pageSize)
+                var LstCars = await CTX.TbLogs.Where(a => a.TimeStamp >= DateTime.Now.AddMonths(-3)).Skip((id - 1) * count)
+                .Take(count)
                 .ToListAsync();
                 return LstCars;
             }
