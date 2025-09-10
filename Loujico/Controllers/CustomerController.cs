@@ -76,7 +76,7 @@ namespace Loujico.Controllers
         }
 
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] TbCustomer Customer)
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] TbCustomer Customer)
         {
 
             if (!ModelState.IsValid)
@@ -136,7 +136,7 @@ namespace Loujico.Controllers
 
             }
         }
-        [HttpDelete("Delete")]
+        [HttpDelete("Delete/{id}")]
         public async Task<ActionResult<ApiResponse<string>>> Delete(int id)
         {
             try
