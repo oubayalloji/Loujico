@@ -136,10 +136,11 @@ namespace Loujico.BL
         {
             try
             {
-                var LstProduct = await ClsHistory.GetAllHistory(Pageid, id, "TbProduct", count);
-                if (LstProduct != null)
+                var LstProduct = await ClsHistory.GetAllHistory(Pageid, id, tableName.product, count);
+                if (LstProduct == null)
                 {
-                    return null;
+                    return new List<TbHistory>();
+
                 }
                 else
                 {

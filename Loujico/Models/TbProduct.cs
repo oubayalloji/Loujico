@@ -8,7 +8,7 @@ namespace Loujico.Models
     {
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "اسم المنتج ")]
+        [Required(ErrorMessage = "يرجى ادخال اسم المنتج")]
         [StringLength(150, MinimumLength = 2, ErrorMessage = "اسم المنتج يجب أن يكون بين 2 و 150 حرف")]
         [RegularExpression(@"^[\p{L}\p{N}\s\-_]+$", ErrorMessage = "اسم المنتج يجب أن يحتوي على أحرف أو أرقام أو شرطات ومسافات فقط")]
 

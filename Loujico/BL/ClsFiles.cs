@@ -55,7 +55,7 @@ namespace Loujico.BL
         {
             try
             {
-                var file = await CTX.TbFiles.FirstOrDefaultAsync(f => f.EntityId == id && f.EntityType==EntityType);
+                var file = await CTX.TbFiles.FirstOrDefaultAsync(f => f.Id == id && f.EntityType==EntityType);
                 if (file == null)
                     return false;
 
@@ -75,7 +75,7 @@ namespace Loujico.BL
         {
             try
             {
-                var file = await CTX.TbFiles.FirstOrDefaultAsync(f => f.EntityId == id && f.EntityType == EntityType);
+                var file = await CTX.TbFiles.FirstOrDefaultAsync(f => f.Id == id && f.EntityType == EntityType);
                 if (file == null)
                     return null;
                 return file;

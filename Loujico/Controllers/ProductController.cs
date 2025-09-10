@@ -33,7 +33,7 @@ namespace Loujico.Controllers
         }
         [HttpPost("Add")]
         [Authorize]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbProduct prod, [FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromBody] TbProduct prod, [FromForm] List<FileModel>? Data)
         {
             if (!ModelState.IsValid)
             {
@@ -80,7 +80,7 @@ namespace Loujico.Controllers
             }
         }
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] TbProduct Product, [FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] TbProduct Product, [FromForm] List<FileModel>? Data)
         {
 
             if (!ModelState.IsValid)
@@ -175,7 +175,8 @@ namespace Loujico.Controllers
 
 
 
-        } [HttpDelete("Delete/{id}")]
+        }
+        [HttpDelete("Delete/{id}")]
         public async Task<ActionResult<ApiResponse<string>>> Delete(int id)
         {
             try

@@ -80,7 +80,7 @@ namespace Loujico.Controllers
         }
 
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] TbProject proj)
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] TbProject proj)
         {
 
             if (!ModelState.IsValid)

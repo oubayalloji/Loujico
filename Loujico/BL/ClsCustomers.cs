@@ -120,7 +120,7 @@ namespace Loujico.BL
         {
             try
             {
-                var LstCustomer = await ClsHistory.GetAllHistory(Pageid, id, "TbCustomer",Count);
+                var LstCustomer = await ClsHistory.GetAllHistory(Pageid, id, tableName.Customer,Count);
                 if (LstCustomer == null)
                 {
                     return new List<TbHistory>();

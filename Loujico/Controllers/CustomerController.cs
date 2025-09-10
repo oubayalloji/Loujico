@@ -30,7 +30,7 @@ namespace Loujico.Controllers
             ClsFiles = clsFiles;
         }
         [HttpPost("Add")]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbCustomer Customer, [FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromBody] TbCustomer Customer, [FromForm] List<FileModel>? Data)
         {
 
             if (!ModelState.IsValid)
