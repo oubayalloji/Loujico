@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 namespace Loujico.Models;
 public partial class TbInvoice : IValidatableObject
 {
@@ -30,9 +31,9 @@ public partial class TbInvoice : IValidatableObject
     public String? CreatedBy { get; set; }
 
     public String? UpdatedBy { get; set; }
-
+    [JsonIgnore]
     public virtual TbCustomer? Customer { get; set; }
-
+    [JsonIgnore]
     public virtual TbProject? Project { get; set; }
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

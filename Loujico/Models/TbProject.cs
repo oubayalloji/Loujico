@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Loujico.Models
 {
@@ -56,7 +57,7 @@ namespace Loujico.Models
         public String? CreatedBy { get; set; }
 
         public String? UpdatedBy { get; set; }
-
+        [JsonIgnore]
         public virtual TbCustomer Customer { get; set; } = null!;
 
         public virtual ICollection<TbInvoice> TbInvoices { get; set; } = new List<TbInvoice>();

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Loujico.Models;
 
@@ -15,7 +16,9 @@ public partial class TbProjectsEmployee
 
     public DateTime JoinedAt { get; set; }
 
+    [JsonIgnore]
     public virtual TbEmployee Employee { get; set; } = null!;
 
+    [JsonIgnore]
     public virtual TbProject Project { get; set; } = null!;
 }

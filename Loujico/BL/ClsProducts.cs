@@ -49,10 +49,15 @@ namespace Loujico.BL
         {
             try
             {
-                return await CTX.TbProducts
+                var Prod = await CTX.TbProducts
                                 .Where(p => p.IsActive).Skip((id - 1) * pageSize)
                                 .Take(pageSize)
                                 .ToListAsync();
+                if (Prod == null)
+                {
+                    return null;
+                }
+                return Prod;
             }
             catch (Exception ex)
             {

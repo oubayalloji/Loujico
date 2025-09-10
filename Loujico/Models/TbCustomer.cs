@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 namespace Loujico.Models
 {
@@ -56,7 +57,7 @@ namespace Loujico.Models
         [Range(1, 3650, ErrorMessage = "مدة العمل يجب أن تكون بين 1 و 3650 يوم")]
 
         public int? WorkDuration { get; set; }
-
+        
         public DateTime CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
@@ -69,10 +70,11 @@ namespace Loujico.Models
         public String? CreatedBy { get; set; }
 
         public String? UpdatedBy { get; set; }
+   
         public virtual ICollection<TbCustomersProduct> TbCustomersProducts { get; set; } = new List<TbCustomersProduct>();
-
+  
         public virtual ICollection<TbInvoice> TbInvoices { get; set; } = new List<TbInvoice>();
-
+      
         public virtual ICollection<TbProject> TbProjects { get; set; } = new List<TbProject>();
     }
 }

@@ -18,15 +18,18 @@ namespace Loujico.Controllers
         Ilog ClsLogs;
         IHistory ClsHistory;
         IFiles ClsFiles;
+      
         CompanySystemContext CTX;
         UserManager<ApplicationUser> UserManager;
-        public ProductController(IProducts ClsProducts, CompanySystemContext context, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles)
+        public ProductController(IProducts clsProducts, CompanySystemContext context, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles,Ilog clsLogs)
         {
-            ClsProducts = ClsProducts;
+            ClsProducts = clsProducts;
             CTX = context;
             UserManager = userManager;
             ClsHistory = clsHistory;
             ClsFiles = clsFiles;
+            ClsHistory = clsHistory;
+            ClsLogs = clsLogs;
         }
         [HttpPost("Add")]
         [Authorize]
@@ -131,6 +134,64 @@ namespace Loujico.Controllers
             {
                 await ClsLogs.Add("Error", ex.Message, null);
                 return BadRequest(new ApiResponse<List<TbHistory>> { Message = ex.Message });
+            }
+        }
+        [HttpDelete("Delete/{id}")]
+        public async Task<ActionResult<ApiResponse<string>>> Delete(int id)
+        {
+            try
+            {
+                var Product = await ClsProducts.GetById(id);
+                await ClsProducts.Delete(id);
+
+                // من هون 
+                var username = UserManager.GetUserName(User);
+                var userId = UserManager.GetUserId(User);
+                await ClsLogs.Add("Error", $"{Product.Product.ProductName} Deleted from the System by {username} ", userId);
+                // لهون هو تسجيل الlog  
+                return Ok(new ApiResponse<String>
+                {
+                    Data = "done"
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbProject>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
+
+
+        }
+        [HttpGet("GetAll/{PageId}")]
+        public async Task<ActionResult<ApiResponse<List<TbProduct>>>> GetAllEmployees(int PageId)
+        {
+
+            try
+            {
+                var Products = await ClsProducts.GetAllProducts(PageId);
+                if (Products==null)
+                {
+                    return NotFound(new ApiResponse<List<TbProduct>> { Message ="There is no projects"});
+                }
+                return Ok(new ApiResponse<List<TbProduct>>
+                {
+                    Data = Products
+                }) ;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbProduct>>
+                {
+                    Message = ex.Message,
+
+                });
+
             }
         }
     }

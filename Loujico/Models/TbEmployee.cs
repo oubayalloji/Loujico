@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Loujico.Models
 {
+    
     public partial class TbEmployee
     {
         public int Id { get; set; }
@@ -70,9 +72,10 @@ namespace Loujico.Models
         public String? CreatedBy { get; set; }
 
         public String? UpdatedBy { get; set; }
-
+        [JsonIgnore]
         public virtual ICollection<TbProductsEmployee>? TbProductsEmployees { get; set; } = new List<TbProductsEmployee>();
 
+        [JsonIgnore]
         public virtual ICollection<TbProjectsEmployee>? TbProjectsEmployees { get; set; } = new List<TbProjectsEmployee>();
     }
 }
