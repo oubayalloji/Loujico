@@ -70,11 +70,11 @@ namespace Loujico.Models
         public String? CreatedBy { get; set; }
 
         public String? UpdatedBy { get; set; }
-   
+       
         public virtual ICollection<TbCustomersProduct> TbCustomersProducts { get; set; } = new List<TbCustomersProduct>();
-  
+        
         public virtual ICollection<TbInvoice> TbInvoices { get; set; } = new List<TbInvoice>();
-      
+    
         public virtual ICollection<TbProject> TbProjects { get; set; } = new List<TbProject>();
     }
 }
