@@ -1,4 +1,5 @@
-﻿using Loujico.Models;
+﻿using FuzzySharp;
+using Loujico.Models;
 using Microsoft.EntityFrameworkCore;
 namespace Loujico.BL
 {
@@ -10,6 +11,7 @@ namespace Loujico.BL
         public Task<bool> Delete(int id);
         public Task<bool> Edit(TbInvoice invoice);
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
+        public Task<List<TbInvoice>> Search(string name, int page, int count);
 
     }
     public class ClsInvoices : IInvoices
@@ -135,6 +137,41 @@ namespace Loujico.BL
                 {
                     return LstInvoice;
                 }
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        }
+        public async Task<List<TbInvoice>> Search(string name, int page, int count)
+        {
+            try
+            {
+                // جلب البيانات أولاً من قاعدة البيانات بدون تتبع 
+                var allItems = await CTX.TbInvoices
+                    .AsNoTracking()
+                    .Where(a => !a.IsDeleted)
+                    .ToListAsync();
+
+                // تطبيق المطابقة التقريبية باستخدام FuzzySharp
+                var matchedItems = allItems.Where(a =>
+                    Fuzz.PartialRatio(name, a.InvoiceStatus) > 70 ||
+                    Fuzz.PartialRatio(name, a.Customer.ToString()) > 70 ||
+                    Fuzz.Ratio(name, a.Amount.ToString()) > 70 ||
+                    Fuzz.Ratio(name, a.DueDate.ToString()) > 70 ||
+                    Fuzz.Ratio(name, a.InvoicesDate.ToString()) > 70 ||
+                    Fuzz.Ratio(name, a.ProjectId.ToString()) > 70 ||
+                    Fuzz.Ratio(name, a.Id.ToString()) > 70
+                );
+
+                // تطبيق الـ pagination
+                var pagedItems = matchedItems
+                    .Skip((page - 1) * count)
+                    .Take(count)
+                    .ToList();
+
+                return pagedItems;
             }
             catch (Exception ex)
             {
