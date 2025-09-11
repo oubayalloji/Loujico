@@ -8,6 +8,7 @@ namespace Loujico.BL
     public interface ICustomers
     {
         public Task<List<TbCustomer>> GetAll(int id,int count);
+        public  Task<List<object>> GetAllCustomersIdAndName();
         public Task<CustomerModel> GetById(int id);
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
         public Task<bool> Edit(TbCustomer customer);
@@ -180,5 +181,30 @@ public async Task<List<TbCustomer>> Search(string name, int page, int count)
             }
         }
 
-}
+        public async Task<List<object>> GetAllCustomersIdAndName()
+        {
+            try
+            {
+                var result = await CTX.TbCustomers
+                    .AsNoTracking()
+                    .Where(x => !x.IsDeleted)
+                    .Select(x => new {
+                        x.Id,
+                        x.CustomerName
+                    })
+                    .ToListAsync();
+                if (result==null)
+                {
+                    return null;
+                }
+
+                return result.Cast<object>().ToList();
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        }
+    }
 }

@@ -66,8 +66,7 @@ namespace Loujico.BL
         {
             EmployeeId = pe.EmployeeId,
             RoleOnProject = pe.RoleOnProject,
-            FirstName = pe.Employee.FirstName,
-            LastName = pe.Employee.LastName
+     
         }).ToList()
     }).FirstOrDefaultAsync();
 

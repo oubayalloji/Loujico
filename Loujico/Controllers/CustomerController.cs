@@ -125,8 +125,33 @@ namespace Loujico.Controllers
             }
         }
 
+        [HttpGet("GetAllCustomersId")]
+        public async Task<ActionResult<ApiResponse<List<object>>>> GetAllCustomersId()
+        {
+
+            try
+            {
+                var Customer = await ClsCustomers.GetAllCustomersIdAndName();
+                if (Customer == null)
+                    return NotFound(new ApiResponse<string> { Message = "There is no Customers" });
+                return Ok(new ApiResponse<List<object>>
+                {
+                    Data = Customer
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<object>>
+                {
+                    Message = ex.Message,
+
+                });
+
+            }
+        }
         [HttpGet("GetAll")]
-        public async Task<ActionResult<ApiResponse<List<TbCustomer>>>> GetAll([FromQuery]int Page, [FromQuery]int Count)
+        public async Task<ActionResult<ApiResponse<List<TbCustomer>>>> GetAll([FromQuery] int Page, [FromQuery] int Count)
         {
 
             try
@@ -218,9 +243,9 @@ namespace Loujico.Controllers
             try
             {
                 var Customer = await ClsCustomers.GetById(id);
-                if (Customer==null)
+                if (Customer == null)
                 {
-                    return NotFound(new ApiResponse<object> { Message="Customer is deleted or could not found"});
+                    return NotFound(new ApiResponse<object> { Message = "Customer is deleted or could not found" });
                 }
 
                 return Ok(new ApiResponse<CustomerModel>
@@ -241,18 +266,18 @@ namespace Loujico.Controllers
         }
 
         [HttpGet("Search")]
-        public async Task<ActionResult<ApiResponse<object>>> Search([FromQuery]string name, [FromQuery] int page,[FromQuery] int count)
+        public async Task<ActionResult<ApiResponse<object>>> Search([FromQuery] string name, [FromQuery] int page, [FromQuery] int count)
         {
             try
             {
-                var Customer = await ClsCustomers.Search(name,page,count);
+                var Customer = await ClsCustomers.Search(name, page, count);
                 if (Customer == null)
                 {
                     return NotFound(new ApiResponse<object> { Message = "No result" });
                 }
                 return Ok(new ApiResponse<object>
                 {
-                    Data= Customer
+                    Data = Customer
                 });
             }
             catch (Exception ex)
