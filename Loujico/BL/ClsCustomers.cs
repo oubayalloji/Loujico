@@ -10,6 +10,7 @@ namespace Loujico.BL
         public Task<bool> Edit(TbCustomer customer);
         public Task<bool> Add(TbCustomer customer);
         public Task<bool> Delete(int id);
+        public Task<List<TbCustomer>> Search(string name, int page, int count);
     }
     public class ClsCustomers : ICustomers
     {
@@ -28,7 +29,7 @@ namespace Loujico.BL
         {
             try
             {
-                return await CTX.TbCustomers
+                return await CTX.TbCustomers.AsNoTracking()
                                 .Where(x => !x.IsDeleted).Skip((id - 1) * count)
                                 .Take(count)
                                 .ToListAsync();
@@ -136,6 +137,28 @@ namespace Loujico.BL
                 await ClsLogs.Add("Error", ex.Message, null);
                 return null;
             }
+        }
+
+        public async Task<List<TbCustomer>> Search(string name, int page, int count)
+        {
+            try
+            {
+                var Items =await CTX.TbCustomers.AsNoTracking().Where(a => (a.CustomerName.Contains(name) || 
+                a.CustomerAddress.Contains(name) ||
+                a.Industry.Contains(name)||
+                a.Phone.Contains(name) ||
+                a.ServiceProvided.Contains(name)||
+                a.Id.ToString().Contains(name))
+                && (!a.IsDeleted)).Skip((page - 1) * count)
+                                .Take(count).ToListAsync();
+                return Items;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+
         }
     }
 }

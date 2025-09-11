@@ -262,5 +262,6 @@ namespace Loujico.Controllers
                 return BadRequest(new ApiResponse<List<TbHistory>> { Message = ex.Message });
             }
         }
+
     }
 }
