@@ -145,7 +145,7 @@ namespace Loujico.Controllers
                 return BadRequest(new ApiResponse<List<TbHistory>> { Message = ex.Message });
             }
         }
-        [HttpDelete("DeleteImg/{id}")]
+        [HttpDelete("DeleteFile/{id}")]
         public async Task<ActionResult<ApiResponse<string>>> DeleteFile(int id)
         {
             try
