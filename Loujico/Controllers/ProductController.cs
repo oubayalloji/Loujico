@@ -234,5 +234,32 @@ namespace Loujico.Controllers
 
             }
         }
+
+        [HttpGet("Search")]
+        public async Task<ActionResult<ApiResponse<object>>> Search([FromQuery] string name, [FromQuery] int page, [FromQuery] int count)
+        {
+            try
+            {
+                var Product = await ClsProducts.Search(name, page, count);
+                if (Product == null)
+                {
+                    return NotFound(new ApiResponse<object> { Message = "No result" });
+                }
+                return Ok(new ApiResponse<object>
+                {
+                    Data = Product
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbProduct>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Loujico.BL;
+﻿using FuzzySharp;
+using Loujico.BL;
 using Loujico.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,7 @@ namespace Loujico.BL
         public Task<bool> Edit(TbProduct product);
         public Task<bool> Delete(int id);
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
+        public Task<List<TbProduct>> Search(string name, int page, int count);
     }
 
     public class ClsProducts : IProducts
@@ -146,6 +148,38 @@ namespace Loujico.BL
                 {
                     return LstProduct;
                 }
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        }
+        public async Task<List<TbProduct>> Search(string name, int page, int count)
+        {
+            try
+            {
+                // جلب البيانات أولاً من قاعدة البيانات بدون تتبع
+                var allItems = await CTX.TbProducts
+                    .AsNoTracking()
+                    .Where(a => !a.IsDeleted)
+                    .ToListAsync();
+
+                // تطبيق المطابقة التقريبية باستخدام FuzzySharp
+                var matchedItems = allItems.Where(a =>
+                    Fuzz.PartialRatio(name, a.ProductName) > 70 ||
+                    Fuzz.Ratio(name, a.Price.ToString()) > 70 ||
+                    Fuzz.Ratio(name, a.BillingCycle) > 70 ||
+                    Fuzz.Ratio(name, a.Id.ToString()) > 70
+                );
+
+                // تطبيق الـ pagination
+                var pagedItems = matchedItems
+                    .Skip((page - 1) * count)
+                    .Take(count)
+                    .ToList();
+
+                return pagedItems;
             }
             catch (Exception ex)
             {

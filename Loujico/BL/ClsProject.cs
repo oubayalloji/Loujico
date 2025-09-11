@@ -1,4 +1,5 @@
-﻿using Loujico.Models;
+﻿using FuzzySharp;
+using Loujico.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 namespace Loujico.BL
@@ -12,6 +13,7 @@ namespace Loujico.BL
         public Task<bool> Edit(TbProject project);
         public Task<bool> Delete(int id);
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
+        public Task<List<TbProject>> Search(string name, int page, int count);
 
     }
 
@@ -182,6 +184,42 @@ namespace Loujico.BL
             {
                 await ClsLogs.Add("Error", ex.Message, null);
                 return new List<TbHistory>();
+            }
+        }
+        public async Task<List<TbProject>> Search(string name, int page, int count)
+        {
+            try
+            {
+                // جلب البيانات أولاً من قاعدة البيانات بدون تتبع
+                var allItems = await CTX.TbProjects
+                    .AsNoTracking()
+                    .Where(a => !a.IsDeleted)
+                    .ToListAsync();
+
+                // تطبيق المطابقة التقريبية باستخدام FuzzySharp
+                var matchedItems = allItems.Where(a =>
+                    Fuzz.Ratio(name, a.Id.ToString()) > 70 ||
+                    Fuzz.PartialRatio(name, a.Title) > 70 ||
+                    Fuzz.PartialRatio(name, a.ProjectStatus) > 70 ||
+                    Fuzz.PartialRatio(name, a.Progress.ToString()) > 70 ||
+                    Fuzz.PartialRatio(name, a.ProjectType.ToString()) > 70 ||
+                    Fuzz.Ratio(name, a.Price.ToString()) > 70 ||
+                    Fuzz.Ratio(name, a.StartDate.ToString()) > 50 || 
+                    Fuzz.Ratio(name, a.EndDate.ToString()) > 50
+                );
+
+                // تطبيق الـ pagination
+                var pagedItems = matchedItems
+                    .Skip((page - 1) * count)
+                    .Take(count)
+                    .ToList();
+
+                return pagedItems;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
             }
         }
     }
