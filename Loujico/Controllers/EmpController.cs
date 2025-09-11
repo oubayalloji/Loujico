@@ -262,6 +262,29 @@ namespace Loujico.Controllers
                 return BadRequest(new ApiResponse<List<TbHistory>> { Message = ex.Message });
             }
         }
+        [HttpGet("Search")]
+        public async Task<ActionResult<ApiResponse<object>>> Search([FromQuery] string name, [FromQuery] int page, [FromQuery] int count)
+        {
+            try
+            {
+                var employee = await ClsEmployees.Search(name, page, count);
+
+                return Ok(new ApiResponse<object>
+                {
+                    Data = employee
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbEmployee>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
+        }
 
     }
 }
