@@ -4,6 +4,8 @@ namespace Loujico.Models
 {
     public class VmInvoicesModel
     {
+        
+        public int Id { get; set; }
         public int? CustomerId { get; set; }
 
         public int? ProjectId { get; set; }
