@@ -1,6 +1,9 @@
-﻿using Loujico.Models;
+﻿using FuzzySharp;
+using Loujico.Models;
 using Microsoft.EntityFrameworkCore;
+using FuzzySharp;
 namespace Loujico.BL
+
 {
     public interface ICustomers
     {
@@ -117,7 +120,43 @@ namespace Loujico.BL
                 return false;
             }
         }
-        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id,int Count)
+   
+
+public async Task<List<TbCustomer>> Search(string name, int page, int count)
+    {
+        try
+        {
+            // جلب البيانات أولاً من قاعدة البيانات بدون تتبع
+            var allItems = await CTX.TbCustomers
+                .AsNoTracking()
+                .Where(a => !a.IsDeleted)
+                .ToListAsync();
+
+            // تطبيق المطابقة التقريبية باستخدام FuzzySharp
+            var matchedItems = allItems.Where(a =>
+                Fuzz.PartialRatio(name, a.CustomerName) > 70 ||
+                Fuzz.PartialRatio(name, a.CustomerAddress) > 70 ||
+                Fuzz.PartialRatio(name, a.Industry ?? "") > 70 ||
+                Fuzz.Ratio(name, a.Phone) > 70 ||
+                Fuzz.PartialRatio(name, a.ServiceProvided ?? "") > 70 ||
+                Fuzz.Ratio(name, a.Id.ToString()) > 70
+            );
+
+            // تطبيق الـ pagination
+            var pagedItems = matchedItems
+                .Skip((page - 1) * count)
+                .Take(count)
+                .ToList();
+
+            return pagedItems;
+        }
+        catch (Exception ex)
+        {
+            await ClsLogs.Add("Error", ex.Message, null);
+            return null;
+        }
+    }
+    public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id,int Count)
         {
             try
             {
@@ -139,26 +178,5 @@ namespace Loujico.BL
             }
         }
 
-        public async Task<List<TbCustomer>> Search(string name, int page, int count)
-        {
-            try
-            {
-                var Items =await CTX.TbCustomers.AsNoTracking().Where(a => (a.CustomerName.Contains(name) || 
-                a.CustomerAddress.Contains(name) ||
-                a.Industry.Contains(name)||
-                a.Phone.Contains(name) ||
-                a.ServiceProvided.Contains(name)||
-                a.Id.ToString().Contains(name))
-                && (!a.IsDeleted)).Skip((page - 1) * count)
-                                .Take(count).ToListAsync();
-                return Items;
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return null;
-            }
-
-        }
-    }
+}
 }
