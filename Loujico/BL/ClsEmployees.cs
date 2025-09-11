@@ -9,11 +9,11 @@ namespace Loujico.BL
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
         public Task<bool> Edit(TbEmployee employee);
         public Task<ShowEmployeeModel> GetById(int id);
-
         public Task<bool> Add(TbEmployee employee);
         public Task<bool> Delete(int id);
         public Task<string> DeActive(int id);
         public Task<string> Active(int id);
+        public Task<List<TbEmployee>> Search(string name, int page, int count);
 
     }
 
@@ -200,6 +200,27 @@ namespace Loujico.BL
             {
                 await ClsLogs.Add("Error", ex.Message, null);
                 return "خطأ أثناء التفعيل";
+            }
+        }
+        public async Task<List<TbEmployee>> Search(string name, int page, int count)
+        {
+            try
+            {
+                var Items = await CTX.TbEmployees.AsNoTracking().Where(a => (a.FirstName.Contains(name) ||
+                a.LastName.Contains(name) ||
+                a.Salary.ToString().Contains(name) ||
+                a.Age.ToString().Contains(name) ||
+                a.Phone.Contains(name) ||
+                a.Position.Contains(name) ||
+                a.Id.ToString().Contains(name))
+                && (!a.IsDeleted)).Skip((page - 1) * count)
+                                .Take(count).ToListAsync();
+                return Items;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
             }
         }
     }
