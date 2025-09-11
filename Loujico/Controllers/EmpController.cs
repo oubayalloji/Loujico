@@ -263,15 +263,15 @@ namespace Loujico.Controllers
             }
         }
         [HttpGet("Search")]
-        public async Task<ActionResult<ApiResponse<object>>> Search([FromQuery] string name, [FromQuery] int page, [FromQuery] int count)
+        public async Task<ActionResult<ApiResponse<object>>> Search([FromQuery] string name, [FromQuery] int page, [FromQuery] int count)   
         {
             try
             {
-                var employee = await ClsEmployees.Search(name, page, count);
+                var Customerloyee = await ClsEmployees.Search(name, page, count);
 
                 return Ok(new ApiResponse<object>
                 {
-                    Data = employee
+                    Data = Customerloyee
                 });
             }
             catch (Exception ex)
