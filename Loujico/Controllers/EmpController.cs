@@ -84,6 +84,31 @@ namespace Loujico.Controllers
 
 
         }
+        [HttpGet("GetAllEmployeesIdAndName")]
+        public async Task<ActionResult<ApiResponse<List<object>>>> GetAllEmployeesIdAndName()
+        {
+
+            try
+            {
+                var Employee = await ClsEmployees.GetAllEmployeesIdAndName();
+                if(Employee==null)
+                    return NotFound(new ApiResponse<string> { Message="There is no Employees"});
+                return Ok(new ApiResponse<List<object>>
+                {
+                    Data = Employee
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbEmployee>>
+                {
+                    Message = ex.Message,
+
+                });
+
+            }
+        }
 
         [HttpPatch("Edit")]
         public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] TbEmployee emp, [FromForm] List<FileModel>? Data)

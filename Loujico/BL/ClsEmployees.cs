@@ -15,6 +15,9 @@ namespace Loujico.BL
         public Task<string> DeActive(int id);
         public Task<string> Active(int id);
         public Task<List<TbEmployee>> Search(string name, int page, int count);
+        public Task<List<object>> GetAllEmployeesIdAndName();
+
+
 
     }
 
@@ -35,7 +38,7 @@ namespace Loujico.BL
         {
             try
             {
-                var lstEmployees = await CTX.TbEmployees
+                var lstEmployees = await CTX.TbEmployees.AsNoTracking()
                                             .Where(e => !e.IsDeleted).Skip((id - 1) * count)
                                             .Take(count)
                                             .ToListAsync();
@@ -48,6 +51,28 @@ namespace Loujico.BL
                 return new List<TbEmployee>();
 
 
+            }
+        }
+        public async Task<List<object>> GetAllEmployeesIdAndName()
+        {
+            try
+            {
+                var result = await CTX.TbEmployees                 
+                    .Where(x => !x.IsDeleted)
+                    .Select(x => new {
+                        x.Id,
+                        x.FirstName,
+                        x.LastName
+                    })
+                    .ToListAsync();
+                if (result == null)
+                    return null;
+                    return result.Cast<object>().ToList();
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
             }
         }
 
