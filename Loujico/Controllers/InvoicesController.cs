@@ -78,7 +78,7 @@ namespace Loujico.Controllers
         }
 
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] TbInvoice invoice,[FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] VmInvoicesModel invoice,[FromForm] List<FileModel>? Data)
         {
             if (!ModelState.IsValid)
             {
@@ -89,15 +89,25 @@ namespace Loujico.Controllers
             {
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                invoice.UpdatedBy = username;
-                await ClsInvoices.Edit(invoice);
-                await ClsLogs.Add("Error", $"id : {invoice.Id} with name : {invoice.Id} updated to the System by {username}", userId);
+                TbInvoice tbInvoice = new TbInvoice
+                {
+                    Amount = invoice.Amount,
+                    UpdatedAt = DateTime.Now,
+                    CreatedBy = username,
+                    DueDate = invoice.DueDate,
+                    CustomerId = invoice.CustomerId,
+                    InvoicesDate = invoice.InvoicesDate,
+                    UpdatedBy=username,
+
+                };
+                await ClsInvoices.Edit(tbInvoice);
+                await ClsLogs.Add("Error", $"id : {tbInvoice.Id} with name : {tbInvoice.Id} updated to the System by {username}", userId);
                 if (Data != null)
                 {
                     foreach (var item in Data)
                     {
-                        await ClsFiles.Add(item, "Invoices", invoice.Id, tableName.invoice);
-                        await ClsLogs.Add("CRUD", $"file {item.fileType} added to : {invoice.Id} by {username} ", userId);
+                        await ClsFiles.Add(item, "Invoices", tbInvoice.Id, tableName.invoice);
+                        await ClsLogs.Add("CRUD", $"file {item.fileType} added to : {tbInvoice.Id} by {username} ", userId);
 
                     }
                 }
