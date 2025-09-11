@@ -67,7 +67,7 @@ namespace Loujico.Controllers
                 {
                     foreach (var item in Data)
                     {
-                        await ClsFiles.Add(item, "Projects", dto.Id, tableName.projectt);
+                        await ClsFiles.Add(item, "Projects", dto.Id, tableName.project);
                     }
                 }
                 return Ok(new { project.Id, message = "تمت إضافة المشروع بنجاح" });
@@ -114,7 +114,7 @@ namespace Loujico.Controllers
                 {
                     foreach (var item in Data)
                     {
-                        await ClsFiles.Add(item, "Projects", proj.Id, tableName.projectt);
+                        await ClsFiles.Add(item, "Projects", proj.Id, tableName.project);
                         await ClsLogs.Add("CRUD", $"file {item.fileType} added to : {proj.Title} by {username} ", userId);
 
                     }
@@ -167,8 +167,8 @@ namespace Loujico.Controllers
         {
             try
             {
-                var file = await ClsFiles.GetById(id, tableName.projectt);
-                await ClsFiles.Delete(id, tableName.projectt);
+                var file = await ClsFiles.GetById(id, tableName.project);
+                await ClsFiles.Delete(id, tableName.project);
 
                 // من هون 
                 var username = UserManager.GetUserName(User);

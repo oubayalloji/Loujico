@@ -9,6 +9,6 @@
         public const string invoice = "TbInvoices";
         public const string log = "TbLogs";
         public const string product = "TbProducts";
-        public const string projectt = "TbProjects";
+        public const string project = "TbProjects";
     }
 }
