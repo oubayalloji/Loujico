@@ -182,6 +182,8 @@ namespace Loujico.Controllers
             try
             {
                 var Customer = await ClsCustomers.GetById(id);
+                if (Customer == null)
+                    return BadRequest(new ApiResponse<String> { Message = "the field is deleted or not found " });
                 await ClsCustomers.Delete(id);
                 // من هون 
                 var username = UserManager.GetUserName(User);
