@@ -90,6 +90,9 @@ namespace Loujico.Controllers
             }
             try
             {
+                var vCustomer = await ClsCustomers.GetById(Customer.Id);
+                if (vCustomer == null)
+                    return NotFound(new ApiResponse<string> { Message = "the Customer is deleted or not found " });
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
                 Customer.UpdatedBy = username;
@@ -128,10 +131,12 @@ namespace Loujico.Controllers
 
             try
             {
-
+                var Customer = await ClsCustomers.GetAll(Page, Count);
+                if (Customer == null)
+                    return NotFound(new ApiResponse<string> { Message = "There is no Customers" });
                 return Ok(new ApiResponse<List<TbCustomer>>
                 {
-                    Data = await ClsCustomers.GetAll(Page,Count)
+                    Data = Customer
                 });
             }
             catch (Exception ex)
@@ -151,6 +156,8 @@ namespace Loujico.Controllers
             try
             {
                 var file = await ClsFiles.GetById(id, tableName.Customer);
+                if (file == null)
+                    return NotFound(new ApiResponse<string> { Message = "the file is deleted or not found " });
                 await ClsFiles.Delete(id, tableName.Customer);
 
                 // من هون 
@@ -183,7 +190,7 @@ namespace Loujico.Controllers
             {
                 var Customer = await ClsCustomers.GetById(id);
                 if (Customer == null)
-                    return BadRequest(new ApiResponse<String> { Message = "the field is deleted or not found " });
+                    return NotFound(new ApiResponse<string> { Message = "the field is deleted or not found " });
                 await ClsCustomers.Delete(id);
                 // من هون 
                 var username = UserManager.GetUserName(User);
@@ -210,11 +217,15 @@ namespace Loujico.Controllers
         {
             try
             {
-                var Customerloyee = await ClsCustomers.GetById(id);
+                var Customer = await ClsCustomers.GetById(id);
+                if (Customer==null)
+                {
+                    return NotFound(new ApiResponse<object> { Message="Customer is deleted or could not found"});
+                }
 
                 return Ok(new ApiResponse<CustomerModel>
                 {
-                    Data = Customerloyee
+                    Data = Customer
                 });
             }
             catch (Exception ex)
@@ -234,11 +245,14 @@ namespace Loujico.Controllers
         {
             try
             {
-                var Customerloyee = await ClsCustomers.Search(name,page,count);
-
+                var Customer = await ClsCustomers.Search(name,page,count);
+                if (Customer == null)
+                {
+                    return NotFound(new ApiResponse<object> { Message = "No result" });
+                }
                 return Ok(new ApiResponse<object>
                 {
-                    Data= Customerloyee
+                    Data= Customer
                 });
             }
             catch (Exception ex)
@@ -258,6 +272,10 @@ namespace Loujico.Controllers
             try
             {
                 var history = await ClsCustomers.LstEditHistory(page, id, count);
+                if (history == null)
+                {
+                    return NotFound(new ApiResponse<object> { Message = "There is No edit History" });
+                }
                 return Ok(new ApiResponse<List<TbHistory>> { Data = history });
             }
             catch (Exception ex)

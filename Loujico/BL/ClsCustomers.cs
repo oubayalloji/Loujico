@@ -84,8 +84,9 @@ namespace Loujico.BL
                 await CTX.SaveChangesAsync();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                await ClsLogs.Add("Error", ex.Message, null);
                 return false;
             }
         }
@@ -100,8 +101,9 @@ namespace Loujico.BL
                 await CTX.SaveChangesAsync();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                await ClsLogs.Add("Error", ex.Message, null);
                 return false;
             }
         }
