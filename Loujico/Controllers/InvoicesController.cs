@@ -87,6 +87,9 @@ namespace Loujico.Controllers
 
             try
             {
+                var vCustomer = await ClsInvoices.GetById(invoice.Id);
+                if (vCustomer == null)
+                    return NotFound(new ApiResponse<string> { Message = "the Customer is deleted or not found " });
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
                 TbInvoice tbInvoice = new TbInvoice
@@ -125,6 +128,8 @@ namespace Loujico.Controllers
             try
             {
                 var file = await ClsFiles.GetById(id, tableName.invoice);
+                if (file == null)
+                    return NotFound(new ApiResponse<string> { Message = "the file is deleted or not found " });
                 await ClsFiles.Delete(id, tableName.invoice);
 
                 // من هون 
@@ -156,6 +161,8 @@ namespace Loujico.Controllers
             try
             {
                 var invoice = await ClsInvoices.GetById(id);
+                if (invoice == null)
+                    return NotFound(new ApiResponse<string> { Message = "the field is deleted or not found " });
                 await ClsInvoices.Delete(id);
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
@@ -175,7 +182,10 @@ namespace Loujico.Controllers
         {
             try
             {
-                return Ok(new ApiResponse<List<TbInvoice>> { Data = await ClsInvoices.GetAll(Page,Count) });
+                var invoice = await ClsInvoices.GetAll(Page, Count);
+                if (invoice == null)
+                    return NotFound(new ApiResponse<string> { Message = "There is no Customers" });
+                return Ok(new ApiResponse<List<TbInvoice>> { Data = invoice});
             }
             catch (Exception ex)
             {
@@ -190,6 +200,8 @@ namespace Loujico.Controllers
             try
             {
                 var invoice = await ClsInvoices.GetById(id);
+                if (invoice == null)
+                    return NotFound(new ApiResponse<string> { Message = "The customer " });
                 return Ok(new ApiResponse<InvoiceModel> { Data = invoice });
             }
             catch (Exception ex)
@@ -204,6 +216,10 @@ namespace Loujico.Controllers
             try 
             {
                 var history = await ClsInvoices.LstEditHistory(page, id, count);
+                if (history == null)
+                {
+                    return NotFound(new ApiResponse<object> { Message = "There is No edit History" });
+                }
                 return Ok(new ApiResponse<List<TbHistory>> { Data = history });
             }
             catch (Exception ex)
@@ -218,7 +234,10 @@ namespace Loujico.Controllers
             try
             {
                 var Invoice = await ClsInvoices.Search(name, page, count);
-
+                if (Invoice == null)
+                {
+                    return NotFound(new ApiResponse<object> { Message = "No result" });
+                }
                 return Ok(new ApiResponse<object>
                 {
                     Data = Invoice
