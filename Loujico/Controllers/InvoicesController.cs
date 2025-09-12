@@ -194,32 +194,6 @@ namespace Loujico.Controllers
             }
         }
 
-        [HttpGet("GetAllInvoiceAndProject")]
-        public async Task<ActionResult<ApiResponse<List<object>>>> GetAllInvoiceAndProject()
-        {
-
-            try
-            {
-                var Project = await ClsInvoices.GetAllInvoiceAndProject();
-                if (Project == null)
-                    return NotFound(new ApiResponse<string> { Message = "There is no Employees" });
-                return Ok(new ApiResponse<List<object>>
-                {
-                    Data = Project
-                });
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<List<TbEmployee>>
-                {
-                    Message = ex.Message,
-
-                });
-
-            }
-        }
-
         [HttpGet("GetById/{id}")]
         public async Task<ActionResult<ApiResponse<InvoiceModel>>> GetById(int id)
         {
