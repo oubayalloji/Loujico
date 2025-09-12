@@ -277,6 +277,30 @@ namespace Loujico.Controllers
             }
 
         }
+        [HttpGet("Count")]
+        public async Task<ActionResult<ApiResponse<int>>> Count()
+        {
+            try
+            {
+                var projectloyee = await ClsProject.Count();
+
+                return Ok(new ApiResponse<int>
+                {
+
+                    Data = projectloyee
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbProject>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
+        }
         [HttpGet("EditHistory")]
         public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory([FromQuery]int page,[FromQuery] int id,[FromQuery] int count)
         {

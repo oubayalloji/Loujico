@@ -12,6 +12,7 @@ namespace Loujico.BL
         public Task<bool> Add(TbProject project);
         public Task<bool> Edit(TbProject project);
         public Task<bool> Delete(int id);
+        public Task<int> Count();
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
         public Task<List<TbProject>> Search(string name, int page, int count);
         public Task<List<object>> GetAllProjectAndInvoice();
@@ -246,6 +247,27 @@ namespace Loujico.BL
             {
                 await ClsLogs.Add("Error", ex.Message, null);
                 return null;
+            }
+        }
+
+        public async Task<int> Count()
+        {
+            try
+            {
+                var LstProject =await CTX.TbProjects.CountAsync();
+                if (LstProject != null)
+                {
+                    return 0;
+                }
+                else
+                {
+                    return LstProject;
+                }
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return 0;
             }
         }
     }
