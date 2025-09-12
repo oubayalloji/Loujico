@@ -109,6 +109,33 @@ namespace Loujico.Controllers
 
             }
         }
+        [HttpGet("GetCount")]
+        public async Task<ActionResult<ApiResponse<int>>> GetCount()
+        {
+            try
+            {
+                var Employee = await ClsEmployees.Count();
+                if (Employee == 0 || Employee == null)
+                {
+                    return NotFound(new ApiResponse<int> { Message = "There is no employees" });
+                }
+
+                return Ok(new ApiResponse<int>
+                {
+                    Data = Employee
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<int>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
+        }
 
         [HttpPatch("Edit")]
         public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] TbEmployee emp, [FromForm] List<FileModel>? Data)

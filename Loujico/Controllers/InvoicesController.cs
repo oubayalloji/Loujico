@@ -254,5 +254,32 @@ namespace Loujico.Controllers
             }
 
         }
+        [HttpGet("GetCount")]
+        public async Task<ActionResult<ApiResponse<int>>> GetCount()
+        {
+            try
+            {
+                var Invoice = await ClsInvoices.Count();
+                if (Invoice == 0 || Invoice == null)
+                {
+                    return NotFound(new ApiResponse<int> { Message = "There is no invoices" });
+                }
+
+                return Ok(new ApiResponse<int>
+                {
+                    Data = Invoice
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<int>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
+        }
     }
 }

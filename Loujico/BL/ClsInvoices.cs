@@ -12,6 +12,7 @@ namespace Loujico.BL
         public Task<bool> Edit(TbInvoice invoice);
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
         public Task<List<TbInvoice>> Search(string name, int page, int count);
+        public Task<int> Count();
     }
     public class ClsInvoices : IInvoices
     {
@@ -177,6 +178,21 @@ namespace Loujico.BL
             {
                 await ClsLogs.Add("Error", ex.Message, null);
                 return null;
+            }
+        }
+        public async Task<int> Count()
+        {
+            try
+            {
+                var Invoice = await CTX.TbInvoices.AsNoTracking().Where(c => c.IsDeleted == false && c.InvoiceStatus== "Overdue").CountAsync();
+                if (Invoice == null)
+                    return 0;
+                return Invoice;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return 0;
             }
         }
     }
