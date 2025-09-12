@@ -12,7 +12,6 @@ namespace Loujico.BL
         public Task<bool> Edit(TbInvoice invoice);
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
         public Task<List<TbInvoice>> Search(string name, int page, int count);
-        public Task<List<object>> GetAllInvoiceAndProject();
     }
     public class ClsInvoices : IInvoices
     {
@@ -24,35 +23,7 @@ namespace Loujico.BL
         {
             CTX = companySystemContext;
         }
-        public async Task<List<object>> GetAllInvoiceAndProject()
-        {
-            try
-            {
-                var result = await CTX.TbInvoices
-           .Where(i => !i.IsDeleted && i.ProjectId != null) 
-           .Join(
-               CTX.TbProjects.Where(p => !p.IsDeleted),  
-               invoice => invoice.ProjectId,             
-               project => project.Id,                     
-               (invoice, project) => new                  
-               {
-                   invoice.Id,            
-                   invoice.ProjectId, 
-                   project.Title         
-               }
-           )
-           .ToListAsync();
-               
-                if (result == null)
-                    return null;
-                return result.Cast<object>().ToList();
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return null;
-            }
-        }
+       
         public async Task<List<TbInvoice>> GetAll(int id, int count)
         {
             try

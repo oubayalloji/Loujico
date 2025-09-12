@@ -33,36 +33,37 @@ namespace Loujico.Controllers
         [HttpPost("Add")]
         public async Task<IActionResult> Add([FromBody] AddProjectModel dto, [FromForm] List<FileModel>? Data)
         {
-            try { 
+            try
+            {
                 if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                    return BadRequest(ModelState);
 
                 var username = UserManager.GetUserName(User);
                 var project = new TbProject
-            {
-                Title = dto.Title,
-                StartDate = dto.StartDate,
-                EndDate = dto.EndDate,
-                Price = dto.Price,
-                Progress = dto.Progress,
-                CreatedAt = DateTime.Now,
-                CreatedBy = username,
-                CustomerId = dto.CustomerId,
-            };
-
-            // ربط الموظفين بالمشروع
-            foreach (var emp in dto.Employees)
-            {
-                project.TbProjectsEmployees.Add(new TbProjectsEmployee
                 {
-                    EmployeeId = emp.EmployeeId,
-                    RoleOnProject = emp.RoleOnProject,
-                    JoinedAt = DateTime.Now
-                });
-            }
+                    Title = dto.Title,
+                    StartDate = dto.StartDate,
+                    EndDate = dto.EndDate,
+                    Price = dto.Price,
+                    Progress = dto.Progress,
+                    CreatedAt = DateTime.Now,
+                    CreatedBy = username,
+                    CustomerId = dto.CustomerId,
+                };
 
-            CTX.TbProjects.Add(project);
-            await CTX.SaveChangesAsync();
+                // ربط الموظفين بالمشروع
+                foreach (var emp in dto.Employees)
+                {
+                    project.TbProjectsEmployees.Add(new TbProjectsEmployee
+                    {
+                        EmployeeId = emp.EmployeeId,
+                        RoleOnProject = emp.RoleOnProject,
+                        JoinedAt = DateTime.Now
+                    });
+                }
+
+                CTX.TbProjects.Add(project);
+                await CTX.SaveChangesAsync();
                 if (Data != null)
                 {
                     foreach (var item in Data)
@@ -71,7 +72,7 @@ namespace Loujico.Controllers
                     }
                 }
                 return Ok(new { project.Id, message = "تمت إضافة المشروع بنجاح" });
-        }
+            }
 
             catch (Exception ex)
             {
@@ -84,6 +85,32 @@ namespace Loujico.Controllers
             }
 
 
+        }
+
+        [HttpGet("GetAllProjectsId")]
+        public async Task<ActionResult<ApiResponse<List<object>>>> GetAllProjectsId()
+        {
+
+            try
+            {
+                var Project = await ClsProject.GetAllProjectAndInvoice();
+                if (Project == null)
+                    return NotFound(new ApiResponse<string> { Message = "There is no Projects" });
+                return Ok(new ApiResponse<List<object>>
+                {
+                    Data = Project
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<object>>
+                {
+                    Message = ex.Message,
+
+                });
+
+            }
         }
 
         [HttpPatch("Edit")]
