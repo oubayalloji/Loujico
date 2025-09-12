@@ -49,7 +49,7 @@ namespace Loujico.BL
             }
         }
 
-        public async Task<List<object>> GetAllCustomersIdAndName()
+        public async Task<List<object>> GetAllProjectAndInvoice()
         {
             try
             {
