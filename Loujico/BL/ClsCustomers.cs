@@ -123,9 +123,7 @@ namespace Loujico.BL
                 return false;
             }
         }
-   
-
-public async Task<List<TbCustomer>> Search(string name, int page, int count)
+        public async Task<List<TbCustomer>> Search(string name, int page, int count)
     {
         try
         {
@@ -159,7 +157,7 @@ public async Task<List<TbCustomer>> Search(string name, int page, int count)
             return null;
         }
     }
-    public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id,int Count)
+        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id,int Count)
         {
             try
             {
@@ -180,7 +178,6 @@ public async Task<List<TbCustomer>> Search(string name, int page, int count)
                 return null;
             }
         }
-
         public async Task<List<object>> GetAllCustomersIdAndName()
         {
             try
