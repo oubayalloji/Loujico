@@ -237,6 +237,34 @@ namespace Loujico.Controllers
                 });
             }
         }
+        [HttpGet("GetCount")]
+        public async Task<ActionResult<ApiResponse<int>>> GetCount()
+        {
+            try
+            {
+                var Customer = await ClsCustomers.Count();
+                if (Customer == 0 || Customer == null)
+                {
+                    return NotFound(new ApiResponse<int> { Message = "There is no customers" });
+                }
+
+                return Ok(new ApiResponse<int>
+                {
+                    Data = Customer
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<int>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
+        }
+
         [HttpGet("GetById/{id}")]
         public async Task<ActionResult<ApiResponse<string>>> GetById(int id)
         {

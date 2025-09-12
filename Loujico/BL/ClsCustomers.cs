@@ -14,6 +14,7 @@ namespace Loujico.BL
         public Task<bool> Edit(TbCustomer customer);
         public Task<bool> Add(TbCustomer customer);
         public Task<bool> Delete(int id);
+        public Task<int> Count();
         public Task<List<TbCustomer>> Search(string name, int page, int count);
     }
     public class ClsCustomers : ICustomers
@@ -201,6 +202,22 @@ namespace Loujico.BL
             {
                 await ClsLogs.Add("Error", ex.Message, null);
                 return null;
+            }
+        }
+
+        public async Task<int> Count()
+        {
+            try
+            {
+                var customer = await CTX.TbCustomers.AsNoTracking().Where(c => c.IsDeleted==false).CountAsync();
+                if (customer == null)
+                    return 0;
+                return customer;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return 0;
             }
         }
     }
