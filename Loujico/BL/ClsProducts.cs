@@ -15,6 +15,7 @@ namespace Loujico.BL
         public Task<bool> Delete(int id);
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
         public Task<List<TbProduct>> Search(string name, int page, int count);
+        public Task<int> Count();
     }
 
     public class ClsProducts : IProducts
@@ -185,6 +186,21 @@ namespace Loujico.BL
             {
                 await ClsLogs.Add("Error", ex.Message, null);
                 return null;
+            }
+        }
+        public async Task<int> Count()
+        {
+            try
+            {
+                var Product = await CTX.TbProducts.AsNoTracking().Where(c => c.IsDeleted == false).CountAsync();
+                if (Product == null)
+                    return 0;
+                return Product;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return 0;
             }
         }
     }

@@ -261,5 +261,32 @@ namespace Loujico.Controllers
             }
 
         }
+        [HttpGet("GetCount")]
+        public async Task<ActionResult<ApiResponse<int>>> GetCount()
+        {
+            try
+            {
+                var Product = await ClsProducts.Count();
+                if (Product == 0 || Product == null)
+                {
+                    return NotFound(new ApiResponse<int> { Message = "There is no products" });
+                }
+
+                return Ok(new ApiResponse<int>
+                {
+                    Data = Product
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<int>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
+        }
     }
 }

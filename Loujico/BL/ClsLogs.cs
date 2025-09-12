@@ -9,7 +9,7 @@ namespace Loujico.BL
     {
         public Task<string> Add(string ActionType, string Action, String? Userid);
         public Task<List<TbLog>> Paginition(int id, int count);
-
+        public Task<int> Count();
 
 
 
@@ -18,7 +18,7 @@ namespace Loujico.BL
     {
         CompanySystemContext CTX;
         const int pageSize = 10;
-
+       
         public ClsLogs(CompanySystemContext companySystemContext)
         {
             CTX = companySystemContext;
@@ -69,6 +69,21 @@ namespace Loujico.BL
             }
 
 
+        }
+        public async Task<int> Count()
+        {
+            try
+            {
+                var log = await CTX.TbLogs.AsNoTracking().CountAsync();
+                if (log == null)
+                    return 0;
+                return log;
+            }
+            catch (Exception ex)
+            {
+                await Add("Error", ex.Message, null);
+                return 0;
+            }
         }
     }
 }

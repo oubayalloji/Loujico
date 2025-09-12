@@ -48,5 +48,32 @@ namespace Loujico.Controllers
 
             }
         }
+        [HttpGet("GetCount")]
+        public async Task<ActionResult<ApiResponse<int>>> GetCount()
+        {
+            try
+            {
+                var Log = await ClsLogs.Count();
+                if (Log == 0 || Log == null)
+                {
+                    return NotFound(new ApiResponse<int> { Message = "There is no Logs" });
+                }
+
+                return Ok(new ApiResponse<int>
+                {
+                    Data = Log
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<int>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
+        }
     }
 }

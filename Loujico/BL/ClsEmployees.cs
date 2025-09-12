@@ -15,10 +15,8 @@ namespace Loujico.BL
         public Task<string> DeActive(int id);
         public Task<string> Active(int id);
         public Task<List<TbEmployee>> Search(string name, int page, int count);
+        public Task<int> Count();
         public Task<List<object>> GetAllEmployeesIdAndName();
-
-
-
     }
 
     public class ClsEmployees : IEmployees
@@ -75,7 +73,6 @@ namespace Loujico.BL
                 return null;
             }
         }
-
         public async Task<bool> Add(TbEmployee employee)
         {
             try
@@ -110,7 +107,6 @@ namespace Loujico.BL
                 return false;
             }
         }
-
         public async Task<bool> Delete(int id)
         {
             try
@@ -131,7 +127,6 @@ namespace Loujico.BL
                 return false;
             }
         }
-
         public async Task<ShowEmployeeModel> GetById(int id)
         {
             try
@@ -166,8 +161,6 @@ namespace Loujico.BL
                 return null;
             }
         }
-
-
         public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id,int count)
         {
             try
@@ -261,6 +254,21 @@ namespace Loujico.BL
             {
                 await ClsLogs.Add("Error", ex.Message, null);
                 return null;
+            }
+        }
+        public async Task<int> Count()
+        {
+            try
+            {
+                var Employee = await CTX.TbEmployees.AsNoTracking().Where(c => c.IsDeleted == false && c.IsPresent==true).CountAsync();
+                if (Employee == null)
+                    return 0;
+                return Employee;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return 0;
             }
         }
     }
