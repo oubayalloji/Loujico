@@ -14,6 +14,7 @@ namespace Loujico.BL
         public Task<bool> Delete(int id);
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
         public Task<List<TbProject>> Search(string name, int page, int count);
+        public Task<List<object>> GetAllProjectAndInvoice();
 
     }
 
@@ -45,6 +46,32 @@ namespace Loujico.BL
 
                 await ClsLogs.Add("Error", ex.Message, null);
                 return false;
+            }
+        }
+
+        public async Task<List<object>> GetAllCustomersIdAndName()
+        {
+            try
+            {
+                var result = await CTX.TbProjects
+                    .AsNoTracking()
+                    .Where(x => !x.IsDeleted)
+                    .Select(x => new {
+                        x.Id,
+                        x.Title
+                    })
+                    .ToListAsync();
+                if (result == null)
+                {
+                    return null;
+                }
+
+                return result.Cast<object>().ToList();
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
             }
         }
 
