@@ -301,7 +301,7 @@ namespace Loujico.Controllers
             }
 
         }
-        [HttpGet("EditHistory")]
+         [HttpGet("EditHistory")]
         public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory([FromQuery]int page,[FromQuery] int id,[FromQuery] int count)
         {
             try

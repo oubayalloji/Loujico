@@ -160,27 +160,26 @@ namespace Loujico.BL
         {
             try
             {
-                // جلب البيانات أولاً من قاعدة البيانات بدون تتبع
-                var allItems = await CTX.TbProducts
+                var query = CTX.TbProducts
                     .AsNoTracking()
-                    .Where(a => !a.IsDeleted)
-                    .ToListAsync();
+                    .Where(a =>
+                        !a.IsDeleted &&
+                        (
+                            string.IsNullOrWhiteSpace(name) ||
+                            EF.Functions.Like(a.ProductName, $"%{name}%") ||
+                            EF.Functions.Like(a.BillingCycle, $"%{name}%") ||
+                            a.Price.ToString().Contains(name) ||
+                            a.Id.ToString().Contains(name)
+                        )
+                    );
 
-                // تطبيق المطابقة التقريبية باستخدام FuzzySharp
-                var matchedItems = allItems.Where(a =>
-                    Fuzz.PartialRatio(name, a.ProductName) > 70 ||
-                    Fuzz.Ratio(name, a.Price.ToString()) > 70 ||
-                    Fuzz.Ratio(name, a.BillingCycle) > 70 ||
-                    Fuzz.Ratio(name, a.Id.ToString()) > 70
-                );
-
-                // تطبيق الـ pagination
-                var pagedItems = matchedItems
+                var pagedItems = await query
+                    .OrderByDescending(a => a.Id)
                     .Skip((page - 1) * count)
                     .Take(count)
-                    .ToList();
+                    .ToListAsync();
 
-                return pagedItems;
+                return pagedItems.Any() ? pagedItems : null;
             }
             catch (Exception ex)
             {

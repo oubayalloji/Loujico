@@ -124,6 +124,42 @@ namespace Loujico.BL
             }
         }
         public async Task<List<TbCustomer>> Search(string name, int page, int count)
+<<<<<<< HEAD
+=======
+        {
+            try
+            {
+                var query = CTX.TbCustomers
+                    .AsNoTracking()
+                    .Where(a =>
+                        !a.IsDeleted &&
+                        (
+                            string.IsNullOrWhiteSpace(name) ||
+                            EF.Functions.Like(a.CustomerName, $"%{name}%") ||
+                            EF.Functions.Like(a.CustomerAddress, $"%{name}%") ||
+                            EF.Functions.Like(a.Industry, $"%{name}%") ||
+                            EF.Functions.Like(a.Phone, $"%{name}%") ||
+                            EF.Functions.Like(a.ServiceProvided, $"%{name}%") ||
+                            a.Id.ToString().Contains(name)
+                        )
+                    );
+
+                var pagedItems = await query
+                    .OrderByDescending(a => a.Id)
+                    .Skip((page - 1) * count)
+                    .Take(count)
+                    .ToListAsync();
+
+                return pagedItems.Any() ? pagedItems : null;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        }
+        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id,int Count)
+>>>>>>> fares
         {
             try
             {

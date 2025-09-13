@@ -23,6 +23,7 @@ namespace Loujico.Models
         [StringLength(256, ErrorMessage = "البريد الإلكتروني يجب أن لا يتجاوز 256 حرفاً")]
         public string Email { get; set; }
 
+<<<<<<< HEAD
         [Required(ErrorMessage = "يجب تحديد دور للمستخدم")]
         [StringLength(50, ErrorMessage = "اسم الدور يجب أن لا يتجاوز 50 حرفاً")]
         [DisplayName("الدور المحدد")]
@@ -40,5 +41,12 @@ namespace Loujico.Models
         public string password { get; set; }
 
         public List<SelectListItem>? roles { get; set; }
+=======
+        [Required]
+        public string Roles { get; set; }
+        [PasswordPropertyText]
+        public string password { get; set; }
+        public List<SelectListItem>? role { get; set; }
+>>>>>>> fares
     }
 }

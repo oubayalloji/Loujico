@@ -10,32 +10,31 @@ namespace Loujico.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+
 
     public class DashbourdController : ControllerBase
     {
-        CompanySystemContext CTX;
         ICustomers ClsCustomers;
         IEmployees ClsEmployee;
         Ilog ClsLogs;
-        IHistory ClsHistory;
         IProject ClsProjects;
         UserManager<ApplicationUser> UserManager;
-        IFiles ClsFiles;
-        public DashbourdController(CompanySystemContext cTX, ICustomers clsCustomers, Ilog clsLogs, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles, IEmployees clsEmployee,IProject clsProject)
+
+        public DashbourdController( ICustomers clsCustomers, Ilog clsLogs, UserManager<ApplicationUser> userManager, IEmployees clsEmployee,IProject clsProject)
         {
-            CompanySystemContext CTX;
+          
              ClsCustomers= clsCustomers;
              ClsLogs=clsLogs;
             ClsProjects = clsProject;
            
             
-            UserManager<ApplicationUser> UserManager;
-            IFiles ClsFiles;
+           UserManager=  userManager;
+    
             ClsEmployee = clsEmployee;
 
         }
         [HttpGet("GetDashboard")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> GetDashboard()
         {
 
@@ -47,7 +46,8 @@ namespace Loujico.Controllers
                 dashboard.CountActiveUsers = await ClsEmployee.Count();
                 dashboard.ActiveProjects = await ClsProjects.Count();
                 dashboard.OverDueInvoices = await ClsCustomers.Count();
-                var users = UserManager.GetUserName(User);
+                var username = UserManager.GetUserName(User);
+                dashboard.User = username;
 
                 if (dashboard == null)
                     return NotFound(new ApiResponse<string> { Message = "There is no Customers" });
