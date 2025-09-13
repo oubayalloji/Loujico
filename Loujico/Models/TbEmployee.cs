@@ -41,12 +41,12 @@ namespace Loujico.Models
         public string? Position { get; set; }
 
         [Range(18, 70, ErrorMessage = "العمر يجب أن يكون بين 18 و 70 سنة")]
-
+        [Required(ErrorMessage = "العمر الهاتف مطلوب")]
         public int Age { get; set; }
 
 
         public string? ProfileImage { get; set; }
-
+        [Required(ErrorMessage = "")]
         public bool IsPresent { get; set; }
 
         [StringLength(1000, ErrorMessage = "الوصف يجب ألا يتجاوز 1000 خانة")]
