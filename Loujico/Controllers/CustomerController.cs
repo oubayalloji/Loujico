@@ -151,12 +151,12 @@ namespace Loujico.Controllers
             }
         }
         [HttpGet("GetAll")]
-        public async Task<ActionResult<ApiResponse<List<TbCustomer>>>> GetAll([FromQuery] int Page, [FromQuery] int Count)
+        public async Task<ActionResult<ApiResponse<List<TbCustomer>>>> GetAll([FromQuery] int Page, [FromQuery] int count)
         {
 
             try
             {
-                var Customer = await ClsCustomers.GetAll(Page, Count);
+                var Customer = await ClsCustomers.GetAll(Page, count);
                 if (Customer == null)
                     return NotFound(new ApiResponse<string> { Message = "There is no Customers" });
                 return Ok(new ApiResponse<List<TbCustomer>>

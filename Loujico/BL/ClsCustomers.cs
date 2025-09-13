@@ -7,8 +7,8 @@ namespace Loujico.BL
 {
     public interface ICustomers
     {
-        public Task<List<TbCustomer>> GetAll(int id,int count);
-        public  Task<List<object>> GetAllCustomersIdAndName();
+        public Task<List<TbCustomer>> GetAll(int id, int count);
+        public Task<List<object>> GetAllCustomersIdAndName();
         public Task<CustomerModel> GetById(int id);
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
         public Task<bool> Edit(TbCustomer customer);
@@ -30,7 +30,7 @@ namespace Loujico.BL
             ClsHistory = clsHistory;
         }
 
-        public async Task<List<TbCustomer>> GetAll(int id,int count)
+        public async Task<List<TbCustomer>> GetAll(int id, int count)
         {
             try
             {
@@ -67,7 +67,6 @@ namespace Loujico.BL
                     Files = files,
 
                 };
-
                 return result;
             }
             catch (Exception ex)
@@ -125,48 +124,46 @@ namespace Loujico.BL
             }
         }
         public async Task<List<TbCustomer>> Search(string name, int page, int count)
-    {
-        try
-        {
-            // جلب البيانات أولاً من قاعدة البيانات بدون تتبع
-            var allItems = await CTX.TbCustomers
-                .AsNoTracking()
-                .Where(a => !a.IsDeleted)
-                .ToListAsync();
-
-            // تطبيق المطابقة التقريبية باستخدام FuzzySharp
-            var matchedItems = allItems.Where(a =>
-                Fuzz.PartialRatio(name, a.CustomerName) > 70 ||
-                Fuzz.PartialRatio(name, a.CustomerAddress) > 70 ||
-                Fuzz.PartialRatio(name, a.Industry ?? "") > 70 ||
-                Fuzz.Ratio(name, a.Phone) > 70 ||
-                Fuzz.PartialRatio(name, a.ServiceProvided ?? "") > 70 ||
-                Fuzz.Ratio(name, a.Id.ToString()) > 70
-            );
-
-            // تطبيق الـ pagination
-            var pagedItems = matchedItems
-                .Skip((page - 1) * count)
-                .Take(count)
-                .ToList();
-
-            return pagedItems;
-        }
-        catch (Exception ex)
-        {
-            await ClsLogs.Add("Error", ex.Message, null);
-            return null;
-        }
-    }
-        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id,int Count)
         {
             try
             {
-                var LstCustomer = await ClsHistory.GetAllHistory(Pageid, id, tableName.Customer,Count);
+                var query = CTX.TbCustomers
+                    .AsNoTracking()
+                    .Where(a =>
+                        !a.IsDeleted &&
+                        (
+                            string.IsNullOrWhiteSpace(name) ||
+                            EF.Functions.Like(a.CustomerName, $"%{name}%") ||
+                            EF.Functions.Like(a.CustomerAddress, $"%{name}%") ||
+                            EF.Functions.Like(a.Industry, $"%{name}%") ||
+                            EF.Functions.Like(a.Phone, $"%{name}%") ||
+                            EF.Functions.Like(a.ServiceProvided, $"%{name}%") ||
+                            a.Id.ToString().Contains(name)
+                        )
+                    );
+
+                var pagedItems = await query
+                    .OrderByDescending(a => a.Id)
+                    .Skip((page - 1) * count)
+                    .Take(count)
+                    .ToListAsync();
+
+                return pagedItems.Any() ? pagedItems : null;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        }
+        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int Count)
+        {
+            try
+            {
+                var LstCustomer = await ClsHistory.GetAllHistory(Pageid, id, tableName.Customer, Count);
                 if (LstCustomer == null)
                 {
                     return new List<TbHistory>();
-
                 }
                 else
                 {
@@ -191,7 +188,7 @@ namespace Loujico.BL
                         x.CustomerName
                     })
                     .ToListAsync();
-                if (result==null)
+                if (result == null)
                 {
                     return null;
                 }
@@ -209,7 +206,7 @@ namespace Loujico.BL
         {
             try
             {
-                var customer = await CTX.TbCustomers.AsNoTracking().Where(c => c.IsDeleted==false).CountAsync();
+                var customer = await CTX.TbCustomers.AsNoTracking().Where(c => c.IsDeleted == false).CountAsync();
                 if (customer == null)
                     return 0;
                 return customer;
