@@ -149,30 +149,29 @@ namespace Loujico.BL
         {
             try
             {
-                // جلب البيانات أولاً من قاعدة البيانات بدون تتبع 
-                var allItems = await CTX.TbInvoices
+                var query = CTX.TbInvoices
                     .AsNoTracking()
-                    .Where(a => !a.IsDeleted)
-                    .ToListAsync();
+                    .Where(a =>
+                        !a.IsDeleted &&
+                        (
+                            string.IsNullOrWhiteSpace(name) ||
+                            EF.Functions.Like(a.InvoiceStatus, $"%{name}%") ||
+                            (a.Customer != null && EF.Functions.Like(a.Customer.ToString(), $"%{name}%")) ||
+                            a.Amount.ToString().Contains(name) ||
+                            a.DueDate.ToString().Contains(name) ||
+                            a.InvoicesDate.ToString().Contains(name) ||
+                            a.ProjectId.ToString().Contains(name) ||
+                            a.Id.ToString().Contains(name)
+                        )
+                    );
 
-                // تطبيق المطابقة التقريبية باستخدام FuzzySharp
-                var matchedItems = allItems.Where(a =>
-                    Fuzz.PartialRatio(name, a.InvoiceStatus) > 70 ||
-                    Fuzz.PartialRatio(name, a.Customer.ToString()) > 70 ||
-                    Fuzz.Ratio(name, a.Amount.ToString()) > 70 ||
-                    Fuzz.Ratio(name, a.DueDate.ToString()) > 70 ||
-                    Fuzz.Ratio(name, a.InvoicesDate.ToString()) > 70 ||
-                    Fuzz.Ratio(name, a.ProjectId.ToString()) > 70 ||
-                    Fuzz.Ratio(name, a.Id.ToString()) > 70
-                );
-
-                // تطبيق الـ pagination
-                var pagedItems = matchedItems
+                var pagedItems = await query
+                    .OrderByDescending(a => a.Id)
                     .Skip((page - 1) * count)
                     .Take(count)
-                    .ToList();
+                    .ToListAsync();
 
-                return pagedItems;
+                return pagedItems.Any() ? pagedItems : null;
             }
             catch (Exception ex)
             {

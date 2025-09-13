@@ -13,9 +13,9 @@ namespace Loujico.Models
         public string Email { get; set; }
 
         [Required]
-        public string selectedRole { get; set; }
+        public string Roles { get; set; }
         [PasswordPropertyText]
         public string password { get; set; }
-        public List<SelectListItem>? roles { get; set; }
+        public List<SelectListItem>? role { get; set; }
     }
 }

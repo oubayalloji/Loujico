@@ -217,31 +217,30 @@ namespace Loujico.BL
         {
             try
             {
-                // جلب البيانات أولاً من قاعدة البيانات بدون تتبع
-                var allItems = await CTX.TbProjects
+                var query = CTX.TbProjects
                     .AsNoTracking()
-                    .Where(a => !a.IsDeleted)
-                    .ToListAsync();
+                    .Where(a =>
+                        !a.IsDeleted &&
+                        (
+                            string.IsNullOrWhiteSpace(name) ||
+                            a.Id.ToString().Contains(name) ||
+                            EF.Functions.Like(a.Title, $"%{name}%") ||
+                            EF.Functions.Like(a.ProjectStatus, $"%{name}%") ||
+                            a.Progress.ToString().Contains(name) ||
+                            a.ProjectType.ToString().Contains(name) ||
+                            a.Price.ToString().Contains(name) ||
+                            a.StartDate.ToString().Contains(name) ||
+                            a.EndDate.ToString().Contains(name)
+                        )
+                    );
 
-                // تطبيق المطابقة التقريبية باستخدام FuzzySharp
-                var matchedItems = allItems.Where(a =>
-                    Fuzz.Ratio(name, a.Id.ToString()) > 70 ||
-                    Fuzz.PartialRatio(name, a.Title) > 70 ||
-                    Fuzz.PartialRatio(name, a.ProjectStatus) > 70 ||
-                    Fuzz.PartialRatio(name, a.Progress.ToString()) > 70 ||
-                    Fuzz.PartialRatio(name, a.ProjectType.ToString()) > 70 ||
-                    Fuzz.Ratio(name, a.Price.ToString()) > 70 ||
-                    Fuzz.Ratio(name, a.StartDate.ToString()) > 50 || 
-                    Fuzz.Ratio(name, a.EndDate.ToString()) > 50
-                );
-
-                // تطبيق الـ pagination
-                var pagedItems = matchedItems
+                var pagedItems = await query
+                    .OrderByDescending(a => a.Id)
                     .Skip((page - 1) * count)
                     .Take(count)
-                    .ToList();
+                    .ToListAsync();
 
-                return pagedItems;
+                return pagedItems.Any() ? pagedItems : null;
             }
             catch (Exception ex)
             {

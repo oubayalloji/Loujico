@@ -12,7 +12,7 @@ namespace Loujico.Models
         [Required(ErrorMessage = "Please enter the Role")]
         [StringLength(17, ErrorMessage = "the password must be between 17 and 3", MinimumLength = 3)]
 
-        public string Role { get; set; }
+        public string roles { get; set; }
  
         [EmailAddress]
         [Required(ErrorMessage = "Please enter the Email")]

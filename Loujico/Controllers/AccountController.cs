@@ -141,9 +141,9 @@ namespace Loujico.Controllers
 
             }
         }
-        [HttpPost("Register")]
+        [HttpPost("Add")]
       
-        public async Task<IActionResult> Register([FromForm] Register model)
+        public async Task<IActionResult> Register([FromBody] Register model)
         {
             // التحقق من صحة النموذج
             if (!ModelState.IsValid)
@@ -203,9 +203,8 @@ namespace Loujico.Controllers
                            await userManager.UpdateAsync(user);
                        }
                    }*/
-
                 // تعيين دور "Seller" للمستخدم
-                await userManager.AddToRoleAsync(user, model.Role);
+                await userManager.AddToRoleAsync(user, model.roles);
 
                 // إنشاء وتوقيع Token
                 var token = await GenerateToken(user);
@@ -233,15 +232,15 @@ namespace Loujico.Controllers
             }
         }
 
-        [HttpDelete("Delete")]
+        [HttpDelete("Delete/{userid}")]
   
-        public async Task<ActionResult<ApiResponse<String>>> Delete(string userid)
+        public async Task<ActionResult<ApiResponse<string>>> Delete(string userid)
         {
             try
             {
                 var user = await userManager.FindByIdAsync(userid);
                 var DeleteUser = await userManager.DeleteAsync(user);
-                return Ok(new ApiResponse<String>
+                return Ok(new ApiResponse<string>
                 {
                     Data ="Done",
                     Message ="Done"
@@ -251,7 +250,7 @@ namespace Loujico.Controllers
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<List<String>>
+                return BadRequest(new ApiResponse<List<string>>
                 {
                     Message = ex.Message,
 
@@ -263,10 +262,10 @@ namespace Loujico.Controllers
 
 
 
-        [HttpPost("Save")]
-        public async Task<ActionResult<ApiResponse<String>>> Save([FromBody]VmEditUser model)
+        [HttpPatch("Edit")]
+        public async Task<ActionResult<ApiResponse<string>>> Save([FromBody]VmEditUser model)
         {
-            ApiResponse<List<String>> response = new ApiResponse<List<String>>();
+            ApiResponse<List<string>> response = new ApiResponse<List<string>>();
             if (!ModelState.IsValid)
             {
                 return BadRequest(response.Message ="validate Error");
@@ -284,7 +283,7 @@ namespace Loujico.Controllers
 
 
             var currentRoles = await userManager.GetRolesAsync(user);
-            var selectedRole = model.selectedRole;
+            var selectedRole = model.Roles;
 
             foreach (var role in currentRoles)
             {
