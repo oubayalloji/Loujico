@@ -48,6 +48,7 @@ namespace Loujico.Controllers
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
                 TbInvoice tbInvoice = new TbInvoice{
+                    Title = invoice.Title,
                     Amount=invoice.Amount,
                     CreatedAt=DateTime.Now,
                     CreatedBy=username,
@@ -87,33 +88,29 @@ namespace Loujico.Controllers
 
             try
             {
-                var vCustomer = await ClsInvoices.GetById(invoice.Id);
+                var vCustomer = await ClsInvoices.GetByIdModel(invoice.Id);
                 if (vCustomer == null)
                     return NotFound(new ApiResponse<string> { Message = "the Customer is deleted or not found " });
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                TbInvoice tbInvoice = new TbInvoice
-                {
-                    Id = invoice.Id,
-                    Amount = invoice.Amount,
-                    UpdatedAt = DateTime.Now,
-                     InvoiceStatus=invoice.InvoiceStatus,
-                     ProjectId=invoice.ProjectId,
-                    DueDate = invoice.DueDate,
-                    CustomerId = invoice.CustomerId,
-                    
-                    InvoicesDate = invoice.InvoicesDate,
-                    UpdatedBy=username,
+                vCustomer.Amount = invoice.Amount;
+                vCustomer.UpdatedAt = DateTime.Now;
+                vCustomer.InvoiceStatus = invoice.InvoiceStatus;
+                vCustomer.ProjectId = invoice.ProjectId;
+                vCustomer.DueDate = invoice.DueDate;
+                vCustomer.CustomerId = invoice.CustomerId;
+                vCustomer.InvoicesDate = invoice.InvoicesDate;
+                vCustomer.UpdatedBy = username;
+                vCustomer.Title = invoice.Title;
 
-                };
-                await ClsInvoices.Edit(tbInvoice);
-                await ClsLogs.Add("CRUD", $"id : {tbInvoice.Id} with name : {tbInvoice.Id} updated to the System by {username}", userId);
+                await ClsInvoices.Edit(vCustomer);
+                await ClsLogs.Add("CRUD", $"id : {vCustomer.Id} with name : {vCustomer.Id} updated to the System by {username}", userId);
                 if (Data != null)
                 {
                     foreach (var item in Data)
                     {
-                        await ClsFiles.Add(item, "Invoices", tbInvoice.Id, tableName.invoice);
-                        await ClsLogs.Add("CRUD", $"file {item.fileType} added to : {tbInvoice.Id} by {username} ", userId);
+                        await ClsFiles.Add(item, "Invoices", vCustomer.Id, tableName.invoice);
+                        await ClsLogs.Add("CRUD", $"file {item.fileType} added to : {vCustomer.Id} by {username} ", userId);
 
                     }
                 }

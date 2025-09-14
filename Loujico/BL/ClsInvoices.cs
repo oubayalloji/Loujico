@@ -7,6 +7,7 @@ namespace Loujico.BL
     {
         public Task<List<TbInvoice>> GetAll(int id, int count);
         public Task<InvoiceModel> GetById(int id);
+        public Task<TbInvoice> GetByIdModel(int id);
         public Task<bool> Add(TbInvoice invoice);
         public Task<bool> Delete(int id);
         public Task<bool> Edit(TbInvoice invoice);
@@ -158,7 +159,7 @@ namespace Loujico.BL
                         (
                             string.IsNullOrWhiteSpace(name) ||
                             EF.Functions.Like(a.InvoiceStatus, $"%{name}%") ||
-                            (a.Customer != null && EF.Functions.Like(a.Customer.ToString(), $"%{name}%")) ||
+                            EF.Functions.Like(a.Title, $"%{name}%") ||
                             a.Amount.ToString().Contains(name) ||
                             a.DueDate.ToString().Contains(name) ||
                             a.InvoicesDate.ToString().Contains(name) ||
@@ -173,7 +174,7 @@ namespace Loujico.BL
                     .Take(count)
                     .ToListAsync();
 
-                return pagedItems.Any() ? pagedItems : null;
+                return pagedItems;
             }
             catch (Exception ex)
             {
@@ -211,5 +212,27 @@ namespace Loujico.BL
                 return 0;
             }
         }
+
+        public async Task<TbInvoice> GetByIdModel(int id)
+        {
+            try
+            {
+
+                var invoice = await CTX.TbInvoices
+                                .FirstOrDefaultAsync(i => i.Id == id && !i.IsDeleted);
+                if (invoice == null)
+                {
+                    return null;
+                }
+    
+                return invoice;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+
+        }
     }
-}
+    }

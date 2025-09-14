@@ -8,6 +8,7 @@ public partial class TbInvoice : IValidatableObject
     public int Id { get; set; }
 
     public int? CustomerId { get; set; }
+    public string Title { get; set; }
 
     public int? ProjectId { get; set; }
     [Range(0.01, double.MaxValue, ErrorMessage = "المبلغ يجب أن يكون أكبر من صفر")]
