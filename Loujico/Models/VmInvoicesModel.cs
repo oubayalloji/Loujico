@@ -6,7 +6,7 @@ namespace Loujico.Models
     public class VmInvoicesModel : IValidatableObject
     {
 
-        [Range(1, int.MaxValue, ErrorMessage = "معرّف الفاتورة يجب أن يكون قيمة صحيحة موجبة")]
+
         public int Id { get; set; }
 
 

@@ -29,6 +29,7 @@ namespace Loujico.Controllers
             UserManager = userManager;
             ClsHistory = clsHistory;
             ClsFiles = clsFiles;
+            UserManager = userManager;
         }
         [HttpPost("Add")]
         public async Task<IActionResult> Add([FromBody] AddProjectModel dto, [FromForm] List<FileModel>? Data)
@@ -71,6 +72,10 @@ namespace Loujico.Controllers
                         await ClsFiles.Add(item, "Projects", dto.Id, tableName.project);
                     }
                 }
+                var usename = UserManager.GetUserName(User);
+                var userId = UserManager.GetUserId(User);
+                await ClsLogs.Add("CRUD", $"{dto.Title} Added to the System by {usename} ", userId);
+
                 return Ok(new { project.Id, message = "تمت إضافة المشروع بنجاح" });
             }
 
@@ -87,8 +92,8 @@ namespace Loujico.Controllers
 
         }
 
-        [HttpGet("GetAllProjectsId")]
-        public async Task<ActionResult<ApiResponse<List<object>>>> GetAllProjectsId()
+        [HttpGet("GetAllId")]
+        public async Task<ActionResult<ApiResponse<List<object>>>> GetAllId()
         {
 
             try
@@ -114,8 +119,9 @@ namespace Loujico.Controllers
         }
 
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] TbProject proj, [FromForm] List<FileModel>? Data)
-        {
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] AddProjectModel dto, [FromForm] List<FileModel>? Data)
+        
+            {
 
             if (!ModelState.IsValid)
             {
@@ -130,19 +136,50 @@ namespace Loujico.Controllers
             }
             try
             {
+                var proj = ClsProject.GetById(dto.Id);
+                if (proj == null)
+                {
+                    return BadRequest(new ApiResponse<String>
+                    {
+
+                        Message = "project not found"
+
+                    });
+                }
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                proj.UpdatedBy = username;
-                await ClsProject.Edit(proj);
+                var project = new TbProject
+                {
+                    Title = dto.Title,
+                    StartDate = dto.StartDate,
+                    EndDate = dto.EndDate,
+                    Price = dto.Price,
+                    Progress = dto.Progress,
+                    UpdatedAt = DateTime.Now,
+                    UpdatedBy = username,
+                    CustomerId = dto.CustomerId,
+                };
+
+                // ربط الموظفين بالمشروع
+                foreach (var emp in dto.Employees)
+                {
+                    project.TbProjectsEmployees.Add(new TbProjectsEmployee
+                    {
+                        EmployeeId = emp.EmployeeId,
+                        RoleOnProject = emp.RoleOnProject,
+                        JoinedAt = DateTime.Now
+                    });
+                }
+                await ClsProject.Edit(project);
                 // من هون 
-                await ClsLogs.Add("Error", $"{proj.Title} updated to the System by {username} ", userId);
+                await ClsLogs.Add("CRUD", $"{project.Title} updated to the System by {username} ", userId);
                 // لهون هو تسجيل الlog
                 if (Data != null)
                 {
                     foreach (var item in Data)
                     {
-                        await ClsFiles.Add(item, "Projects", proj.Id, tableName.project);
-                        await ClsLogs.Add("CRUD", $"file {item.fileType} added to : {proj.Title} by {username} ", userId);
+                        await ClsFiles.Add(item, "Projects", project.Id, tableName.project);
+                        await ClsLogs.Add("CRUD", $"file {item.fileType} added to : {project.Title} by {username} ", userId);
 
                     }
                 }
@@ -200,7 +237,7 @@ namespace Loujico.Controllers
                 // من هون 
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                await ClsLogs.Add("Error", $"file {file.FileType} for {file.EntityId} in table{file.EntityType} Deleted from the System by {username} ", userId);
+                await ClsLogs.Add("CRUD", $"file {file.FileType} for {file.EntityId} in table{file.EntityType} Deleted from the System by {username} ", userId);
                 // لهون هو تسجيل الlog  
                 return Ok(new ApiResponse<String>
                 {
@@ -220,7 +257,7 @@ namespace Loujico.Controllers
 
 
         }
-        [HttpDelete("Delete")]
+        [HttpDelete("Delete/{id}")]
         public async Task<ActionResult<ApiResponse<string>>> Delete(int id)
         {
             try
@@ -231,7 +268,7 @@ namespace Loujico.Controllers
                 // من هون 
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                await ClsLogs.Add("Error", $"{project.Title} Deleted from the System by {username} ", userId);
+                await ClsLogs.Add("CRUD", $"{project.Title} Deleted from the System by {username} ", userId);
                 // لهون هو تسجيل الlog  
                 return Ok(new ApiResponse<String>
                 {
@@ -277,7 +314,7 @@ namespace Loujico.Controllers
             }
 
         }
-        [HttpGet("Count")]
+        [HttpGet("GetCount")]
         public async Task<ActionResult<ApiResponse<int>>> Count()
         {
             try

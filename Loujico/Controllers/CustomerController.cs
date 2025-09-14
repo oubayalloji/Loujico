@@ -28,6 +28,7 @@ namespace Loujico.Controllers
             UserManager = userManager;
             ClsHistory = clsHistory;
             ClsFiles = clsFiles;
+           
         }
         [HttpPost("Add")]
         public async Task<ActionResult<ApiResponse<string>>> Add([FromBody] TbCustomer Customer, [FromForm] List<FileModel>? Data)
@@ -49,7 +50,7 @@ namespace Loujico.Controllers
                 Customer.CreatedBy = username;
                 await ClsCustomers.Add(Customer);
                 // من هون 
-                await ClsLogs.Add("Error", $"{Customer.CustomerName} added to the System by {username} ", userId);
+                await ClsLogs.Add("CRUD", $"{Customer.CustomerName} added to the System by {username} ", userId);
                 // لهون هو تسجيل الlog
                 if (Data != null)
                 {
@@ -97,7 +98,7 @@ namespace Loujico.Controllers
                 var userId = UserManager.GetUserId(User);
                 Customer.UpdatedBy = username;
                 await ClsCustomers.Edit(Customer);
-                await ClsLogs.Add("Error", $"id : {Customer.Id} with name :{Customer.CustomerName} updated to the System by {username} ", userId);
+                await ClsLogs.Add("CRUD", $"id : {Customer.Id} with name :{Customer.CustomerName} updated to the System by {username} ", userId);
                 if (Data != null)
                 {
                     foreach (var item in Data)
@@ -125,8 +126,8 @@ namespace Loujico.Controllers
             }
         }
 
-        [HttpGet("GetAllCustomersId")]
-        public async Task<ActionResult<ApiResponse<List<object>>>> GetAllCustomersId()
+        [HttpGet("GetAllId")]
+        public async Task<ActionResult<ApiResponse<List<object>>>> GetAllId()
         {
 
             try
@@ -188,7 +189,7 @@ namespace Loujico.Controllers
                 // من هون 
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                await ClsLogs.Add("Error", $"file {file.FileType} for {file.EntityId} in table{file.EntityType} Deleted from the System by {username} ", userId);
+                await ClsLogs.Add("CRUD", $"file {file.FileType} for {file.EntityId} in table{file.EntityType} Deleted from the System by {username} ", userId);
                 // لهون هو تسجيل الlog  
                 return Ok(new ApiResponse<String>
                 {
@@ -220,7 +221,7 @@ namespace Loujico.Controllers
                 // من هون 
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                await ClsLogs.Add("Error", $"{Customer.Customer.CustomerName} Deleted from the System by {username} ", userId);
+                await ClsLogs.Add("CRUD", $"{Customer.Customer.CustomerName} Deleted from the System by {username} ", userId);
                 // لهون هو تسجيل الlog  
                 return Ok(new ApiResponse<String>
                 {

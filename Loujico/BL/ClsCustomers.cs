@@ -50,6 +50,7 @@ namespace Loujico.BL
             try
             {
                 var cus = await CTX.TbCustomers
+                                .AsNoTracking()
                                 .Include(c => c.TbCustomersProducts)
                                 .Include(c => c.TbProjects)
                                 .Include(c => c.TbInvoices)

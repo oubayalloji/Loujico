@@ -17,12 +17,13 @@ namespace Loujico.Controllers
 
     public class AccountController : Controller
     {
+        CompanySystemContext CTX;
         private readonly IConfiguration configuration;
         private readonly UserManager<ApplicationUser> userManager;
         Ilog ClsLogs;
-        public AccountController(IConfiguration _configuration, UserManager<ApplicationUser> manager, Ilog clsLogs)
-        {  
-
+        public AccountController(IConfiguration _configuration, UserManager<ApplicationUser> manager, Ilog clsLogs,CompanySystemContext systemContext)
+        {
+            CTX = systemContext;
             configuration = _configuration;
             userManager = manager;
             ClsLogs = clsLogs;
@@ -117,6 +118,10 @@ namespace Loujico.Controllers
 
                 foreach (var user in users)
                 {
+                    if (user.IsDeleted==true)
+                    {
+                        continue;
+                    }
                     var roles = await userManager.GetRolesAsync(user);
                     userRolesViewModel.Add(new VmUserRoles
                     {
@@ -239,7 +244,17 @@ namespace Loujico.Controllers
             try
             {
                 var user = await userManager.FindByIdAsync(userid);
-                var DeleteUser = await userManager.DeleteAsync(user);
+                if (user==null)
+                {
+                    return BadRequest();
+                }
+                user.IsDeleted= true;
+                var result = await userManager.UpdateAsync(user);
+                if (result ==null)
+                {
+                    return BadRequest();
+                }
+
                 return Ok(new ApiResponse<string>
                 {
                     Data ="Done",

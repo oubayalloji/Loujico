@@ -30,6 +30,7 @@ namespace Loujico.Controllers
             ClsFiles = clsFiles;
             ClsHistory = clsHistory;
             ClsLogs = clsLogs;
+            UserManager = userManager;
         }
         [HttpPost("Add")]
         [Authorize]
@@ -46,7 +47,7 @@ namespace Loujico.Controllers
                 var userId = UserManager.GetUserId(User);
                 prod.CreatedBy = username;
                 await ClsProducts.Add(prod);
-                await ClsLogs.Add("Error", $"{prod.Id} added to the System by {username}", userId);
+                await ClsLogs.Add("CRUD", $"{prod.Id} added to the System by {username}", userId);
                 if (Data != null)
                 {
                     foreach (var item in Data)
@@ -101,7 +102,7 @@ namespace Loujico.Controllers
                 Product.UpdatedBy = username;
                 await ClsProducts.Edit(Product);
 
-                await ClsLogs.Add("Error", $"id : {Product.Id} with name : {Product.ProductName} updated to the System by {username} ", userId);
+                await ClsLogs.Add("CRUD", $"id : {Product.Id} with name : {Product.ProductName} updated to the System by {username} ", userId);
                 if (Data != null)
                 {
                     foreach (var item in Data)
@@ -156,7 +157,7 @@ namespace Loujico.Controllers
                 // من هون 
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                await ClsLogs.Add("Error", $"file {file.FileType} for {file.EntityId} in table{file.EntityType} Deleted from the System by {username} ", userId);
+                await ClsLogs.Add("CRUD", $"file {file.FileType} for {file.EntityId} in table{file.EntityType} Deleted from the System by {username} ", userId);
                 // لهون هو تسجيل الlog  
                 return Ok(new ApiResponse<String>
                 {
@@ -187,7 +188,7 @@ namespace Loujico.Controllers
                 // من هون 
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                await ClsLogs.Add("Error", $"{Product.Product.ProductName} Deleted from the System by {username} ", userId);
+                await ClsLogs.Add("CRUD", $"{Product.Product.ProductName} Deleted from the System by {username} ", userId);
                 // لهون هو تسجيل الlog  
                 return Ok(new ApiResponse<String>
                 {

@@ -59,7 +59,7 @@ namespace Loujico.Controllers
                 };
 
                 await ClsInvoices.Add(tbInvoice);
-                await ClsLogs.Add("Error", $"{tbInvoice.Id} added to the System by {username}", userId);
+                await ClsLogs.Add("CRUD", $"{tbInvoice.Id} added to the System by {username}", userId);
                 if (Data != null)
                 {
                     foreach (var item in Data)
@@ -94,17 +94,20 @@ namespace Loujico.Controllers
                 var userId = UserManager.GetUserId(User);
                 TbInvoice tbInvoice = new TbInvoice
                 {
+                    Id = invoice.Id,
                     Amount = invoice.Amount,
                     UpdatedAt = DateTime.Now,
-                    CreatedBy = username,
+                     InvoiceStatus=invoice.InvoiceStatus,
+                     ProjectId=invoice.ProjectId,
                     DueDate = invoice.DueDate,
                     CustomerId = invoice.CustomerId,
+                    
                     InvoicesDate = invoice.InvoicesDate,
                     UpdatedBy=username,
 
                 };
                 await ClsInvoices.Edit(tbInvoice);
-                await ClsLogs.Add("Error", $"id : {tbInvoice.Id} with name : {tbInvoice.Id} updated to the System by {username}", userId);
+                await ClsLogs.Add("CRUD", $"id : {tbInvoice.Id} with name : {tbInvoice.Id} updated to the System by {username}", userId);
                 if (Data != null)
                 {
                     foreach (var item in Data)
@@ -135,7 +138,7 @@ namespace Loujico.Controllers
                 // من هون 
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                await ClsLogs.Add("Error", $"file {file.FileType} for {file.EntityId} in table{file.EntityType} Deleted from the System by {username} ", userId);
+                await ClsLogs.Add("CRUD", $"file {file.FileType} for {file.EntityId} in table{file.EntityType} Deleted from the System by {username} ", userId);
                 // لهون هو تسجيل الlog  
                 return Ok(new ApiResponse<String>
                 {
@@ -166,7 +169,7 @@ namespace Loujico.Controllers
                 await ClsInvoices.Delete(id);
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                await ClsLogs.Add("Error", $"{invoice.Invoice.Id} Deleted from the System by {username}", userId);
+                await ClsLogs.Add("CRUD", $"{invoice.Invoice.Id} Deleted from the System by {username}", userId);
 
                 return Ok(new ApiResponse<string> { Data = "done" });
             }
