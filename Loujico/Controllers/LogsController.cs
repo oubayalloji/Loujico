@@ -23,6 +23,32 @@ namespace Loujico.Controllers
             ClsLogs = clsLogs;
             UserManager = userManager;
         }
+        [HttpGet("Search")]
+        public async Task<ActionResult<ApiResponse<object>>> Search([FromQuery] string name, [FromQuery] int page, [FromQuery] int count)
+        {
+            try
+            {
+                var Invoice = await ClsLogs.Search(name, page, count);
+                if (Invoice == null)
+                {
+                    return NotFound(new ApiResponse<object> { Message = "No result" });
+                }
+                return Ok(new ApiResponse<object>
+                {
+                    Data = Invoice
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbInvoice>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
+        }
         [HttpGet("GetAll")]
         public async Task<ActionResult<ApiResponse<List<TbLog>>>> Paginition([FromQuery] int Page, [FromQuery] int Count)
         {

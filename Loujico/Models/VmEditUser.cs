@@ -7,7 +7,7 @@ namespace Loujico.Models
     public class VmEditUser
     {
 
-        [StringLength(32, MinimumLength = 1, ErrorMessage = "معرّف المستخدم يجب أن يكون بين 1 و 32 حرفاً")]
+        [StringLength(60, MinimumLength = 1, ErrorMessage = "معرّف المستخدم يجب أن يكون بين 1 و 32 حرفاً")]
         public string userid { get; set; }
 
 

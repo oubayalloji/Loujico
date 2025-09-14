@@ -4,7 +4,7 @@ namespace Loujico.Models
 {
     public class AddProjectModel
     {
-        public int? Id { get; set; }
+        public int Id { get; set; }
         [Required(ErrorMessage = "الاسم مطلوب")]
 
         public string Title { get; set; } = null!;
@@ -14,8 +14,8 @@ namespace Loujico.Models
    
 
         public DateOnly? EndDate { get; set; }
-        [Required(ErrorMessage = "معرف الزبون مطلوب")]
 
+        [Required(ErrorMessage = "معرف الزبون مطلوب")]
         public int CustomerId { get; set; }
         public decimal? Price { get; set; }
         public int Progress { get; set; }

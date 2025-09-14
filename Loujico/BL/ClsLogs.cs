@@ -11,6 +11,7 @@ namespace Loujico.BL
         public Task<List<TbLog>> Paginition(int id, int count);
         public Task<int> Count();
 
+        public  Task<List<TbLog>> Search(string name, int page, int count);
 
 
     }
@@ -83,6 +84,35 @@ namespace Loujico.BL
             {
                 await Add("Error", ex.Message, null);
                 return 0;
+            }
+        }
+        public async Task<List<TbLog>> Search(string name, int page, int count)
+        {
+            try
+            {
+                var query = CTX.TbLogs
+                    .AsNoTracking()
+                    .Where(a =>
+                        (
+                            string.IsNullOrWhiteSpace(name) ||
+                            EF.Functions.Like(a.ActionType, $"%{name}%")
+                            
+                       
+                        )
+                    );
+
+                var pagedItems = await query
+                    .OrderByDescending(a => a.Id)
+                    .Skip((page - 1) * count)
+                    .Take(count)
+                    .ToListAsync();
+
+                return pagedItems.Any() ? pagedItems : null;
+            }
+            catch (Exception ex)
+            {
+                await Add("Error", ex.Message, null);
+                return null;
             }
         }
     }

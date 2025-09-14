@@ -18,16 +18,17 @@ namespace Loujico.Controllers
         IEmployees ClsEmployee;
         Ilog ClsLogs;
         IProject ClsProjects;
+        IInvoices ClsInvoices;
         UserManager<ApplicationUser> UserManager;
 
-        public DashbourdController( ICustomers clsCustomers, Ilog clsLogs, UserManager<ApplicationUser> userManager, IEmployees clsEmployee,IProject clsProject)
+        public DashbourdController( ICustomers clsCustomers, Ilog clsLogs, UserManager<ApplicationUser> userManager, IEmployees clsEmployee,IProject clsProject,IInvoices invoices)
         {
           
              ClsCustomers= clsCustomers;
              ClsLogs=clsLogs;
             ClsProjects = clsProject;
            
-            
+            ClsInvoices= invoices;
            UserManager=  userManager;
     
             ClsEmployee = clsEmployee;
@@ -43,14 +44,14 @@ namespace Loujico.Controllers
                 DashboardModel dashboard = new DashboardModel();
 
                 dashboard.Customer = await ClsCustomers.Count(); 
-                dashboard.CountActiveUsers = await ClsEmployee.Count();
-                dashboard.ActiveProjects = await ClsProjects.Count();
-                dashboard.OverDueInvoices = await ClsCustomers.Count();
+                dashboard.CountActiveEmployee = await ClsEmployee.Count();
+                dashboard.ActiveProjects = await ClsProjects.CountPending();
+                dashboard.OverDueInvoices = await ClsInvoices.CountOverdue();
                 var username = UserManager.GetUserName(User);
                 dashboard.User = username;
 
                 if (dashboard == null)
-                    return NotFound(new ApiResponse<string> { Message = "There is no Customers" });
+                    return NotFound(new ApiResponse<string> { Message = "There is no data" });
                 return Ok(new ApiResponse<DashboardModel>
                 {
                     Data = dashboard
