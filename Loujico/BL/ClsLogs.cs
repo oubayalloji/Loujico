@@ -107,7 +107,7 @@ namespace Loujico.BL
                     .Take(count)
                     .ToListAsync();
 
-                return pagedItems.Any() ? pagedItems : null;
+                return pagedItems;
             }
             catch (Exception ex)
             {

@@ -10,13 +10,13 @@ namespace Loujico.Models
         public int Id { get; set; }
 
 
-        [Range(1, int.MaxValue, ErrorMessage = "معرّف العميل يجب أن يكون قيمة صحيحة موجبة")]
+  //      [Range(1, int.MaxValue, ErrorMessage = "معرّف العميل يجب أن يكون قيمة صحيحة موجبة")]
         public int? CustomerId { get; set; }
 
-        [Range(1, int.MaxValue, ErrorMessage = "معرّف المشروع يجب أن يكون قيمة صحيحة موجبة في حال التحديد")]
+  //      [Range(1, int.MaxValue, ErrorMessage = "معرّف المشروع يجب أن يكون قيمة صحيحة موجبة في حال التحديد")]
         public int? ProjectId { get; set; }
 
-        [DataType(DataType.Currency)]
+   //     [DataType(DataType.Currency)]
         public decimal? Amount { get; set; }
 
         [DataType(DataType.Date)]
@@ -31,6 +31,8 @@ namespace Loujico.Models
             ErrorMessage = "حالة الفاتورة يجب أن تكون: Pending أو Paid أو Overdue أو Cancelled")]
 
         public string? InvoiceStatus { get; set; }
+        [Required]
+        public string Title { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
