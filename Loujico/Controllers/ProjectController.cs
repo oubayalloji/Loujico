@@ -119,88 +119,87 @@ namespace Loujico.Controllers
         }
 
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] AddProjectModel dto, [FromForm] List<FileModel>? Data)
-        
-            {
-
+        public async Task<ActionResult<ApiResponse<string>>> Edit(
+      [FromBody] AddProjectModel dto,
+      [FromForm] List<FileModel>? Data)
+        {
             if (!ModelState.IsValid)
+                return BadRequest(new ApiResponse<string> { Message = "Invalid payload." });
+
+            // جلب المشروع مع علاقات الموظفين (المحذوفين يُستبعدون تلقائياً عبر HasQueryFilter)
+            var proj = await CTX.TbProjects
+                .Include(p => p.TbProjectsEmployees)
+                .FirstOrDefaultAsync(p => p.Id == dto.Id && !p.IsDeleted);
+
+            if (proj == null)
+                return NotFound(new ApiResponse<string> { Message = "Project not found." });
+
+            var username = UserManager.GetUserName(User);
+            var userId = UserManager.GetUserId(User);
+
+            // تحديث خصائص المشروع
+            proj.Title = dto.Title;
+            proj.StartDate = dto.StartDate;
+            proj.EndDate = dto.EndDate;
+            proj.Price = dto.Price;
+            proj.Progress = dto.Progress;
+            proj.CustomerId = dto.CustomerId;
+            proj.UpdatedAt = DateTime.Now;
+            proj.UpdatedBy = username;
+
+            // 1. علّم جميع روابط الموظفين الحالية محذوفة
+            foreach (var link in proj.TbProjectsEmployees)
             {
-
-                return BadRequest(new ApiResponse<String>
-                {
-
-                    Message = "wronge"
-
-                });
-
+                link.IsDeleted = true;
             }
-            try
+
+            // 2. عُد تفعيل أو أضف الروابط الواردة في dto.Employees
+            foreach (var empDto in dto.Employees ?? Enumerable.Empty<EmployeeOnProjectModel>())
             {
-                var proj = ClsProject.GetById(dto.Id);
-                if (proj == null)
+                var match = proj.TbProjectsEmployees
+                    .FirstOrDefault(pe =>
+                        pe.EmployeeId == empDto.EmployeeId &&
+                        pe.RoleOnProject == empDto.RoleOnProject);
+
+                if (match != null)
                 {
-                    return BadRequest(new ApiResponse<String>
+                    // إعادة التفعيل وتحديث وقت الانضمام
+                    match.IsDeleted = false;
+                    match.JoinedAt = DateTime.Now;
+                }
+                else
+                {
+                    // إضافة سجل جديد للموظف
+                    proj.TbProjectsEmployees.Add(new TbProjectsEmployee
                     {
-
-                        Message = "project not found"
-
+                        EmployeeId = empDto.EmployeeId,
+                        RoleOnProject = empDto.RoleOnProject,
+                        JoinedAt = DateTime.Now,
+                        IsDeleted = false
                     });
                 }
-                var username = UserManager.GetUserName(User);
-                var userId = UserManager.GetUserId(User);
-                var project = new TbProject
-                {
-                    Title = dto.Title,
-                    StartDate = dto.StartDate,
-                    EndDate = dto.EndDate,
-                    Price = dto.Price,
-                    Progress = dto.Progress,
-                    UpdatedAt = DateTime.Now,
-                    UpdatedBy = username,
-                    CustomerId = dto.CustomerId,
-                };
-
-                // ربط الموظفين بالمشروع
-                foreach (var emp in dto.Employees)
-                {
-                    project.TbProjectsEmployees.Add(new TbProjectsEmployee
-                    {
-                        EmployeeId = emp.EmployeeId,
-                        RoleOnProject = emp.RoleOnProject,
-                        JoinedAt = DateTime.Now
-                    });
-                }
-                await ClsProject.Edit(project);
-                // من هون 
-                await ClsLogs.Add("CRUD", $"{project.Title} updated to the System by {username} ", userId);
-                // لهون هو تسجيل الlog
-                if (Data != null)
-                {
-                    foreach (var item in Data)
-                    {
-                        await ClsFiles.Add(item, "Projects", project.Id, tableName.project);
-                        await ClsLogs.Add("CRUD", $"file {item.fileType} added to : {project.Title} by {username} ", userId);
-
-                    }
-                }
-                return Ok(new ApiResponse<String>
-                {
-                   
-                    Message = "Done"
-
-                });
             }
-            catch (Exception ex)
+
+            // حفظ التعديلات دفعة واحدة
+            await CTX.SaveChangesAsync();
+
+            // تسجيل السجلّات
+            await ClsLogs.Add("CRUD", $"Project '{proj.Title}' updated by {username}.", userId);
+
+            // معالجة الملفات إن وجدت
+            if (Data != null)
             {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<List<TbProject>>
+                foreach (var file in Data)
                 {
-                    Message = ex.Message,
-
-                });
+                    await ClsFiles.Add(file, "Projects", proj.Id, tableName.project);
+                    await ClsLogs.Add(
+                        "CRUD",
+                        $"File '{file.fileType}' added to project '{proj.Title}' by {username}.",
+                        userId);
+                }
             }
 
-
+            return Ok(new ApiResponse<string> { Message = "Done" });
         }
         [HttpGet("GetAll")]
         public async Task<ActionResult<ApiResponse<List<object>>>> GetAll([FromQuery] int Page, [FromQuery] int Count)

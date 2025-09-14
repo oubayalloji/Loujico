@@ -8,6 +8,7 @@ namespace Loujico.BL
     public interface IProject
     {
         public  Task<AddProjectModel> GetById(int id);
+        public  Task<TbProject> GetByIdModel(int id);
         public  Task<List<object>> Pagintion(int id, int count);
         public Task<bool> Add(TbProject project);
         public Task<bool> Edit(TbProject project);
@@ -92,6 +93,7 @@ namespace Loujico.BL
         EndDate = p.EndDate,
         Progress = p.Progress,
         Price = p.Price,
+        CustomerId=p.CustomerId,
         Employees = p.TbProjectsEmployees.Select(pe => new EmployeeOnProjectModel
         {
             EmployeeId = pe.EmployeeId,
@@ -127,6 +129,7 @@ namespace Loujico.BL
                         p.EndDate,
                         p.Progress,
                         p.Price,
+                        p.CustomerId,
                         Employees = p.TbProjectsEmployees.Select(pe => new {
                             pe.EmployeeId,
                             pe.RoleOnProject,
@@ -242,7 +245,7 @@ namespace Loujico.BL
                     .Take(count)
                     .ToListAsync();
 
-                return pagedItems.Any() ? pagedItems : null;
+                return pagedItems;
             }
             catch (Exception ex)
             {
@@ -290,5 +293,22 @@ namespace Loujico.BL
                 return 0;
             }
         }
+
+        public async Task<TbProject> GetByIdModel(int id)
+        {
+            try
+            {
+                var projectDto = await CTX.TbProjects
+    .Where(p => p.Id == id && !p.IsDeleted).Include(i=>i.TbInvoices).Include(i=>i.TbProjectsEmployees).FirstOrDefaultAsync();
+
+                return projectDto; // نوع الدالة Task<ProjectWithEmployeesDto>
+
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        }
     }
-}
+    }

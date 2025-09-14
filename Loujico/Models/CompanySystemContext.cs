@@ -342,6 +342,8 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
 
         modelBuilder.Entity<TbProjectsEmployee>(entity =>
         {
+           entity .HasQueryFilter(pe => !pe.IsDeleted);
+
             entity.HasKey(e => e.Id).HasName("PK__TbProjec__3213E83F7A181059");
 
             entity.ToTable("TbProjects_Employees");

@@ -15,6 +15,7 @@ public partial class TbProjectsEmployee
     public string? RoleOnProject { get; set; }
 
     public DateTime JoinedAt { get; set; }
+    public bool IsDeleted { get; set; }
 
     [JsonIgnore]
     public virtual TbEmployee Employee { get; set; } = null!;
