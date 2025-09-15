@@ -8,6 +8,7 @@ public partial class TbInvoice : IValidatableObject
     public int Id { get; set; }
 
     public int? CustomerId { get; set; }
+    [Required(ErrorMessage = "عنوان الفاتورة مطلوب")]
     public string Title { get; set; }
 
     public int? ProjectId { get; set; }

@@ -33,7 +33,7 @@ namespace Loujico.Controllers
             ClsFiles = clsFiles;
         }
         [HttpPost("Add")]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromBody] TbEmployee emp, [FromForm]  List<FileModel>? Data )
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbEmployee emp, [FromForm]  List<FileModel>? Data )
         {
 
             if (!ModelState.IsValid)
@@ -138,7 +138,7 @@ namespace Loujico.Controllers
         }
 
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] TbEmployee emp, [FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] TbEmployee emp, [FromForm] List<FileModel>? Data)
         {
 
             if (!ModelState.IsValid)
@@ -249,7 +249,7 @@ namespace Loujico.Controllers
                 });
             }
         }
-        [HttpDelete("DeleteImg/{id}")]
+        [HttpDelete("DeleteFile/{id}")]
         public async Task<ActionResult<ApiResponse<string>>> DeleteFile(int id)
         {
             try

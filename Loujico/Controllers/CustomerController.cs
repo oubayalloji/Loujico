@@ -31,7 +31,7 @@ namespace Loujico.Controllers
            
         }
         [HttpPost("Add")]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromBody] TbCustomer Customer, [FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbCustomer Customer, [FromForm] List<FileModel>? Data)
         {
 
             if (!ModelState.IsValid)
@@ -77,7 +77,7 @@ namespace Loujico.Controllers
         }
 
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] TbCustomer Customer, [FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] TbCustomer Customer, [FromForm] List<FileModel>? Data)
         {
 
             if (!ModelState.IsValid)

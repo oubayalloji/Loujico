@@ -8,7 +8,7 @@ namespace Loujico.BL
     public interface IProject
     {
         public  Task<AddProjectModel> GetById(int id);
-        public  Task<TbProject> GetByIdModel(int id);
+        public  Task<ShowProject> GetByIdModel(int id);
         public  Task<List<object>> Pagintion(int id, int count);
         public Task<bool> Add(TbProject project);
         public Task<bool> Edit(TbProject project);
@@ -130,12 +130,6 @@ namespace Loujico.BL
                         p.Progress,
                         p.Price,
                         p.CustomerId,
-                        Employees = p.TbProjectsEmployees.Select(pe => new {
-                            pe.EmployeeId,
-                            pe.RoleOnProject,
-                            pe.Employee.FirstName,
-                            pe.Employee.LastName
-                        })
                     }).ToListAsync();
 
                 return projects.Cast<object>().ToList();
@@ -273,7 +267,8 @@ namespace Loujico.BL
                 await ClsLogs.Add("Error", ex.Message, null);
                 return 0;
             }
-        } public async Task<int> Count()
+        }
+        public async Task<int> Count()
         {
             try
             {
@@ -294,15 +289,46 @@ namespace Loujico.BL
             }
         }
 
-        public async Task<TbProject> GetByIdModel(int id)
+        public async Task<ShowProject> GetByIdModel(int id)
         {
             try
             {
                 var projectDto = await CTX.TbProjects
-    .Where(p => p.Id == id && !p.IsDeleted).Include(i=>i.TbInvoices).Include(i=>i.TbProjectsEmployees).FirstOrDefaultAsync();
+            .Where(p => p.Id == id && !p.IsDeleted).Include(i => i.TbInvoices).Include(i => i.TbProjectsEmployees).Select(p => new
+            {
+                p.Id,
+                p.Title,
+                p.StartDate,
+                p.EndDate,
+                p.Progress,
+                p.Price,
+                p.CustomerId,
+                Employees = p.TbProjectsEmployees.Select(pe => new
+                {
+                    pe.EmployeeId,
+                    pe.RoleOnProject,
+                    pe.Employee.FirstName,
+                    pe.Employee.LastName
+                })
+            }).FirstOrDefaultAsync();
 
-                return projectDto; // نوع الدالة Task<ProjectWithEmployeesDto>
 
+                if (projectDto == null)
+                    return null;
+
+                // 2) جيب الملفات الخاصة بالموظف
+                var files = await CTX.TbFiles
+                    .Where(f => f.EntityId == projectDto.Id && f.EntityType == tableName.project && !f.IsDeleted)
+                    .ToListAsync();
+
+                // 3) جهّز الـ ViewModel
+                var result = new ShowProject
+                {
+                    project = projectDto,
+                    Files = files,
+
+                }; // نوع الدالة Task<ProjectWithEmployeesDto>
+                return result;
             }
             catch (Exception ex)
             {

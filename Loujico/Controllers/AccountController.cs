@@ -148,7 +148,7 @@ namespace Loujico.Controllers
         }
         [HttpPost("Add")]
       
-        public async Task<IActionResult> Register([FromBody] Register model)
+        public async Task<IActionResult> Register([FromForm] Register model)
         {
             // التحقق من صحة النموذج
             if (!ModelState.IsValid)
@@ -278,7 +278,7 @@ namespace Loujico.Controllers
 
 
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Save([FromBody]VmEditUser model)
+        public async Task<ActionResult<ApiResponse<string>>> Save([FromForm]VmEditUser model)
         {
             ApiResponse<List<string>> response = new ApiResponse<List<string>>();
             if (!ModelState.IsValid)

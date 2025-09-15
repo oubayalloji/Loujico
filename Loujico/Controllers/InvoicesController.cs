@@ -35,7 +35,7 @@ namespace Loujico.Controllers
         }
 
         [HttpPost("Add")]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromBody] VmInvoicesModel invoice, [FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] VmInvoicesModel invoice, [FromForm] List<FileModel>? Data)
         {
             if (!ModelState.IsValid)
             {
@@ -79,7 +79,7 @@ namespace Loujico.Controllers
         }
 
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] VmInvoicesModel invoice,[FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] VmInvoicesModel invoice,[FromForm] List<FileModel>? Data)
         {
             if (!ModelState.IsValid)
             {

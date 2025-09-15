@@ -32,13 +32,16 @@ namespace Loujico.Controllers
             UserManager = userManager;
         }
         [HttpPost("Add")]
-        public async Task<IActionResult> Add([FromBody] AddProjectModel dto, [FromForm] List<FileModel>? Data)
+        public async Task<IActionResult> Add([FromForm] AddProjectModel dto,[FromForm]  List<FileModel>? Data)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
-
+                if (dto.CustomerId == 0)
+                {
+                    return BadRequest("please enter customer id");
+                }
                 var username = UserManager.GetUserName(User);
                 var project = new TbProject
                 {
@@ -69,7 +72,7 @@ namespace Loujico.Controllers
                 {
                     foreach (var item in Data)
                     {
-                        await ClsFiles.Add(item, "Projects", dto.Id, tableName.project);
+                        await ClsFiles.Add(item, "Projects", project.Id, tableName.project);
                     }
                 }
                 var usename = UserManager.GetUserName(User);
@@ -120,7 +123,7 @@ namespace Loujico.Controllers
 
         [HttpPatch("Edit")]
         public async Task<ActionResult<ApiResponse<string>>> Edit(
-      [FromBody] AddProjectModel dto,
+      [FromForm] AddProjectModel dto,
       [FromForm] List<FileModel>? Data)
         {
             if (!ModelState.IsValid)
@@ -225,12 +228,14 @@ namespace Loujico.Controllers
 
             }
         }
-        [HttpDelete("DeleteImg/{id}")]
+        [HttpDelete("DeleteFile/{id}")]
         public async Task<ActionResult<ApiResponse<string>>> DeleteFile(int id)
         {
             try
             {
                 var file = await ClsFiles.GetById(id, tableName.project);
+                if (file == null)
+                    return NotFound("the file is deleted");
                 await ClsFiles.Delete(id, tableName.project);
 
                 // من هون 
@@ -294,9 +299,9 @@ namespace Loujico.Controllers
         {
             try
             {
-                var projectloyee = await ClsProject.GetById(id);
+                var projectloyee = await ClsProject.GetByIdModel(id);
 
-                return Ok(new ApiResponse<AddProjectModel>
+                return Ok(new ApiResponse<ShowProject>
                 {
                  
                     Data = projectloyee
