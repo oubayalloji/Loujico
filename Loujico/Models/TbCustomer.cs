@@ -56,7 +56,7 @@ namespace Loujico.Models
 
         [Range(1, 3650, ErrorMessage = "مدة العمل يجب أن تكون بين 1 و 3650 يوم")]
 
-        public int? WorkDuration { get; set; }
+        public int? WorkDuration { get; set; } 
         
         public DateTime CreatedAt { get; set; }
 
