@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -27,6 +28,30 @@ namespace Loujico.Controllers
             configuration = _configuration;
             userManager = manager;
             ClsLogs = clsLogs;
+        }
+        [HttpGet("Header")]
+
+        public  async Task<ActionResult> Header()
+        {
+            try
+            {
+                var UserName = await userManager.GetUserAsync(User);
+                var roles = await userManager.GetRolesAsync(UserName);
+                return Ok(new
+                {
+                    username = UserName,
+                    role = roles
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<object>
+                {
+                    Message = ex.Message,
+
+                });
+            }
         }
         [HttpPost("LogIn")]
         [AllowAnonymous]
@@ -319,11 +344,6 @@ namespace Loujico.Controllers
         
             return Ok( response);
         }
-
-
-
-
-
 
         private async Task<string> GenerateToken(ApplicationUser user)
         {
