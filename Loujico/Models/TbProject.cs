@@ -60,7 +60,7 @@ namespace Loujico.Models
         [JsonIgnore]
         public virtual TbCustomer Customer { get; set; } = null!;
 
-        public virtual ICollection<TbInvoice> TbInvoices { get; set; } = new List<TbInvoice>();
+        // public virtual ICollection<TbInvoice> TbInvoices { get; set; } = new List<TbInvoice>();
 
         public virtual ICollection<TbProjectsEmployee> TbProjectsEmployees { get; set; } = new List<TbProjectsEmployee>();
      

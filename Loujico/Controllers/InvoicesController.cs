@@ -1,285 +1,285 @@
-﻿using Loujico.BL;
-using Loujico.Models;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿//using Loujico.BL;
+//using Loujico.Models;
+//using Microsoft.AspNetCore.Authentication.JwtBearer;
+//using Microsoft.AspNetCore.Authorization;
+//using Microsoft.AspNetCore.Http;
+//using Microsoft.AspNetCore.Identity;
+//using Microsoft.AspNetCore.Mvc;
+//using System;
+//using System.Collections.Generic;
+//using System.Threading.Tasks;
 
-namespace Loujico.Controllers
-{
-    [Route("api/[controller]")]
-    [ApiController]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+//namespace Loujico.Controllers
+//{
+//    [Route("api/[controller]")]
+//    [ApiController]
+//    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
 
-    public class InvoicesController : ControllerBase
-    {
-        CompanySystemContext CTX;
-        IInvoices ClsInvoices;
-        Ilog ClsLogs;
-        IHistory ClsHistory;
-        IFiles ClsFiles;
-        UserManager<ApplicationUser> UserManager;
+//    public class InvoicesController : ControllerBase
+//    {
+//        CompanySystemContext CTX;
+//        IInvoices ClsInvoices;
+//        Ilog ClsLogs;
+//        IHistory ClsHistory;
+//        IFiles ClsFiles;
+//        UserManager<ApplicationUser> UserManager;
 
-        public InvoicesController(CompanySystemContext cTX, IInvoices clsInvoices, Ilog clsLogs, IHistory clsHistory, UserManager<ApplicationUser> userManager, IFiles clsFiles)
-        {
-            CTX = cTX;
-            ClsInvoices = clsInvoices;
-            ClsLogs = clsLogs;
-            ClsHistory = clsHistory;
-            UserManager = userManager;
-            ClsFiles = clsFiles;
-        }
+//        public InvoicesController(CompanySystemContext cTX, IInvoices clsInvoices, Ilog clsLogs, IHistory clsHistory, UserManager<ApplicationUser> userManager, IFiles clsFiles)
+//        {
+//            CTX = cTX;
+//            ClsInvoices = clsInvoices;
+//            ClsLogs = clsLogs;
+//            ClsHistory = clsHistory;
+//            UserManager = userManager;
+//            ClsFiles = clsFiles;
+//        }
 
-        [HttpPost("Add")]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] VmInvoicesModel invoice, [FromForm] List<FileModel>? Data)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new ApiResponse<string> { Message = "wronge" });
-            }
+//        [HttpPost("Add")]
+//        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] VmInvoicesModel invoice, [FromForm] List<FileModel>? Data)
+//        {
+//            if (!ModelState.IsValid)
+//            {
+//                return BadRequest(new ApiResponse<string> { Message = "wronge" });
+//            }
 
-            try
-            {
+//            try
+//            {
                
-                var username = UserManager.GetUserName(User);
-                var userId = UserManager.GetUserId(User);
-                TbInvoice tbInvoice = new TbInvoice{
-                    Title = invoice.Title,
-                    Amount=invoice.Amount,
-                    CreatedAt=DateTime.Now,
-                    CreatedBy=username,
-                    DueDate=invoice.DueDate,    
-                    CustomerId = invoice.CustomerId,
-                    InvoicesDate = invoice.InvoicesDate,
+//                var username = UserManager.GetUserName(User);
+//                var userId = UserManager.GetUserId(User);
+//                TbInvoice tbInvoice = new TbInvoice{
+//                    Title = invoice.Title,
+//                    Amount=invoice.Amount,
+//                    CreatedAt=DateTime.Now,
+//                    CreatedBy=username,
+//                    DueDate=invoice.DueDate,    
+//                    CustomerId = invoice.CustomerId,
+//                    InvoicesDate = invoice.InvoicesDate,
 
                
-                };
+//                };
 
-                await ClsInvoices.Add(tbInvoice);
-                await ClsLogs.Add("CRUD", $"{tbInvoice.Id} added to the System by {username}", userId);
-                if (Data != null)
-                {
-                    foreach (var item in Data)
-                    {
-                        await ClsFiles.Add(item, "Invoices", tbInvoice.Id, tableName.invoice);
-                    }
-                }
-                return Ok(new ApiResponse<string> { Message = "Done" });
-            }
+//                await ClsInvoices.Add(tbInvoice);
+//                await ClsLogs.Add("CRUD", $"{tbInvoice.Id} added to the System by {username}", userId);
+//                if (Data != null)
+//                {
+//                    foreach (var item in Data)
+//                    {
+//                        await ClsFiles.Add(item, "Invoices", tbInvoice.Id, tableName.invoice);
+//                    }
+//                }
+//                return Ok(new ApiResponse<string> { Message = "Done" });
+//            }
 
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<string> { Message = ex.Message });
-            }
-        }
+//            catch (Exception ex)
+//            {
+//                await ClsLogs.Add("Error", ex.Message, null);
+//                return BadRequest(new ApiResponse<string> { Message = ex.Message });
+//            }
+//        }
 
-        [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] VmInvoicesModel invoice,[FromForm] List<FileModel>? Data)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new ApiResponse<string> { Message = "wronge" });
-            }
+//        [HttpPatch("Edit")]
+//        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] VmInvoicesModel invoice,[FromForm] List<FileModel>? Data)
+//        {
+//            if (!ModelState.IsValid)
+//            {
+//                return BadRequest(new ApiResponse<string> { Message = "wronge" });
+//            }
 
-            try
-            {
-                var vCustomer = await ClsInvoices.GetByIdModel(invoice.Id);
-                if (vCustomer == null)
-                    return NotFound(new ApiResponse<string> { Message = "the Customer is deleted or not found " });
-                var username = UserManager.GetUserName(User);
-                var userId = UserManager.GetUserId(User);
-                vCustomer.Amount = invoice.Amount;
-                vCustomer.UpdatedAt = DateTime.Now;
-                vCustomer.InvoiceStatus = invoice.InvoiceStatus;
-                vCustomer.ProjectId = invoice.ProjectId;
-                vCustomer.DueDate = invoice.DueDate;
-                vCustomer.CustomerId = invoice.CustomerId;
-                vCustomer.InvoicesDate = invoice.InvoicesDate;
-                vCustomer.UpdatedBy = username;
-                vCustomer.Title = invoice.Title;
+//            try
+//            {
+//                var vCustomer = await ClsInvoices.GetByIdModel(invoice.Id);
+//                if (vCustomer == null)
+//                    return NotFound(new ApiResponse<string> { Message = "the Customer is deleted or not found " });
+//                var username = UserManager.GetUserName(User);
+//                var userId = UserManager.GetUserId(User);
+//                vCustomer.Amount = invoice.Amount;
+//                vCustomer.UpdatedAt = DateTime.Now;
+//                vCustomer.InvoiceStatus = invoice.InvoiceStatus;
+//                vCustomer.ProjectId = invoice.ProjectId;
+//                vCustomer.DueDate = invoice.DueDate;
+//                vCustomer.CustomerId = invoice.CustomerId;
+//                vCustomer.InvoicesDate = invoice.InvoicesDate;
+//                vCustomer.UpdatedBy = username;
+//                vCustomer.Title = invoice.Title;
 
-                await ClsInvoices.Edit(vCustomer);
-                await ClsLogs.Add("CRUD", $"id : {vCustomer.Id} with name : {vCustomer.Id} updated to the System by {username}", userId);
-                if (Data != null)
-                {
-                    foreach (var item in Data)
-                    {
-                        await ClsFiles.Add(item, "Invoices", vCustomer.Id, tableName.invoice);
-                        await ClsLogs.Add("CRUD", $"file {item.fileType} added to : {vCustomer.Id} by {username} ", userId);
+//                await ClsInvoices.Edit(vCustomer);
+//                await ClsLogs.Add("CRUD", $"id : {vCustomer.Id} with name : {vCustomer.Id} updated to the System by {username}", userId);
+//                if (Data != null)
+//                {
+//                    foreach (var item in Data)
+//                    {
+//                        await ClsFiles.Add(item, "Invoices", vCustomer.Id, tableName.invoice);
+//                        await ClsLogs.Add("CRUD", $"file {item.fileType} added to : {vCustomer.Id} by {username} ", userId);
 
-                    }
-                }
-                return Ok(new ApiResponse<string> { Message = "Done" });
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<string> { Message = ex.Message });
-            }
-        }
-        [HttpDelete("DeleteFile/{id}")]
-        public async Task<ActionResult<ApiResponse<string>>> DeleteFile(int id)
-        {
-            try
-            {
-                var file = await ClsFiles.GetById(id, tableName.invoice);
-                if (file == null)
-                    return NotFound(new ApiResponse<string> { Message = "the file is deleted or not found " });
-                await ClsFiles.Delete(id, tableName.invoice);
+//                    }
+//                }
+//                return Ok(new ApiResponse<string> { Message = "Done" });
+//            }
+//            catch (Exception ex)
+//            {
+//                await ClsLogs.Add("Error", ex.Message, null);
+//                return BadRequest(new ApiResponse<string> { Message = ex.Message });
+//            }
+//        }
+//        [HttpDelete("DeleteFile/{id}")]
+//        public async Task<ActionResult<ApiResponse<string>>> DeleteFile(int id)
+//        {
+//            try
+//            {
+//                var file = await ClsFiles.GetById(id, tableName.invoice);
+//                if (file == null)
+//                    return NotFound(new ApiResponse<string> { Message = "the file is deleted or not found " });
+//                await ClsFiles.Delete(id, tableName.invoice);
 
-                // من هون 
-                var username = UserManager.GetUserName(User);
-                var userId = UserManager.GetUserId(User);
-                await ClsLogs.Add("CRUD", $"file {file.FileType} for {file.EntityId} in table{file.EntityType} Deleted from the System by {username} ", userId);
-                // لهون هو تسجيل الlog  
-                return Ok(new ApiResponse<String>
-                {
-                    Data = "done"
-                });
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<List<TbProject>>
-                {
-                    Message = ex.Message,
+//                // من هون 
+//                var username = UserManager.GetUserName(User);
+//                var userId = UserManager.GetUserId(User);
+//                await ClsLogs.Add("CRUD", $"file {file.FileType} for {file.EntityId} in table{file.EntityType} Deleted from the System by {username} ", userId);
+//                // لهون هو تسجيل الlog  
+//                return Ok(new ApiResponse<String>
+//                {
+//                    Data = "done"
+//                });
+//            }
+//            catch (Exception ex)
+//            {
+//                await ClsLogs.Add("Error", ex.Message, null);
+//                return BadRequest(new ApiResponse<List<TbProject>>
+//                {
+//                    Message = ex.Message,
 
-                });
-            }
+//                });
+//            }
 
 
 
-        }
-        [HttpDelete("Delete/{id}")]
-        public async Task<ActionResult<ApiResponse<string>>> Delete(int id)
-        {
-            try
-            {
-                var invoice = await ClsInvoices.GetById(id);
-                if (invoice == null)
-                    return NotFound(new ApiResponse<string> { Message = "the field is deleted or not found " });
-                await ClsInvoices.Delete(id);
-                var username = UserManager.GetUserName(User);
-                var userId = UserManager.GetUserId(User);
-                await ClsLogs.Add("CRUD", $"{invoice.Invoice.Id} Deleted from the System by {username}", userId);
+//        }
+//        [HttpDelete("Delete/{id}")]
+//        public async Task<ActionResult<ApiResponse<string>>> Delete(int id)
+//        {
+//            try
+//            {
+//                var invoice = await ClsInvoices.GetById(id);
+//                if (invoice == null)
+//                    return NotFound(new ApiResponse<string> { Message = "the field is deleted or not found " });
+//                await ClsInvoices.Delete(id);
+//                var username = UserManager.GetUserName(User);
+//                var userId = UserManager.GetUserId(User);
+//                await ClsLogs.Add("CRUD", $"{invoice.Invoice.Id} Deleted from the System by {username}", userId);
 
-                return Ok(new ApiResponse<string> { Data = "done" });
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<string> { Message = ex.Message });
-            }
-        }
+//                return Ok(new ApiResponse<string> { Data = "done" });
+//            }
+//            catch (Exception ex)
+//            {
+//                await ClsLogs.Add("Error", ex.Message, null);
+//                return BadRequest(new ApiResponse<string> { Message = ex.Message });
+//            }
+//        }
 
-        [HttpGet("GetAll")]
-        public async Task<ActionResult<ApiResponse<List<TbInvoice>>>> GetAll([FromQuery] int Page, [FromQuery] int Count)
-        {
-            try
-            {
-                var invoice = await ClsInvoices.GetAll(Page, Count);
-                if (invoice == null)
-                    return NotFound(new ApiResponse<string> { Message = "There is no Customers" });
-                return Ok(new ApiResponse<List<TbInvoice>> { Data = invoice});
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<List<TbInvoice>> { Message = ex.Message });
-            }
-        }
+//        [HttpGet("GetAll")]
+//        public async Task<ActionResult<ApiResponse<List<TbInvoice>>>> GetAll([FromQuery] int Page, [FromQuery] int Count)
+//        {
+//            try
+//            {
+//                var invoice = await ClsInvoices.GetAll(Page, Count);
+//                if (invoice == null)
+//                    return NotFound(new ApiResponse<string> { Message = "There is no Customers" });
+//                return Ok(new ApiResponse<List<TbInvoice>> { Data = invoice});
+//            }
+//            catch (Exception ex)
+//            {
+//                await ClsLogs.Add("Error", ex.Message, null);
+//                return BadRequest(new ApiResponse<List<TbInvoice>> { Message = ex.Message });
+//            }
+//        }
 
-        [HttpGet("GetById/{id}")]
-        public async Task<ActionResult<ApiResponse<InvoiceModel>>> GetById(int id)
-        {
-            try
-            {
-                var invoice = await ClsInvoices.GetById(id);
-                if (invoice == null)
-                    return NotFound(new ApiResponse<string> { Message = "The customer " });
-                return Ok(new ApiResponse<InvoiceModel> { Data = invoice });
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<InvoiceModel> { Message = ex.Message });
-            }
-        }
-        [HttpGet("EditHistory")]
-        public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory([FromQuery] int page, [FromQuery] int id, [FromQuery] int count)
-        {
-            try 
-            {
-                var history = await ClsInvoices.LstEditHistory(page, id, count);
-                if (history == null)
-                {
-                    return NotFound(new ApiResponse<object> { Message = "There is No edit History" });
-                }
-                return Ok(new ApiResponse<List<TbHistory>> { Data = history });
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<List<TbHistory>> { Message = ex.Message });
-            }
-        }
-        [HttpGet("Search")]
-        public async Task<ActionResult<ApiResponse<object>>> Search([FromQuery] string name, [FromQuery] int page, [FromQuery] int count)
-        {
-            try
-            {
-                var Invoice = await ClsInvoices.Search(name, page, count);
-                if (Invoice == null)
-                {
-                    return NotFound(new ApiResponse<object> { Message = "No result" });
-                }
-                return Ok(new ApiResponse<object>
-                {
-                    Data = Invoice
-                });
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<List<TbInvoice>>
-                {
-                    Message = ex.Message,
+//        [HttpGet("GetById/{id}")]
+//        public async Task<ActionResult<ApiResponse<InvoiceModel>>> GetById(int id)
+//        {
+//            try
+//            {
+//                var invoice = await ClsInvoices.GetById(id);
+//                if (invoice == null)
+//                    return NotFound(new ApiResponse<string> { Message = "The customer " });
+//                return Ok(new ApiResponse<InvoiceModel> { Data = invoice });
+//            }
+//            catch (Exception ex)
+//            {
+//                await ClsLogs.Add("Error", ex.Message, null);
+//                return BadRequest(new ApiResponse<InvoiceModel> { Message = ex.Message });
+//            }
+//        }
+//        [HttpGet("EditHistory")]
+//        public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory([FromQuery] int page, [FromQuery] int id, [FromQuery] int count)
+//        {
+//            try 
+//            {
+//                var history = await ClsInvoices.LstEditHistory(page, id, count);
+//                if (history == null)
+//                {
+//                    return NotFound(new ApiResponse<object> { Message = "There is No edit History" });
+//                }
+//                return Ok(new ApiResponse<List<TbHistory>> { Data = history });
+//            }
+//            catch (Exception ex)
+//            {
+//                await ClsLogs.Add("Error", ex.Message, null);
+//                return BadRequest(new ApiResponse<List<TbHistory>> { Message = ex.Message });
+//            }
+//        }
+//        [HttpGet("Search")]
+//        public async Task<ActionResult<ApiResponse<object>>> Search([FromQuery] string name, [FromQuery] int page, [FromQuery] int count)
+//        {
+//            try
+//            {
+//                var Invoice = await ClsInvoices.Search(name, page, count);
+//                if (Invoice == null)
+//                {
+//                    return NotFound(new ApiResponse<object> { Message = "No result" });
+//                }
+//                return Ok(new ApiResponse<object>
+//                {
+//                    Data = Invoice
+//                });
+//            }
+//            catch (Exception ex)
+//            {
+//                await ClsLogs.Add("Error", ex.Message, null);
+//                return BadRequest(new ApiResponse<List<TbInvoice>>
+//                {
+//                    Message = ex.Message,
 
-                });
-            }
+//                });
+//            }
 
-        }
-        [HttpGet("GetCount")]
-        public async Task<ActionResult<ApiResponse<int>>> GetCount()
-        {
-            try
-            {
-                var Invoice = await ClsInvoices.Count();
-                if (Invoice == 0 || Invoice == null)
-                {
-                    return NotFound(new ApiResponse<int> { Message = "There is no invoices" });
-                }
+//        }
+//        [HttpGet("GetCount")]
+//        public async Task<ActionResult<ApiResponse<int>>> GetCount()
+//        {
+//            try
+//            {
+//                var Invoice = await ClsInvoices.Count();
+//                if (Invoice == 0 || Invoice == null)
+//                {
+//                    return NotFound(new ApiResponse<int> { Message = "There is no invoices" });
+//                }
 
-                return Ok(new ApiResponse<int>
-                {
-                    Data = Invoice
-                });
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<List<int>>
-                {
-                    Message = ex.Message,
+//                return Ok(new ApiResponse<int>
+//                {
+//                    Data = Invoice
+//                });
+//            }
+//            catch (Exception ex)
+//            {
+//                await ClsLogs.Add("Error", ex.Message, null);
+//                return BadRequest(new ApiResponse<List<int>>
+//                {
+//                    Message = ex.Message,
 
-                });
-            }
+//                });
+//            }
 
-        }
-    }
-}
+//        }
+//    }
+//}

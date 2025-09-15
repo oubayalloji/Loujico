@@ -73,7 +73,7 @@ namespace Loujico.Models
        
         public virtual ICollection<TbCustomersProduct> TbCustomersProducts { get; set; } = new List<TbCustomersProduct>();
         
-        public virtual ICollection<TbInvoice> TbInvoices { get; set; } = new List<TbInvoice>();
+        //public virtual ICollection<TbInvoice> TbInvoices { get; set; } = new List<TbInvoice>();
     
         public virtual ICollection<TbProject> TbProjects { get; set; } = new List<TbProject>();
     }

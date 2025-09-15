@@ -196,10 +196,10 @@ namespace Loujico.BL
         {
             try
             {
-                var LstProject = await ClsHistory.GetAllHistory(Pageid, id, "TbProject", count);
-                if (LstProject != null)
+                var LstProject = await ClsHistory.GetAllHistory(Pageid, id, tableName.project, count);
+                if (LstProject == null)
                 {
-                    return new List<TbHistory>();
+                    return null;
                 }
                 else
                 {
@@ -294,7 +294,9 @@ namespace Loujico.BL
             try
             {
                 var projectDto = await CTX.TbProjects
-            .Where(p => p.Id == id && !p.IsDeleted).Include(i => i.TbInvoices).Include(i => i.TbProjectsEmployees).Select(p => new
+            .Where(p => p.Id == id && !p.IsDeleted)
+           // .Include(i => i.TbInvoices)
+            .Include(i => i.TbProjectsEmployees).Select(p => new
             {
                 p.Id,
                 p.Title,

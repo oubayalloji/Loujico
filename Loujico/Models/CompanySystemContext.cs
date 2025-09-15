@@ -29,7 +29,7 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
 
     public virtual DbSet<TbHistory> TbHistories { get; set; }
 
-    public virtual DbSet<TbInvoice> TbInvoices { get; set; }
+    //public virtual DbSet<TbInvoice> TbInvoices { get; set; }
 
     public virtual DbSet<TbLog> TbLogs { get; set; }
 
@@ -203,42 +203,42 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
                 .HasColumnName("table_name");
         });
 
-        modelBuilder.Entity<TbInvoice>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK__TbInvoic__3213E83FB6962AD5");
+        //modelBuilder.Entity<TbInvoice>(entity =>
+        //{
+        //    entity.HasKey(e => e.Id).HasName("PK__TbInvoic__3213E83FB6962AD5");
 
-            entity.ToTable(tb => tb.HasTrigger("TRG_Invoices_History"));
+        //    entity.ToTable(tb => tb.HasTrigger("TRG_Invoices_History"));
 
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Amount)
-                .HasDefaultValue(0.00m)
-                .HasColumnType("decimal(10, 2)")
-                .HasColumnName("amount");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(sysutcdatetime())")
-                .HasColumnName("created_at");
-            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.CustomerId).HasColumnName("customer_id");
-            entity.Property(e => e.DueDate).HasColumnName("due_date");
-            entity.Property(e => e.InvoiceStatus).HasMaxLength(50);
-            entity.Property(e => e.InvoicesDate)
-                .HasDefaultValueSql("(sysutcdatetime())")
-                .HasColumnName("invoices_date");
-            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
-            entity.Property(e => e.LastVisit).HasColumnName("last_visit");
-            entity.Property(e => e.ProjectId).HasColumnName("project_id");
-            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
+        //    entity.Property(e => e.Id).HasColumnName("id");
+        //    entity.Property(e => e.Amount)
+        //        .HasDefaultValue(0.00m)
+        //        .HasColumnType("decimal(10, 2)")
+        //        .HasColumnName("amount");
+        //    entity.Property(e => e.CreatedAt)
+        //        .HasDefaultValueSql("(sysutcdatetime())")
+        //        .HasColumnName("created_at");
+        //    entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+        //    entity.Property(e => e.CustomerId).HasColumnName("customer_id");
+        //    entity.Property(e => e.DueDate).HasColumnName("due_date");
+        //    entity.Property(e => e.InvoiceStatus).HasMaxLength(50);
+        //    entity.Property(e => e.InvoicesDate)
+        //        .HasDefaultValueSql("(sysutcdatetime())")
+        //        .HasColumnName("invoices_date");
+        //    entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        //    entity.Property(e => e.LastVisit).HasColumnName("last_visit");
+        //    entity.Property(e => e.ProjectId).HasColumnName("project_id");
+        //    entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        //    entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
 
-            entity.HasOne(d => d.Customer).WithMany(p => p.TbInvoices)
-                .HasForeignKey(d => d.CustomerId)
-                .HasConstraintName("FK_invoices_customers");
+        //    entity.HasOne(d => d.Customer).WithMany(p => p.TbInvoices)
+        //        .HasForeignKey(d => d.CustomerId)
+        //        .HasConstraintName("FK_invoices_customers");
 
-            entity.HasOne(d => d.Project).WithMany(p => p.TbInvoices)
-                .HasForeignKey(d => d.ProjectId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("FK_invoices_projects");
-        });
+        //    entity.HasOne(d => d.Project).WithMany(p => p.TbInvoices)
+        //        .HasForeignKey(d => d.ProjectId)
+        //        .OnDelete(DeleteBehavior.SetNull)
+        //        .HasConstraintName("FK_invoices_projects");
+        //});
 
         modelBuilder.Entity<TbLog>(entity =>
         {

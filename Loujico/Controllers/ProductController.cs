@@ -66,20 +66,20 @@ namespace Loujico.Controllers
         
         }
 
-        [HttpGet("GetById/{id}")]
-        public async Task<ActionResult<ApiResponse<ProductModel>>> GetById(int id)
-        {
-            try
-            {
-                var invoice = await ClsProducts.GetById(id);
-                return Ok(new ApiResponse<ProductModel> { Data = invoice });
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<InvoiceModel> { Message = ex.Message });
-            }
-        }
+        //[HttpGet("GetById/{id}")]
+        //public async Task<ActionResult<ApiResponse<ProductModel>>> GetById(int id)
+        //{
+        //    try
+        //    {
+        //        var invoice = await ClsProducts.GetById(id);
+        //        return Ok(new ApiResponse<ProductModel> { Data = invoice });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await ClsLogs.Add("Error", ex.Message, null);
+        //        return BadRequest(new ApiResponse<InvoiceModel> { Message = ex.Message });
+        //    }
+        //}
         [HttpPatch("Edit")]
         public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] TbProduct Product, [FromForm] List<FileModel>? Data)
         {

@@ -53,7 +53,7 @@ namespace Loujico.BL
                                 .AsNoTracking()
                                 .Include(c => c.TbCustomersProducts)
                                 .Include(c => c.TbProjects)
-                                .Include(c => c.TbInvoices)
+                               // .Include(c => c.TbInvoices)
                                 .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
                 if (cus == null)
                 {
