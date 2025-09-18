@@ -35,11 +35,12 @@ namespace Loujico.Controllers
         {
             try
             {
-                var UserName = await userManager.GetUserAsync(User);
-                var roles = await userManager.GetRolesAsync(UserName);
+                var user = await userManager.GetUserAsync(User);
+                var userName =  userManager.GetUserName(User);
+                var roles = await userManager.GetRolesAsync(user);
                 return Ok(new
                 {
-                    username = UserName,
+                    username = userName,
                     role = roles
                 });
             }

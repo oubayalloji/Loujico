@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Loujico.Controllers
 {
@@ -18,10 +19,10 @@ namespace Loujico.Controllers
         Ilog ClsLogs;
         IHistory ClsHistory;
         IFiles ClsFiles;
-      
+
         CompanySystemContext CTX;
         UserManager<ApplicationUser> UserManager;
-        public ProductController(IProducts clsProducts, CompanySystemContext context, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles,Ilog clsLogs)
+        public ProductController(IProducts clsProducts, CompanySystemContext context, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles, Ilog clsLogs)
         {
             ClsProducts = clsProducts;
             CTX = context;
@@ -34,37 +35,68 @@ namespace Loujico.Controllers
         }
         [HttpPost("Add")]
         [Authorize]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbProduct prod, [FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] AddProductModel dto, [FromForm] List<FileModel>? Data)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new ApiResponse<string> { Message = "wronge" });
-            }
-
             try
             {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
                 var username = UserManager.GetUserName(User);
-                var userId = UserManager.GetUserId(User);
-                prod.CreatedBy = username;
-                await ClsProducts.Add(prod);
-                await ClsLogs.Add("CRUD", $"{prod.Id} added to the System by {username}", userId);
+                var product = new TbProduct
+                {
+                    ProductName = dto.ProductName,
+                    ProductDescription = dto.ProductDescription,
+                    BillingCycle = dto.BillingCycle,
+                    Price = dto.Price,
+                    IsActive = dto.IsActive,
+                    CreatedAt = DateTime.Now,
+                    CreatedBy = username,
+                   
+
+                };
+
+                // ربط الموظفين بالمشروع
+                foreach (var emp in dto.Employees)
+                {
+                    product.TbProductsEmployees.Add(new TbProductsEmployee
+                    {
+                        EmployeeId = emp.EmployeeId,
+                        RoleOnProduct = emp.RoleOnProject,
+                        JoinedAt = DateTime.Now
+                    });
+                }
+
+                CTX.TbProducts.Add(product);
+                await CTX.SaveChangesAsync();
                 if (Data != null)
                 {
                     foreach (var item in Data)
                     {
-                        await ClsFiles.Add(item, "Products", prod.Id, tableName.product);
+                        await ClsFiles.Add(item, "Products", product.Id, tableName.product);
                     }
                 }
-                return Ok(new ApiResponse<string> { Message = "Done" });
+                var usename = UserManager.GetUserName(User);
+                var userId = UserManager.GetUserId(User);
+                await ClsLogs.Add("CRUD", $"{dto.ProductName} Added to the System by {usename} ", userId);
+
+                return Ok(new { product.Id, message = "تمت إضافة المشروع بنجاح" });
             }
 
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<string> { Message = ex.Message });
+                return BadRequest(new ApiResponse<List<TbProject>>
+                {
+                    Message = ex.Message,
+
+                });
             }
-        
+
+
         }
+
+    
 
         [HttpGet("GetById/{id}")]
         public async Task<ActionResult<ApiResponse<ProductModel>>> GetById(int id)
@@ -81,57 +113,89 @@ namespace Loujico.Controllers
             }
         }
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] TbProduct Product, [FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] AddProductModel dto, [FromForm] List<FileModel>? Data)
         {
 
             if (!ModelState.IsValid)
+                return BadRequest(new ApiResponse<string> { Message = "Invalid payload." });
+
+            // جلب المشروع مع علاقات الموظفين (المحذوفين يُستبعدون تلقائياً عبر HasQueryFilter)
+            var prod = await CTX.TbProducts
+                .Include(p => p.TbProductsEmployees)
+                .FirstOrDefaultAsync(p => p.Id == dto.Id && !p.IsDeleted);
+
+            if (prod == null)
+                return NotFound(new ApiResponse<string> { Message = "product not found." });
+
+            var username = UserManager.GetUserName(User);
+            var userId = UserManager.GetUserId(User);
+
+            // تحديث خصائص المشروع
+            prod.ProductName = dto.ProductName;
+            prod.ProductDescription = dto.ProductDescription;
+            prod.BillingCycle = dto.BillingCycle;
+            prod.Price = dto.Price;
+
+            prod.IsActive = dto.IsActive;
+            prod.UpdatedAt = DateTime.Now;
+            prod.UpdatedBy = username;
+
+            // 1. علّم جميع روابط الموظفين الحالية محذوفة
+            foreach (var link in prod.TbProductsEmployees)
             {
-
-                return BadRequest(new ApiResponse<String>
-                {
-
-                    Message = "wronge"
-
-                });
-
+                link.IsDeleted = true;
             }
-            try
+
+            // 2. عُد تفعيل أو أضف الروابط الواردة في dto.Employees
+            foreach (var empDto in dto.Employees ?? Enumerable.Empty<EmployeeOnProjectModel>())
             {
-                var username = UserManager.GetUserName(User);
-                var userId = UserManager.GetUserId(User);
-                Product.UpdatedBy = username;
-                await ClsProducts.Edit(Product);
+                var match = prod.TbProductsEmployees
+                    .FirstOrDefault(pe =>
+                        pe.EmployeeId == empDto.EmployeeId &&
+                        pe.RoleOnProduct == empDto.RoleOnProject);
 
-                await ClsLogs.Add("CRUD", $"id : {Product.Id} with name : {Product.ProductName} updated to the System by {username} ", userId);
-                if (Data != null)
+                if (match != null)
                 {
-                    foreach (var item in Data)
-                    {
-                        await ClsFiles.Add(item, "Products", Product.Id, tableName.product);
-                        await ClsLogs.Add("CRUD", $"file {item.fileType} added to : {Product.ProductName} by {username} ", userId);
-
-                    }
+                    // إعادة التفعيل وتحديث وقت الانضمام
+                    match.IsDeleted = false;
+                    match.JoinedAt = DateTime.Now;
                 }
-
-                return Ok(new ApiResponse<String>
+                else
                 {
-                 
-                    Message = "Done"
-
-                });
+                    // إضافة سجل جديد للموظف
+                    prod.TbProductsEmployees.Add(new TbProductsEmployee
+                    {
+                        EmployeeId = empDto.EmployeeId,
+                        RoleOnProduct = empDto.RoleOnProject,
+                        JoinedAt = DateTime.Now,
+                        IsDeleted = false
+                    });
+                }
             }
-            catch (Exception ex)
+
+            // حفظ التعديلات دفعة واحدة
+            await CTX.SaveChangesAsync();
+
+            // تسجيل السجلّات
+            await ClsLogs.Add("CRUD", $"product '{prod.ProductName}' updated by {username}.", userId);
+
+            // معالجة الملفات إن وجدت
+            if (Data != null)
             {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<List<TbProduct>>
+                foreach (var file in Data)
                 {
-                    Message = ex.Message,
-
-                });
+                    await ClsFiles.Add(file, "products", prod.Id, tableName.product);
+                    await ClsLogs.Add(
+                        "CRUD",
+                        $"File '{file.fileType}' added to Product '{prod.ProductName}' by {username}.",
+                        userId);
+                }
             }
 
-
+            return Ok(new ApiResponse<string> { Message = "Done" });
         }
+
+
         [HttpGet("EditHistory")] 
         public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory([FromQuery] int page, [FromQuery] int id, [FromQuery] int count)
         {
