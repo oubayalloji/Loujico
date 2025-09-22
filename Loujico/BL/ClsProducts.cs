@@ -10,6 +10,7 @@ namespace Loujico.BL
     {
         public Task<List<TbProduct>> GetAllProducts(int id, int count);
         public Task<ProductModel?> GetById(int id);
+        public Task<TbProduct?> GetByIdModel(int id);
         public Task<bool> Add(TbProduct product);
         public Task<bool> Edit(TbProduct product);
         public Task<bool> Delete(int id);
@@ -31,6 +32,26 @@ namespace Loujico.BL
             ClsLogs = clsLogs;
             ClsHistory = clsHistory;
         }
+        public async Task<TbProduct> GetByIdModel(int id)
+        {
+            try
+            {
+                var projectDto = await CTX.TbProducts.Where(p => p.Id == id && p.IsActive && !p.IsDeleted).FirstOrDefaultAsync();
+                    if (projectDto == null)
+                {
+                    return null;
+                }
+
+                return projectDto; // نوع الدالة Task<ProjectWithEmployeesDto>
+
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        }
+
         public async Task<bool> Edit(TbProduct product)
         {
             try
@@ -73,10 +94,30 @@ namespace Loujico.BL
         {
             try
             {
-                var Product = await CTX.TbProducts
+                var Product = await CTX.TbProducts.Where(p => p.Id == id && p.IsActive && !p.IsDeleted)
                                 .Include(p => p.TbCustomersProducts)
-                                .Include(p => p.TbProductsEmployees)
-                                .FirstOrDefaultAsync(p => p.Id == id && p.IsActive && !p.IsDeleted);
+                                .Include(i => i.TbProductsEmployees).Select(p => new
+                                {
+                                    p.Id,
+                                    p.BillingCycle,
+                                    p.ProductDescription,
+                                    p.ProductName,
+                                    p.IsActive,
+                                    p.Price,
+                                    p.CreatedBy,
+                                    p.CreatedAt,
+                                    p.UpdatedBy,
+                                    p.UpdatedAt,
+                                    Employees = p.TbProductsEmployees.Select(pe => new
+                                    {
+                                        pe.EmployeeId,
+                                        pe.RoleOnProduct,
+                                        pe.Employee.FirstName,
+                                        pe.Employee.LastName
+                                    })
+                                
+                                }) .FirstOrDefaultAsync();
+                                
                 if (Product == null)
                 {
                     return null;

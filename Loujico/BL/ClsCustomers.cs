@@ -60,7 +60,7 @@ namespace Loujico.BL
                     return null;
                 }
                 var files = await CTX.TbFiles
-                      .Where(f => f.EntityId == cus.Id && f.EntityType == tableName.Employee && !f.IsDeleted)
+                      .Where(f => f.EntityId == cus.Id && f.EntityType == tableName.Customer && !f.IsDeleted)
                       .ToListAsync();
                 var result = new CustomerModel
                 {

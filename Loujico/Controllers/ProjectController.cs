@@ -155,7 +155,13 @@ namespace Loujico.Controllers
             {
                 link.IsDeleted = true;
             }
-
+            if (Data != null)
+            {
+                foreach (var item in Data)
+                {
+                    await ClsFiles.Add(item, "Projects", proj.Id, tableName.project);
+                }
+            }
             // 2. عُد تفعيل أو أضف الروابط الواردة في dto.Employees
             foreach (var empDto in dto.Employees ?? Enumerable.Empty<EmployeeOnProjectModel>())
             {

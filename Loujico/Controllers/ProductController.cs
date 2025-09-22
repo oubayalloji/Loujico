@@ -246,13 +246,13 @@ namespace Loujico.Controllers
         {
             try
             {
-                var Product = await ClsProducts.GetById(id);
+                var Product = await ClsProducts.GetByIdModel(id);
                 await ClsProducts.Delete(id);
 
                 // من هون 
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                await ClsLogs.Add("CRUD", $"{Product.Product.ProductName} Deleted from the System by {username} ", userId);
+                await ClsLogs.Add("CRUD", $"{Product.ProductName} Deleted from the System by {username} ", userId);
                 // لهون هو تسجيل الlog  
                 return Ok(new ApiResponse<String>
                 {
