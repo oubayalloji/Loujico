@@ -24,6 +24,7 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
     public virtual DbSet<Co_Industry> Co_Industries { get; set; }
     public  virtual DbSet<Co_Activity> Co_Activities { get; set; }
     public virtual DbSet<Co_Company_Name> Co_Companies { get; set; }
+    public virtual DbSet<Co_CompanyEmployee> Co_CompanyEmployees { get; set; }
     public virtual DbSet<Co_Contact> Co_Contacts { get; set; }
     public virtual DbSet<Co_Legal> Co_Legals { get; set; }
     public virtual DbSet<TbCustomer> TbCustomers { get; set; }
