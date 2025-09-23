@@ -44,6 +44,7 @@ namespace Loujico.Models
 
         public ICollection<Co_Contact> Contacts { get; set; }
         public ICollection<Co_Legal> Legals { get; set; }
+        public ICollection<Co_CompanyEmployee> CompanyEmployees { get; set; }
     }
 
 
