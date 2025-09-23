@@ -10,7 +10,7 @@ namespace Loujico.BL
     {
         public  Task<List<Co_Company_Name>> GetAll(int id, int count, string? legalFilter);
         public Task<List<object>> GetAllCustomersIdAndName();
-        public Task<CustomerModel> GetById(int id);
+        public Task<CompanyModel> GetById(int id);
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
         public Task<bool> Edit(Co_Company_Name Company);
         public Task<bool> Add(Co_Company_Name Company);
@@ -23,7 +23,7 @@ namespace Loujico.BL
         CompanySystemContext CTX;
         Ilog ClsLogs;
         IHistory ClsHistory;
-        const int pageSize = 10;
+
         public ClsCompany(CompanySystemContext companySystemContext, Ilog clsLogs, IHistory clsHistory)
         {
             CTX = companySystemContext;
@@ -60,7 +60,7 @@ namespace Loujico.BL
                 return null;
             }
         }
-        public async Task<CustomerModel> GetById(int id)
+        public async Task<CompanyModel> GetById(int id)
         {
             try
             {
@@ -79,9 +79,9 @@ namespace Loujico.BL
                 var files = await CTX.TbFiles
                       .Where(f => f.EntityId == cus.Id && f.EntityType == tableName.Company && !f.IsDeleted)
                       .ToListAsync();
-                var result = new CustomerModel
+                var result = new CompanyModel
                 {
-                    Customer = cus,
+                    Company = cus,
                     Files = files,
 
                 }; return result;
@@ -223,6 +223,7 @@ namespace Loujico.BL
                 return null;
             }
         }
+      
 
         public async Task<int> Count( string? legalFilter)
         {
