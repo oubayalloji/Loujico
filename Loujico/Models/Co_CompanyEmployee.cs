@@ -13,9 +13,13 @@ namespace Loujico.Models
         [ForeignKey("CompanyId")]
         public Co_Company_Name Company { get; set; }
 
-        [Required(ErrorMessage = "اسم الموظف مطلوب")]
+        [Required(ErrorMessage = "اسم الموظف الأول مطلوب")]
         [StringLength(150)]
-        public string FullName { get; set; }   // الاسم الكامل للموظف
+        public string FirstName { get; set; }   // الاسم الكامل للموظف
+
+        [Required(ErrorMessage = "اسم الموظف الثاني مطلوب")]
+        [StringLength(150)]
+        public string LastName { get; set; }   // الاسم الكامل للموظف
 
         [Required(ErrorMessage = "المنصب مطلوب")]
         [StringLength(100)]
