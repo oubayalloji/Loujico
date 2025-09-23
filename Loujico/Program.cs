@@ -21,7 +21,7 @@ namespace Loujico
             builder.Services.AddScoped<Ilog, ClsLogs>();
             builder.Services.AddScoped<IProducts, ClsProducts>();
             builder.Services.AddScoped<IHistory, ClsHistory>();
-            builder.Services.AddScoped<ICustomers, ClsCustomers>();
+            builder.Services.AddScoped<ICustomers, ClsCustomer>();
           //  builder.Services.AddScoped<IInvoices, ClsInvoices>();
             builder.Services.AddScoped<IFiles, ClsFiles>();
             builder.Services.AddDbContext<CompanySystemContext>(options =>

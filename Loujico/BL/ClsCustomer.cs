@@ -17,13 +17,13 @@ namespace Loujico.BL
         public Task<int> Count();
         public Task<List<TbCustomer>> Search(string name, int page, int count);
     }
-    public class ClsCustomers : ICustomers
+    public class ClsCustomer : ICustomers
     {
         CompanySystemContext CTX;
         Ilog ClsLogs;
         IHistory ClsHistory;
         const int pageSize = 10;
-        public ClsCustomers(CompanySystemContext companySystemContext, Ilog clsLogs, IHistory clsHistory)
+        public ClsCustomer(CompanySystemContext companySystemContext, Ilog clsLogs, IHistory clsHistory)
         {
             CTX = companySystemContext;
             ClsLogs = clsLogs;

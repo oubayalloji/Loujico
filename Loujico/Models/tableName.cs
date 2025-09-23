@@ -10,5 +10,6 @@
         public const string log = "TbLogs";
         public const string product = "TbProducts";
         public const string project = "TbProjects";
+        public const string Company = "Co_Companies";
     }
 }
