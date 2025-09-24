@@ -28,16 +28,10 @@ namespace Loujico.Models
         [StringLength(100)]
         public string Department { get; set; }   // القسم (مالية، تسويق...)
 
-        [StringLength(20)]
-        [RegularExpression(@"^[0-9+\-\s]{6,20}$", ErrorMessage = "رقم الهاتف غير صالح")]
-        public string? Phone { get; set; }   // رقم الهاتف
-
-        [EmailAddress(ErrorMessage = "البريد الإلكتروني غير صالح")]
-        [StringLength(150)]
-        public string? Email { get; set; }   // البريد الإلكتروني
-
         [StringLength(500)]
         public string? Notes { get; set; }   // ملاحظات إضافية
+
+        public ICollection<Co_Contact> Contacts { get; set; }
 
     }
 }

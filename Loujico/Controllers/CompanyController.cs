@@ -123,8 +123,7 @@ namespace Loujico.Controllers
                             FirstName = emp.FirstName,
                             LastName = emp.LastName,
                             Position = emp.Position,
-                            Phone = emp.Phone,
-                            Email = emp.Email
+                            
                         });
                     }
                 }
@@ -223,8 +222,7 @@ namespace Loujico.Controllers
                     LastName = e.LastName,
                     Position = e.Position,
                     Department = e.Department,
-                    Phone = e.Phone,
-                    Email = e.Email,
+                 
                     Notes = e.Notes
                 }).ToList() ?? new List<Co_CompanyEmployee>();
 

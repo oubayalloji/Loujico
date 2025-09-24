@@ -22,5 +22,10 @@ namespace Loujico.Models
         [Required(ErrorMessage = "معلومة الاتصال مطلوبة")]
         [StringLength(150)]
         public string Name { get; set; }
+
+        public int? EmployeeId { get; set; }
+
+        [ForeignKey("EmployeeId")]
+        public Co_CompanyEmployee Employee { get; set; }
     }
 }
