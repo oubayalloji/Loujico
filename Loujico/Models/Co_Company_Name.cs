@@ -40,10 +40,11 @@ namespace Loujico.Models
 
         // Navigation
         public ICollection<Co_Address> Addresses { get; set; }
-        public ICollection<Co_Activity> Activity { get; set; }
+        public ICollection<CompanyActivity> CompanyActivities { get; set; }
 
         public ICollection<Co_Contact> Contacts { get; set; }
-        public ICollection<Co_Legal> Legals { get; set; }
+        public ICollection<CompanyLegal> CompanyLegals { get; set; }
+
         public ICollection<Co_CompanyEmployee> CompanyEmployees { get; set; }
     }
 

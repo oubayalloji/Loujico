@@ -7,14 +7,11 @@ namespace Loujico.Models
     {
         public int Id { get; set; }
 
-        [Required]
-        public int CompanyId { get; set; }
-
-        [ForeignKey("CompanyId")]
-        public Co_Company_Name Company { get; set; }
-
         [Required(ErrorMessage = "المعلومة القانونية مطلوبة")]
         [StringLength(200)]
         public string LegalInfo { get; set; }
+
+        public ICollection<CompanyLegal> CompanyLegals { get; set; }
+
     }
 }

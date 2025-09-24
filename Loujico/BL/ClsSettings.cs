@@ -13,7 +13,10 @@ namespace Loujico.BL
         public Task<bool> AddIndustry(Co_Industry Industry);
         public  Task<List<object>> GetAllLegalType();
         public  Task<bool> DeleteLegal(int Id);
-        public Task<bool> AddLegal(Co_Legal Legal);
+        public Task<bool> AddLegal(Co_Legal Legal);   
+        public  Task<List<object>> GetAllActivityType();
+        public  Task<bool> DeleteActivity(int Id);
+        public Task<bool> AddActivity(Co_Activity Legal);
     }
     public class ClsSettings : Isettings
     {
@@ -192,6 +195,69 @@ namespace Loujico.BL
             {
                 var result = await CTX.TbContact
                     .AsNoTracking()
+                    .Select(x => new
+                    {
+                        x.Id,
+                        x.Name
+                    })
+                    .ToListAsync();
+                if (result == null)
+                {
+                    return null;
+                }
+
+                return result.Cast<object>().ToList();
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        } 
+        #endregion 
+
+        #region Activity
+
+        public async Task<bool> AddActivity(Co_Activity Activity)
+        {
+            try
+            {
+                await CTX.Co_Activities.AddAsync(Activity);
+                await CTX.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return false;
+            }
+        }
+        public async Task<bool> DeleteActivity(int Id)
+        {
+            try
+            {
+                var contact = await CTX.Co_Activities.FirstOrDefaultAsync(x => x.Id == Id);
+                if (contact == null)
+                {
+                    return false;
+                }
+                CTX.Co_Activities.Remove(contact);
+                await CTX.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return false;
+            }
+        }
+        public async Task<List<object>> GetAllActivityType()
+        {
+            try
+            {
+                var result = await CTX.Co_Activities
+                    .AsNoTracking()
+                    .Include(x=>x.CompanyActivities)
                     .Select(x => new
                     {
                         x.Id,
