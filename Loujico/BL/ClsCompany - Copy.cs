@@ -229,7 +229,7 @@ namespace Loujico.BL
         {
             try
             {
-                var customer = await CTX.Co_Companies.AsNoTracking().Where(c => c.IsDeleted == false||  c.Legals.Any(l => l.LegalInfo == legalFilter)).CountAsync();
+                var customer = await CTX.Co_Companies.AsNoTracking().Where(c => c.IsDeleted == false && c.Legals.Any(l => l.LegalInfo == legalFilter)).CountAsync();
                 if (customer == null)
                     return 0;
                 return customer;

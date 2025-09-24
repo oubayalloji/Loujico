@@ -4,7 +4,7 @@
     {
         // خصائص الشركة الأساسية
 
-        public int Id { get; set; }
+        //public int Id { get; set; }
         public string Name { get; set; }
         public string Comm_No { get; set; }
         public string? Tax_No { get; set; }
