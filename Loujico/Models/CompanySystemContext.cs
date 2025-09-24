@@ -16,8 +16,9 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
         : base(options)
     {
     }
+    public virtual DbSet<CompanyLegal> Co_CompanyLegals { get; set; }
 
-
+    public DbSet<CompanyActivity> Co_CompanyActivities { get; set; }
     public virtual DbSet<TbCountry> TbCountries { get; set; }
     public virtual DbSet<TbContact> TbContact { get; set; }
     public virtual DbSet<TbState> TbStates { get; set; }

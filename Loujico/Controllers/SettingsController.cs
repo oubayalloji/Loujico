@@ -37,7 +37,7 @@ namespace Loujico.Controllers
             {
                 var Customer = await ClsSettings.GetAllLegalType();
                 if (Customer == null)
-                    return NotFound(new ApiResponse<string> { Message = "There is no Customers" });
+                    return NotFound(new ApiResponse<string> { Message = "There is no Legals" });
                 return Ok(new ApiResponse<List<object>>
                 {
                     Data = Customer
@@ -103,13 +103,38 @@ namespace Loujico.Controllers
                 });
 
             }
+        }   
+        [HttpGet("GetAllActivityType")]
+        public async Task<ActionResult<ApiResponse<List<object>>>> GetAllActivityType()
+        {
+
+            try
+            {
+                var Activity = await ClsSettings.GetAllActivityType();
+                if (Activity == null)
+                    return NotFound(new ApiResponse<string> { Message = "There is no Activities" });
+                return Ok(new ApiResponse<List<object>>
+                {
+                    Data = Activity
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<object>>
+                {
+                    Message = ex.Message,
+
+                });
+
+            }
         }
 
 
 
 
         [HttpPost("AddIndustry")]
-        public async Task<ActionResult<ApiResponse<string>>> AddIndustry([FromForm] Co_Industry emp)
+        public async Task<ActionResult<ApiResponse<string>>> AddIndustry([FromForm] string Name)
         {
 
             if (!ModelState.IsValid)
@@ -123,10 +148,11 @@ namespace Loujico.Controllers
             {
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-         
-                await ClsSettings.AddIndustry(emp);
+                Co_Industry co_Industry = new Co_Industry();
+                co_Industry.Name = Name;
+                await ClsSettings.AddIndustry(co_Industry);
                 // من هون 
-                await ClsLogs.Add("CRUD", $"{emp.Name} added to the System by {username} ", userId);
+                await ClsLogs.Add("CRUD", $"{co_Industry.Name} added to the System by {username} ", userId);
                 return Ok(new ApiResponse<String>
                 {
 
@@ -145,9 +171,9 @@ namespace Loujico.Controllers
             }
 
 
-        }    
+        }
         [HttpPost("AddContact")]
-        public async Task<ActionResult<ApiResponse<string>>> AddContact([FromForm] TbContact emp)
+        public async Task<ActionResult<ApiResponse<string>>> AddContact([FromForm] string name)
         {
 
             if (!ModelState.IsValid)
@@ -159,12 +185,14 @@ namespace Loujico.Controllers
             }
             try
             {
+                TbContact contact = new TbContact();
+                contact.Name = name;
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-         
-                await ClsSettings.AddContact(emp);
+
+                await ClsSettings.AddContact(contact);
                 // من هون 
-                await ClsLogs.Add("CRUD", $"{emp.Name} added to the System by {username} ", userId);
+                await ClsLogs.Add("CRUD", $"{contact.Name} added to the System by {username} ", userId);
                 return Ok(new ApiResponse<string>
                 {
 
@@ -183,9 +211,9 @@ namespace Loujico.Controllers
             }
 
 
-        }    
+        }
         [HttpPost("AddLegal")]
-        public async Task<ActionResult<ApiResponse<string>>> AddLegal([FromForm] Co_Legal emp)
+        public async Task<ActionResult<ApiResponse<string>>> AddLegal([FromForm] string name)
         {
 
             if (!ModelState.IsValid)
@@ -199,11 +227,68 @@ namespace Loujico.Controllers
             {
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-         
-                await ClsSettings.AddLegal(emp);
+                Co_Legal co_Legal = new Co_Legal();
+                co_Legal.LegalInfo = name;
+                if(!await ClsSettings.AddLegal(co_Legal))
+                {
+                    return Ok(new ApiResponse<string>
+                    {
+
+                        Message = "Error"
+
+                    });
+                }
                 // من هون 
-                await ClsLogs.Add("CRUD", $"{emp.LegalInfo} added to the System by {username} ", userId);
-                return Ok(new ApiResponse<String>
+                await ClsLogs.Add("CRUD", $"{co_Legal.LegalInfo} added to the System by {username} ", userId);
+                return Ok(new ApiResponse<string>
+                {
+
+                    Message = "Done"
+
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbEmployee>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
+
+        } 
+        [HttpPost("AddActivity")]
+        public async Task<ActionResult<ApiResponse<string>>> AddActivity([FromForm] string name, [FromForm] int IndustryId)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ApiResponse<String>
+                {
+                    Message = "wronge"
+                });
+            }
+            try
+            {
+                var username = UserManager.GetUserName(User);
+                var userId = UserManager.GetUserId(User);
+                Co_Activity co_Activity = new Co_Activity();
+                co_Activity.Name = name;
+                co_Activity.IndustryId = IndustryId;
+                if(!await ClsSettings.AddActivity(co_Activity))
+                {
+                    return Ok(new ApiResponse<string>
+                    {
+
+                        Message = "Error"
+
+                    });
+                }
+                // من هون 
+                await ClsLogs.Add("CRUD", $"{co_Activity.Name} added to the System by {username} ", userId);
+                return Ok(new ApiResponse<string>
                 {
 
                     Message = "Done"
@@ -309,6 +394,42 @@ namespace Loujico.Controllers
                     return NotFound(new ApiResponse<List<TbEmployee>>
                     {
                         Message = "وسيلة التواصل غير موجد",
+                    });
+                }
+
+                // من هون 
+                var username = UserManager.GetUserName(User);
+                var userId = UserManager.GetUserId(User);
+                await ClsLogs.Add("CRUD", $"{Cont.Name} Deleted from the System by {username} ", userId);
+                // لهون هو تسجيل الlog  
+                return Ok(new ApiResponse<String>
+                {
+
+                    Data = "done"
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbEmployee>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+        }  
+        [HttpDelete("DeleteActivity/{id}")]
+        public async Task<ActionResult<ApiResponse<string>>> DeleteActivity(int id)
+        {
+            try
+            {
+               var Cont= CTX.TbContact.FirstOrDefault(x => x.Id == id);
+                var Emp = await ClsSettings.DeleteActivity(id);
+                if (Emp == false)
+                {
+                    return NotFound(new ApiResponse<List<TbEmployee>>
+                    {
+                        Message = "النشاط غير موجد",
                     });
                 }
 

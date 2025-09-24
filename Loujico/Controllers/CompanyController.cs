@@ -58,8 +58,8 @@ namespace Loujico.Controllers
                     // تهيئة القوائم لتجنب null
                     Addresses = new List<Co_Address>(),
                     Contacts = new List<Co_Contact>(),
-                    Legals = new List<Co_Legal>(),
-                    Activity = new List<Co_Activity>(),
+                 //   Legals = new List<Co_Legal>(),
+                    //Activity = new List<Co_Activity>(),
                     CompanyEmployees = new List<Co_CompanyEmployee>()
                 };
 
@@ -92,16 +92,16 @@ namespace Loujico.Controllers
                 }
 
                 // تعبئة الـ Legals
-                if (dto.Legals != null)
+         /*       if (dto.Legals != null)
                 {
                     foreach (var l in dto.Legals)
                     {
                         company.Legals.Add(new Co_Legal { LegalInfo = l.LegalInfo });
                     }
-                }
+                }*/
 
                 // نشاطات
-                if (dto.Activities != null)
+         /*       if (dto.Activities != null)
                 {
                     foreach (var act in dto.Activities)
                     {
@@ -111,7 +111,7 @@ namespace Loujico.Controllers
                             IndustryId = act.IndustryId
                         });
                     }
-                }
+                }*/
 
                 // موظفين
                 if (dto.CompanyEmployees != null)
@@ -167,8 +167,8 @@ namespace Loujico.Controllers
                 var company = await CTX.Co_Companies
                     .Include(c => c.Addresses)
                     .Include(c => c.Contacts)
-                    .Include(c => c.Legals)
-                    .Include(c => c.Activity)
+                 //   .Include(c => c.Legals)
+                 //   .Include(c => c.Activity)
                     .Include(c => c.CompanyEmployees)
                     .FirstOrDefaultAsync(c => c.Id == dto.Id && !c.IsDeleted);
 
@@ -186,8 +186,8 @@ namespace Loujico.Controllers
                 // --- حذف كل العناصر الفرعية الحالية ---
                 CTX.Co_Address.RemoveRange(company.Addresses);
                 CTX.Co_Contacts.RemoveRange(company.Contacts);
-                CTX.Co_Legals.RemoveRange(company.Legals);
-                CTX.Co_Activities.RemoveRange(company.Activity);
+          //      CTX.Co_Legals.RemoveRange(company.Legals);
+            //    CTX.Co_Activities.RemoveRange(company.Activity);
                 CTX.Co_CompanyEmployees.RemoveRange(company.CompanyEmployees);
 
                 // --- إعادة الإضافة من DTOs (إن وجدت) ---
@@ -205,16 +205,16 @@ namespace Loujico.Controllers
                     Name = c.Name
                 }).ToList() ?? new List<Co_Contact>();
 
-                company.Legals = dto.Legals?.Select(l => new Co_Legal
+          /*      company.Legals = dto.Legals?.Select(l => new Co_Legal
                 {
                     LegalInfo = l.LegalInfo
-                }).ToList() ?? new List<Co_Legal>();
+                }).ToList() ?? new List<Co_Legal>();*/
 
-                company.Activity = dto.Activities?.Select(ac => new Co_Activity
+            /*    company.Activity = dto.Activities?.Select(ac => new Co_Activity
                 {
                     Name = ac.Name,
                     IndustryId = ac.IndustryId
-                }).ToList() ?? new List<Co_Activity>();
+                }).ToList() ?? new List<Co_Activity>();*/
 
                 company.CompanyEmployees = dto.CompanyEmployees?.Select(e => new Co_CompanyEmployee
                 {
