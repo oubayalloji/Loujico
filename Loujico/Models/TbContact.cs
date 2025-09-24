@@ -11,6 +11,6 @@ namespace Loujico.Models
         public string Name { get; set; }
 
         // Navigation
-        public ICollection<Co_Contact> CompanyContacts { get; set; }
+        public ICollection<Co_Contact>? CompanyContacts { get; set; }
     }
 }

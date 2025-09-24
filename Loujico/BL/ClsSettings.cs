@@ -6,6 +6,14 @@ namespace Loujico.BL
     public interface Isettings
     {
         public  Task<List<object>> GetAllContactType();
+        public  Task<bool> DeleteContact(int Id);
+        public Task<bool> AddContact(TbContact contact); 
+        public  Task<List<object>> GetAllIndustryType();
+        public  Task<bool> DeleteIndustry(int Id);
+        public Task<bool> AddIndustry(Co_Industry Industry);
+        public  Task<List<object>> GetAllLegalType();
+        public  Task<bool> DeleteLegal(int Id);
+        public Task<bool> AddLegal(Co_Legal Legal);
     }
     public class ClsSettings : Isettings
     {
@@ -19,27 +27,34 @@ namespace Loujico.BL
             ClsLogs = clsLogs;
             ClsHistory = clsHistory;
         }
+
+        #region Industry
         public async Task<bool> AddIndustry(Co_Industry Industry)
         {
             try
             {
                 await CTX.Co_Industries.AddAsync(Industry);
                 await CTX.SaveChangesAsync();
-                return true;    
+                return true;
             }
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
                 return false;
             }
-        }  
-        public async Task<bool> DeleteIndustry(Co_Industry Industry)
+        }
+        public async Task<bool> DeleteIndustry(int Id)
         {
             try
             {
+               var Industry= await CTX.Co_Industries.FirstOrDefaultAsync(x => x.Id== Id);
+                if (Industry==null)
+                {
+                    return false;
+                }
                 CTX.Co_Industries.Remove(Industry);
                 await CTX.SaveChangesAsync();
-                return true;    
+                return true;
             }
             catch (Exception ex)
             {
@@ -53,7 +68,8 @@ namespace Loujico.BL
             {
                 var result = await CTX.Co_Industries
                     .AsNoTracking()
-                    .Select(x => new {
+                    .Select(x => new
+                    {
                         x.Id,
                         x.Name
                     })
@@ -72,7 +88,7 @@ namespace Loujico.BL
             }
         }
 
-
+        #endregion
 
         #region Legal
         public async Task<bool> AddLegal(Co_Legal Legal)
@@ -89,10 +105,15 @@ namespace Loujico.BL
                 return false;
             }
         }
-        public async Task<bool> DeleteLegal(Co_Legal Legal)
+        public async Task<bool> DeleteLegal(int Id)
         {
             try
             {
+                var Legal = await CTX.Co_Legals.FirstOrDefaultAsync(x => x.Id == Id);
+                if (Legal == null)
+                {
+                    return false;
+                }
                 CTX.Co_Legals.Remove(Legal);
                 await CTX.SaveChangesAsync();
                 return true;
@@ -146,10 +167,15 @@ namespace Loujico.BL
                 return false;
             }
         }
-        public async Task<bool> DeleteContact(TbContact contact)
+        public async Task<bool> DeleteContact(int Id)
         {
             try
             {
+                var contact = await CTX.TbContact.FirstOrDefaultAsync(x => x.Id == Id);
+                if (contact == null)
+                {
+                    return false;
+                }
                 CTX.TbContact.Remove(contact);
                 await CTX.SaveChangesAsync();
                 return true;
