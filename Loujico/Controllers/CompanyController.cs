@@ -34,7 +34,7 @@ namespace Loujico.Controllers
             ClsCompanys = clsCompanys;
         }
         [HttpPost("Add")]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] AddCompany dto, [FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromBody] AddCompany dto, [FromForm] List<FileModel>? Data)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new ApiResponse<string> { Message = "Invalid model" });
@@ -44,7 +44,6 @@ namespace Loujico.Controllers
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
 
-                // إنشاء الكيان الرئيسي
                 var company = new Co_Company_Name
                 {
                     Name = dto.Name,
@@ -55,15 +54,14 @@ namespace Loujico.Controllers
                     CreatedAt = DateTime.UtcNow,
                     CreatedBy = username,
                     IsDeleted = false,
-                    // تهيئة القوائم لتجنب null
                     Addresses = new List<Co_Address>(),
                     Contacts = new List<Co_Contact>(),
-                 //   Legals = new List<Co_Legal>(),
-                    //Activity = new List<Co_Activity>(),
-                    CompanyEmployees = new List<Co_CompanyEmployee>()
+                    CompanyEmployees = new List<Co_CompanyEmployee>(),
+                 //   CompanyLegals = new List<CompanyLegal>(),
+                    CompanyActivities = new List<CompanyActivity>()
                 };
 
-                // تعبئة العناوين
+                // Addresses
                 if (dto.Addresses != null)
                 {
                     foreach (var a in dto.Addresses)
@@ -78,7 +76,7 @@ namespace Loujico.Controllers
                     }
                 }
 
-                // تعبئة الاتصالات
+                // Contacts
                 if (dto.Contacts != null)
                 {
                     foreach (var c in dto.Contacts)
@@ -91,29 +89,7 @@ namespace Loujico.Controllers
                     }
                 }
 
-                // تعبئة الـ Legals
-         /*       if (dto.Legals != null)
-                {
-                    foreach (var l in dto.Legals)
-                    {
-                        company.Legals.Add(new Co_Legal { LegalInfo = l.LegalInfo });
-                    }
-                }*/
-
-                // نشاطات
-         /*       if (dto.Activities != null)
-                {
-                    foreach (var act in dto.Activities)
-                    {
-                        company.Activity.Add(new Co_Activity
-                        {
-                            Name = act.Name,
-                            IndustryId = act.IndustryId
-                        });
-                    }
-                }*/
-
-                // موظفين
+                // Company Employees
                 if (dto.CompanyEmployees != null)
                 {
                     foreach (var emp in dto.CompanyEmployees)
@@ -123,19 +99,49 @@ namespace Loujico.Controllers
                             FirstName = emp.FirstName,
                             LastName = emp.LastName,
                             Position = emp.Position,
-                            
+                            Department = emp.Department,
+                            Notes = emp.Notes
                         });
                     }
                 }
 
-                // إضافة الشركة وكل الـ navigation entities عبر EF Core
-                CTX.Co_Companies.Add(company);
-                await CTX.SaveChangesAsync(); // الحفظ هنا يملأ company.Id و CompanyId في الكيانات المرتبطة تلقائياً
+                // CompanyLegals: ربط عبر LegalId فقط (لا إنشاء جديد لأن DTO لا يحمل بيانات الإنشاء)
+             /*   if (dto.Legals != null)
+                {
+                    foreach (var lDto in dto.Legals)
+                    {
+                        if (lDto.LegalId.HasValue && lDto.LegalId.Value > 0)
+                        {
+                            company.CompanyLegals.Add(new CompanyLegal
+                            {
+                                Company = company,
+                                LegalId = lDto.LegalId.Value
+                            });
+                        }
+                    }
+                }*/
 
-                // سجل اللوق بعد الحفظ
+                // CompanyActivities: ربط عبر ActivityId فقط (لا إنشاء جديد)
+                if (dto.Activities != null)
+                {
+                    foreach (var aDto in dto.Activities)
+                    {
+                        if (aDto.ActivityId>=0 && aDto.ActivityId >= 0)
+                        {
+                            company.CompanyActivities.Add(new CompanyActivity
+                            {
+                                Company = company,
+                                ActivityId = aDto.ActivityId
+                            });
+                        }
+                    }
+                }
+
+                CTX.Co_Companies.Add(company);
+                await CTX.SaveChangesAsync();
+
                 await ClsLogs.Add("CRUD", $"{company.Name} added to the System by {username}", userId);
 
-                // معالجة الملفات المرتبطة بعد أن أصبح company.Id موجوداً
                 if (Data != null)
                 {
                     foreach (var item in Data)
@@ -146,16 +152,22 @@ namespace Loujico.Controllers
 
                 return Ok(new ApiResponse<string> { Message = "Done" });
             }
+            catch (DbUpdateException dbEx)
+            {
+                // FK conflict محتمل: اعط رد واضح
+                await ClsLogs.Add("Error", dbEx.Message, null);
+                return BadRequest(new ApiResponse<string> { Message = "Database update error. Check that provided LegalId and ActivityId values exist." });
+            }
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
                 return BadRequest(new ApiResponse<string> { Message = ex.Message });
             }
         }
-        [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit( [FromBody] CompanyEditDto dto, [FromForm] List<FileModel>? Data)
+/*        [HttpPatch("Edit")]
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] CompanyEditDto dto, [FromForm] List<FileModel>? Data)
         {
-            if (!ModelState.IsValid )
+            if (!ModelState.IsValid)
                 return BadRequest(new ApiResponse<string> { Message = "Invalid model or id mismatch" });
 
             await using var tx = await CTX.Database.BeginTransactionAsync();
@@ -167,8 +179,8 @@ namespace Loujico.Controllers
                 var company = await CTX.Co_Companies
                     .Include(c => c.Addresses)
                     .Include(c => c.Contacts)
-                 //   .Include(c => c.Legals)
-                 //   .Include(c => c.Activity)
+                    .Include(c => c.CompanyLegals).ThenInclude(cl => cl.Legal)
+                    .Include(c => c.CompanyActivities).ThenInclude(ca => ca.Activity)
                     .Include(c => c.CompanyEmployees)
                     .FirstOrDefaultAsync(c => c.Id == dto.Id && !c.IsDeleted);
 
@@ -183,12 +195,18 @@ namespace Loujico.Controllers
                 company.UpdatedAt = DateTime.UtcNow;
                 company.UpdatedBy = username;
 
-                // --- حذف كل العناصر الفرعية الحالية ---
+                // --- حذف كل العناصر الفرعية الحالية (المتعلقة بهذه الشركة) ---
+                // لا نحذف Co_Activities أو Co_Legals الافتراضية من الجداول العامة، بل نحذف سجلات الربط
                 CTX.Co_Address.RemoveRange(company.Addresses);
                 CTX.Co_Contacts.RemoveRange(company.Contacts);
-          //      CTX.Co_Legals.RemoveRange(company.Legals);
-            //    CTX.Co_Activities.RemoveRange(company.Activity);
                 CTX.Co_CompanyEmployees.RemoveRange(company.CompanyEmployees);
+
+                // حذف روابط CompanyLegals و CompanyActivities
+                var existingCompanyLegals = company.CompanyLegals.ToList();
+                var existingCompanyActivities = company.CompanyActivities.ToList();
+
+                CTX.Co_CompanyLegals.RemoveRange(existingCompanyLegals);
+                CTX.Co_CompanyActivities.RemoveRange(existingCompanyActivities);
 
                 // --- إعادة الإضافة من DTOs (إن وجدت) ---
                 company.Addresses = dto.Addresses?.Select(a => new Co_Address
@@ -205,26 +223,79 @@ namespace Loujico.Controllers
                     Name = c.Name
                 }).ToList() ?? new List<Co_Contact>();
 
-          /*      company.Legals = dto.Legals?.Select(l => new Co_Legal
-                {
-                    LegalInfo = l.LegalInfo
-                }).ToList() ?? new List<Co_Legal>();*/
-
-            /*    company.Activity = dto.Activities?.Select(ac => new Co_Activity
-                {
-                    Name = ac.Name,
-                    IndustryId = ac.IndustryId
-                }).ToList() ?? new List<Co_Activity>();*/
-
                 company.CompanyEmployees = dto.CompanyEmployees?.Select(e => new Co_CompanyEmployee
                 {
                     FirstName = e.FirstName,
                     LastName = e.LastName,
                     Position = e.Position,
                     Department = e.Department,
-                 
                     Notes = e.Notes
                 }).ToList() ?? new List<Co_CompanyEmployee>();
+
+                // --- معالجة الـ Legals: ربط أو إنشاء جديد ثم إضافة CompanyLegal ---
+                company.CompanyLegals = new List<CompanyLegal>();
+                if (dto.Legals != null)
+                {
+                    foreach (var lDto in dto.Legals)
+                    {
+                        Co_Legal legalEntity = null;
+                        if (lDto.Id.HasValue)
+                        {
+                            legalEntity = await CTX.Co_Legals.FindAsync(lDto.Id.Value);
+                        }
+
+                        if (legalEntity == null)
+                        {
+                            legalEntity = new Co_Legal
+                            {
+                           //     LegalInfo = lDto.LegalInfo
+                            };
+                            CTX.Co_Legals.Add(legalEntity);
+                            await CTX.SaveChangesAsync(); // حفظ مؤقت للحصول على Id الجديد قبل إنشاء رابط
+                        }
+
+                        company.CompanyLegals.Add(new CompanyLegal
+                        {
+                            CompanyId = company.Id,
+                            LegalId = legalEntity.Id,
+                            Legal = legalEntity,
+                            Company = company
+                        });
+                    }
+                }
+
+                // --- معالجة الـ Activities: ربط أو إنشاء جديد ثم إضافة CompanyActivity ---
+                company.CompanyActivities = new List<CompanyActivity>();
+                if (dto.Activities != null)
+                {
+                    foreach (var aDto in dto.Activities)
+                    {
+                        Co_Activity activityEntity = null;
+                        if (aDto.Id.HasValue)
+                        {
+                            activityEntity = await CTX.Co_Activities.FindAsync(aDto.Id.Value);
+                        }
+
+                        if (activityEntity == null)
+                        {
+                            activityEntity = new Co_Activity
+                            {
+                                Name = aDto.Name,
+                                IndustryId = aDto.IndustryId
+                            };
+                            CTX.Co_Activities.Add(activityEntity);
+                            await CTX.SaveChangesAsync(); // حفظ مؤقت للحصول على Id الجديد
+                        }
+
+                        company.CompanyActivities.Add(new CompanyActivity
+                        {
+                            CompanyId = company.Id,
+                            ActivityId = activityEntity.Id,
+                            Activity = activityEntity,
+                            Company = company
+                        });
+                    }
+                }
 
                 await CTX.SaveChangesAsync();
                 await tx.CommitAsync();
@@ -242,7 +313,7 @@ namespace Loujico.Controllers
                 await ClsLogs.Add("Error", ex.Message, null);
                 return BadRequest(new ApiResponse<string> { Message = ex.Message });
             }
-        }
+        }*/
         [HttpGet("GetAllId")]
         public async Task<ActionResult<ApiResponse<List<object>>>> GetAllId()
         {
@@ -338,7 +409,7 @@ namespace Loujico.Controllers
                 // من هون 
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
-                await ClsLogs.Add("CRUD", $"{Customer.Company.Name} Deleted from the System by {username} ", userId);
+                await ClsLogs.Add("CRUD", $" Deleted from the System by {username} ", userId);
                 // لهون هو تسجيل الlog  
                 return Ok(new ApiResponse<string>
                 {
@@ -394,7 +465,7 @@ namespace Loujico.Controllers
                     return NotFound(new ApiResponse<object> { Message = "company is deleted or could not found" });
                 }
 
-                return Ok(new ApiResponse<CompanyModel>
+                return Ok(new ApiResponse<object>
                 {
                     Data = company
                 });

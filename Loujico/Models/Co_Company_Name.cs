@@ -5,6 +5,8 @@ namespace Loujico.Models
     public class Co_Company_Name
     {
         public int Id { get; set; }
+        public int? LegalId { get; set; }
+        public Co_Legal? Legal { get; set; }
 
         [Required(ErrorMessage = "اسم الشركة مطلوب")]
         [StringLength(200)]
@@ -43,8 +45,8 @@ namespace Loujico.Models
         public ICollection<CompanyActivity> CompanyActivities { get; set; }
 
         public ICollection<Co_Contact> Contacts { get; set; }
-        public ICollection<CompanyLegal> CompanyLegals { get; set; }
-
+/*        public ICollection<CompanyLegal> CompanyLegals { get; set; }
+*/
         public ICollection<Co_CompanyEmployee> CompanyEmployees { get; set; }
     }
 

@@ -9,7 +9,10 @@
             public Co_Company_Name Company { get; set; }
 
             public int ActivityId { get; set; }
-            public Co_Activity Activity { get; set; }
+            public Co_Activity Activity { get; set; }  
+
+            public int IndustryId { get; set; }
+            public Co_Industry Industry { get; set; }
        
     }
 }

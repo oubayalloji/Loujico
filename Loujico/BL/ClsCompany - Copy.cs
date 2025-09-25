@@ -10,7 +10,7 @@ namespace Loujico.BL
     {
         public  Task<List<Co_Company_Name>> GetAll(int id, int count, string? legalFilter);
         public Task<List<object>> GetAllCustomersIdAndName();
-        public Task<CompanyModel> GetById(int id);
+        public Task<object> GetById(int id);
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
         public Task<bool> Edit(Co_Company_Name Company);
         public Task<bool> Add(Co_Company_Name Company);
@@ -39,12 +39,13 @@ namespace Loujico.BL
                                .AsNoTracking()
                                .Include(c => c.Addresses)
                                .Include(c => c.Contacts)
+                             //  .Include(c => c.CompanyLegals)
                                .Where(x => !x.IsDeleted);
 
                 // إذا في فلترة على الـ legals
                 if (!string.IsNullOrEmpty(legalFilter))
                 {
-         //           query = query.Where(c => c.Legals.Any(l => l.LegalInfo == legalFilter));
+                //    query = query.Where(c => c.CompanyLegals.Any(l => l.Legal.LegalInfo == legalFilter));
 
                     // أو إذا بدك بحث جزئي:
                     // query = query.Where(x => x.Legals.Contains(legalFilter));
@@ -60,31 +61,76 @@ namespace Loujico.BL
                 return null;
             }
         }
-        public async Task<CompanyModel> GetById(int id)
+        public async Task<object> GetById(int id)
         {
             try
             {
-                var cus = await CTX.Co_Companies
-                                .AsNoTracking()
-                             //   .Include(c => c.Legals)
-                                .Include(c => c.Addresses)
-                                //.Include(c => c.Activity)
-                                .Include(c => c.Contacts)
-                               // .Include(c => c.TbInvoices)
-                                .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
-                if (cus == null)
-                {
-                    return null;
-                }
-                var files = await CTX.TbFiles
-                      .Where(f => f.EntityId == cus.Id && f.EntityType == tableName.Company && !f.IsDeleted)
-                      .ToListAsync();
-                var result = new CompanyModel
-                {
-                    Company = cus,
-                    Files = files,
+                var result = await CTX.Co_Companies
+                    .AsNoTracking()
+                    .Where(c => c.Id == id && !c.IsDeleted)
+                    .Select(c => new
+                    {
+                        c.Id,
+                        c.Name,
+                        c.Comm_No,
+                        c.Tax_No,
+                        c.Found_Date,
+                        c.CompanyDescription,
+                        c.CreatedAt,
+                        c.UpdatedAt,
+                        c.LastVisit,
+                        c.CreatedBy,
+                        c.UpdatedBy,
 
-                }; return result;
+                        Addresses = c.Addresses.Select(a => new
+                        {
+                            a.Id,
+                            a.CountryId,
+                            a.StateId,
+                            a.CityId,
+                            a.AddressLine
+                        }),
+
+                        Contacts = c.Contacts.Select(ct => new
+                        {
+                            ct.Id,
+                            ct.ContactTypeId,
+                            ct.Name
+                        }),
+
+                 /*       Legals = c.CompanyLegals.Select(cl => new
+                        {
+                            cl.LegalId,
+                            cl.Legal.LegalInfo
+                        }),*/
+
+                        Activities = c.CompanyActivities.Select(ca => new
+                        {
+                            ca.ActivityId,
+                            ca.Activity.Name,
+                            ca.Activity.IndustryId
+                        })
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (result == null)
+                    return null;
+
+                var files = await CTX.TbFiles
+                    .Where(f => f.EntityId == id && f.EntityType == tableName.Company && !f.IsDeleted)
+                    .Select(f => new
+                    {
+                        f.Id,
+                        f.FileName,
+                      
+                    })
+                    .ToListAsync();
+
+                return new
+                {
+                    Company = result,
+                    Files = files
+                };
             }
             catch (Exception ex)
             {
@@ -158,7 +204,7 @@ namespace Loujico.BL
                             EF.Functions.Like(a.Comm_No, $"%{name}%") ||
                             EF.Functions.Like(a.Found_Date.ToString(), $"%{name}%") ||
                             EF.Functions.Like(a.Tax_No, $"%{name}%") ||
-                       //     a.Legals.Any(l => EF.Functions.Like(l.LegalInfo, $"%{name}%")) ||
+                          //  a.CompanyLegals.Any(l => EF.Functions.Like(l.Legal.LegalInfo, $"%{name}%")) ||
                             a.Contacts.Any(l => EF.Functions.Like(l.Name, $"%{name}%")) ||
                             a.Id.ToString().Contains(name)
                         )
@@ -230,7 +276,7 @@ namespace Loujico.BL
             try
             {
 
-                var customer = await CTX.Co_Companies.AsNoTracking().Where(c => c.IsDeleted == false/*||  c.Legals.Any(l => l.LegalInfo == legalFilter)*/).CountAsync();
+                var customer = await CTX.Co_Companies.AsNoTracking().Where(c => c.IsDeleted == false /*&&  c.CompanyLegals.Any(l => l.Legal.LegalInfo == legalFilter)*/).CountAsync();
                 if (customer == null)
                     return 0;
                 return customer;

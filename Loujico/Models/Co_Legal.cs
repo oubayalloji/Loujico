@@ -11,7 +11,7 @@ namespace Loujico.Models
         [StringLength(200)]
         public string LegalInfo { get; set; }
 
-        public ICollection<CompanyLegal> CompanyLegals { get; set; }
+        public ICollection<Co_CompanyEmployee> Company { get; set; }
 
     }
 }

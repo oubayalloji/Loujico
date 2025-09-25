@@ -12,6 +12,9 @@ namespace Loujico.Models
 
         // Navigation
         public ICollection<Co_Activity> Activities { get; set; }
+        public ICollection<CompanyActivity> CompanyActivity { get; set; }
+
+
     }
 
 }
