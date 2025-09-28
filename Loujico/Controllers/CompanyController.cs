@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 namespace Loujico.Controllers
 {
     [Route("api/[controller]")]
@@ -22,6 +23,7 @@ namespace Loujico.Controllers
         UserManager<ApplicationUser> UserManager;
         IFiles ClsFiles;
         ICompanys ClsCompanys;
+        
         public CompanyController(CompanySystemContext cTX, ICustomers clsCustomers, Ilog clsLogs, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles, ICompanys clsCompanys)
         {
 
@@ -33,8 +35,8 @@ namespace Loujico.Controllers
             ClsFiles = clsFiles;
             ClsCompanys = clsCompanys;
         }
-        [HttpPost("Add")]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromBody] AddCompany dto, [FromForm] List<FileModel>? Data)
+        [HttpPost("AddCompany")]
+        public async Task<ActionResult<ApiResponse<CompanyReadDto>>> AddCompany([FromBody] CompanyCreateDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new ApiResponse<string> { Message = "Invalid model" });
@@ -43,6 +45,14 @@ namespace Loujico.Controllers
             {
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
+
+                // إذا أرسل المستخدم LegalId، تحقق من وجودها
+                if (dto.LegalId.HasValue)
+                {
+                    var legalExists = await CTX.Co_Legals.AnyAsync(l => l.Id == dto.LegalId.Value);
+                    if (!legalExists)
+                        return BadRequest(new ApiResponse<string> { Message = $"Invalid LegalId: {dto.LegalId.Value}" });
+                }
 
                 var company = new Co_Company_Name
                 {
@@ -54,109 +64,41 @@ namespace Loujico.Controllers
                     CreatedAt = DateTime.UtcNow,
                     CreatedBy = username,
                     IsDeleted = false,
-                    Addresses = new List<Co_Address>(),
-                    Contacts = new List<Co_Contact>(),
-                    CompanyEmployees = new List<Co_CompanyEmployee>(),
-                 //   CompanyLegals = new List<CompanyLegal>(),
-                    CompanyActivities = new List<CompanyActivity>()
+                    LegalId = dto.LegalId   // ربط الـ LegalId مباشرة
                 };
-
-                // Addresses
-                if (dto.Addresses != null)
-                {
-                    foreach (var a in dto.Addresses)
-                    {
-                        company.Addresses.Add(new Co_Address
-                        {
-                            CountryId = a.CountryId,
-                            StateId = a.StateId,
-                            CityId = a.CityId,
-                            AddressLine = a.AddressLine
-                        });
-                    }
-                }
-
-                // Contacts
-                if (dto.Contacts != null)
-                {
-                    foreach (var c in dto.Contacts)
-                    {
-                        company.Contacts.Add(new Co_Contact
-                        {
-                            ContactTypeId = c.ContactTypeId,
-                            Name = c.Name
-                        });
-                    }
-                }
-
-                // Company Employees
-                if (dto.CompanyEmployees != null)
-                {
-                    foreach (var emp in dto.CompanyEmployees)
-                    {
-                        company.CompanyEmployees.Add(new Co_CompanyEmployee
-                        {
-                            FirstName = emp.FirstName,
-                            LastName = emp.LastName,
-                            Position = emp.Position,
-                            Department = emp.Department,
-                            Notes = emp.Notes
-                        });
-                    }
-                }
-
-                // CompanyLegals: ربط عبر LegalId فقط (لا إنشاء جديد لأن DTO لا يحمل بيانات الإنشاء)
-             /*   if (dto.Legals != null)
-                {
-                    foreach (var lDto in dto.Legals)
-                    {
-                        if (lDto.LegalId.HasValue && lDto.LegalId.Value > 0)
-                        {
-                            company.CompanyLegals.Add(new CompanyLegal
-                            {
-                                Company = company,
-                                LegalId = lDto.LegalId.Value
-                            });
-                        }
-                    }
-                }*/
-
-                // CompanyActivities: ربط عبر ActivityId فقط (لا إنشاء جديد)
-                if (dto.Activities != null)
-                {
-                    foreach (var aDto in dto.Activities)
-                    {
-                        if (aDto.ActivityId>=0 && aDto.ActivityId >= 0)
-                        {
-                            company.CompanyActivities.Add(new CompanyActivity
-                            {
-                                Company = company,
-                                ActivityId = aDto.ActivityId
-                            });
-                        }
-                    }
-                }
 
                 CTX.Co_Companies.Add(company);
                 await CTX.SaveChangesAsync();
 
                 await ClsLogs.Add("CRUD", $"{company.Name} added to the System by {username}", userId);
 
-                if (Data != null)
+                // بناء رد مع بيانات الـ Legal إن وُجدت
+                var read = new CompanyReadDto
                 {
-                    foreach (var item in Data)
-                    {
-                        await ClsFiles.Add(item, "Companys", company.Id, tableName.Company);
-                    }
+                    Id = company.Id,
+                    Name = company.Name,
+                    Comm_No = company.Comm_No,
+                    Tax_No = company.Tax_No,
+                    Found_Date = company.Found_Date,
+                    CompanyDescription = company.CompanyDescription,
+                    CreatedAt = company.CreatedAt,
+                    CreatedBy = company.CreatedBy,
+                    LegalId = company.LegalId
+                };
+
+                if (company.LegalId.HasValue)
+                {
+                    var legal = await CTX.Co_Legals
+                                         .AsNoTracking()
+                                         .Where(l => l.Id == company.LegalId.Value)
+                                         .Select(l => new { l.Id, l.LegalInfo })
+                                         .FirstOrDefaultAsync();
+
+                    if (legal != null)
+                        read.LegalInfo = legal.LegalInfo;
                 }
 
-                return Ok(new ApiResponse<string> { Message = "Done" });
-            }
-            catch (DbUpdateException dbEx)
-            {
-                // FK conflict محتمل: اعط رد واضح
-                await ClsLogs.Add("Error", dbEx.Message, null);
-                return BadRequest(new ApiResponse<string> { Message = "Database update error. Check that provided LegalId and ActivityId values exist." });
+                return Ok(new ApiResponse<CompanyReadDto> { Message = "Done", Data = read });
             }
             catch (Exception ex)
             {
@@ -164,148 +106,110 @@ namespace Loujico.Controllers
                 return BadRequest(new ApiResponse<string> { Message = ex.Message });
             }
         }
-/*        [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] CompanyEditDto dto, [FromForm] List<FileModel>? Data)
+
+        [HttpPatch("EditCompany")]
+        public async Task<ActionResult<ApiResponse<string>>> EditCompany([FromForm] CompanyUpdateDto dto)
         {
             if (!ModelState.IsValid)
-                return BadRequest(new ApiResponse<string> { Message = "Invalid model or id mismatch" });
+                return BadRequest(new ApiResponse<string> { Message = "Invalid model" });
 
-            await using var tx = await CTX.Database.BeginTransactionAsync();
+            var username = UserManager.GetUserName(User);
+            var userId = UserManager.GetUserId(User);
+
+            var company = await CTX.Co_Companies.FirstOrDefaultAsync(c => c.Id == dto.id && !c.IsDeleted);
+            if (company == null)
+                return NotFound(new ApiResponse<string> { Message = "Not found" });
+
+            // إذا أرسلت LegalId فنتحقق من وجوده قبل التغيير لتجنب FK error
+            if (dto.LegalId.HasValue)
+            {
+                var legalExists = await CTX.Co_Legals.AnyAsync(l => l.Id == dto.LegalId.Value);
+                if (!legalExists)
+                    return BadRequest(new ApiResponse<string> { Message = $"Invalid LegalId: {dto.LegalId.Value}" });
+            }
+
             try
             {
-                var username = UserManager.GetUserName(User);
-                var userId = UserManager.GetUserId(User);
-
-                var company = await CTX.Co_Companies
-                    .Include(c => c.Addresses)
-                    .Include(c => c.Contacts)
-                    .Include(c => c.CompanyLegals).ThenInclude(cl => cl.Legal)
-                    .Include(c => c.CompanyActivities).ThenInclude(ca => ca.Activity)
-                    .Include(c => c.CompanyEmployees)
-                    .FirstOrDefaultAsync(c => c.Id == dto.Id && !c.IsDeleted);
-
-                if (company == null) return NotFound(new ApiResponse<string> { Message = "Company not found" });
-
-                // update basic fields
+                // تحديث الحقول الأساسية
                 company.Name = dto.Name;
                 company.Comm_No = dto.Comm_No;
                 company.Tax_No = dto.Tax_No;
                 company.Found_Date = dto.Found_Date;
                 company.CompanyDescription = dto.CompanyDescription;
+
+                // ربط/إلغاء ربط الـ Legal بحسب قيمة الـ DTO
+                company.LegalId = dto.LegalId; // يمكن أن تكون null => فك الربط
+
                 company.UpdatedAt = DateTime.UtcNow;
                 company.UpdatedBy = username;
 
-                // --- حذف كل العناصر الفرعية الحالية (المتعلقة بهذه الشركة) ---
-                // لا نحذف Co_Activities أو Co_Legals الافتراضية من الجداول العامة، بل نحذف سجلات الربط
-                CTX.Co_Address.RemoveRange(company.Addresses);
-                CTX.Co_Contacts.RemoveRange(company.Contacts);
-                CTX.Co_CompanyEmployees.RemoveRange(company.CompanyEmployees);
+                await CTX.SaveChangesAsync();
+                await ClsLogs.Add("CRUD", $"{company.Name} updated by {username}", userId);
 
-                // حذف روابط CompanyLegals و CompanyActivities
-                var existingCompanyLegals = company.CompanyLegals.ToList();
-                var existingCompanyActivities = company.CompanyActivities.ToList();
+                return Ok(new ApiResponse<string> { Message = "Done" });
+            }
+            catch (DbUpdateException dbEx)
+            {
+                await ClsLogs.Add("Error", dbEx.Message, null);
+                return BadRequest(new ApiResponse<string> { Message = "Database update error. Check provided FK ids." });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<string> { Message = ex.Message });
+            }
+        }
 
-                CTX.Co_CompanyLegals.RemoveRange(existingCompanyLegals);
-                CTX.Co_CompanyActivities.RemoveRange(existingCompanyActivities);
 
-                // --- إعادة الإضافة من DTOs (إن وجدت) ---
-                company.Addresses = dto.Addresses?.Select(a => new Co_Address
+
+
+        // POST: api/companies/{companyId}/contacts
+        [HttpPost("AddContact")]
+        public async Task<ActionResult<ApiResponse<List<CompanyContactReadDto>>>> AddContact([FromBody] List<CompanyContactCreateDto> dtos)
+        {
+            if (dtos == null || !dtos.Any())
+                return BadRequest(new ApiResponse<string> { Message = "No contacts supplied" });
+
+            await using var tx = await CTX.Database.BeginTransactionAsync();
+            try
+            {
+                var companyIds = dtos.Select(d => d.CompanyId).Distinct().ToList();
+                // optional: validate single companyId or existence of company(ies) / contact types here
+
+                var created = new List<CompanyContactReadDto>();
+                foreach (var dto in dtos)
                 {
-                    CountryId = a.CountryId,
-                    StateId = a.StateId,
-                    CityId = a.CityId,
-                    AddressLine = a.AddressLine
-                }).ToList() ?? new List<Co_Address>();
+                    if (!ModelState.IsValid) // أو تحقق لكل dto يدوياً
+                        return BadRequest(new ApiResponse<string> { Message = "Invalid contact data" });
 
-                company.Contacts = dto.Contacts?.Select(c => new Co_Contact
-                {
-                    ContactTypeId = c.ContactTypeId,
-                    Name = c.Name
-                }).ToList() ?? new List<Co_Contact>();
-
-                company.CompanyEmployees = dto.CompanyEmployees?.Select(e => new Co_CompanyEmployee
-                {
-                    FirstName = e.FirstName,
-                    LastName = e.LastName,
-                    Position = e.Position,
-                    Department = e.Department,
-                    Notes = e.Notes
-                }).ToList() ?? new List<Co_CompanyEmployee>();
-
-                // --- معالجة الـ Legals: ربط أو إنشاء جديد ثم إضافة CompanyLegal ---
-                company.CompanyLegals = new List<CompanyLegal>();
-                if (dto.Legals != null)
-                {
-                    foreach (var lDto in dto.Legals)
+                    var contact = new Co_Contact
                     {
-                        Co_Legal legalEntity = null;
-                        if (lDto.Id.HasValue)
-                        {
-                            legalEntity = await CTX.Co_Legals.FindAsync(lDto.Id.Value);
-                        }
+                        CompanyId = dto.CompanyId,        // إذا DTO لا يحمل CompanyId, استخدم مسار api/companies/{id}/contacts بدلًا من قائمة عامة
+                        ContactTypeId = dto.ContactTypeId,
+                        Name = dto.Name
+                    };
 
-                        if (legalEntity == null)
-                        {
-                            legalEntity = new Co_Legal
-                            {
-                           //     LegalInfo = lDto.LegalInfo
-                            };
-                            CTX.Co_Legals.Add(legalEntity);
-                            await CTX.SaveChangesAsync(); // حفظ مؤقت للحصول على Id الجديد قبل إنشاء رابط
-                        }
-
-                        company.CompanyLegals.Add(new CompanyLegal
-                        {
-                            CompanyId = company.Id,
-                            LegalId = legalEntity.Id,
-                            Legal = legalEntity,
-                            Company = company
-                        });
-                    }
-                }
-
-                // --- معالجة الـ Activities: ربط أو إنشاء جديد ثم إضافة CompanyActivity ---
-                company.CompanyActivities = new List<CompanyActivity>();
-                if (dto.Activities != null)
-                {
-                    foreach (var aDto in dto.Activities)
+                    CTX.Co_Contacts.Add(contact);
+                    created.Add(new CompanyContactReadDto
                     {
-                        Co_Activity activityEntity = null;
-                        if (aDto.Id.HasValue)
-                        {
-                            activityEntity = await CTX.Co_Activities.FindAsync(aDto.Id.Value);
-                        }
-
-                        if (activityEntity == null)
-                        {
-                            activityEntity = new Co_Activity
-                            {
-                                Name = aDto.Name,
-                                IndustryId = aDto.IndustryId
-                            };
-                            CTX.Co_Activities.Add(activityEntity);
-                            await CTX.SaveChangesAsync(); // حفظ مؤقت للحصول على Id الجديد
-                        }
-
-                        company.CompanyActivities.Add(new CompanyActivity
-                        {
-                            CompanyId = company.Id,
-                            ActivityId = activityEntity.Id,
-                            Activity = activityEntity,
-                            Company = company
-                        });
-                    }
+                        Id = 0, // سيُملأ بعد SaveChanges
+                        CompanyId = contact.CompanyId,
+                        ContactTypeId = contact.ContactTypeId,
+                        ContactTypeName = "", // يمكن ملأها بعد الحفظ أو بعمل join
+                        Name = contact.Name
+                    });
                 }
 
                 await CTX.SaveChangesAsync();
+
+                // الآن عبيّن الـ Ids و contactTypeName إن أردت
+                for (int i = 0; i < created.Count; i++)
+                {
+                    created[i].Id = CTX.Co_Contacts.OrderByDescending(c => c.Id).Skip(i).Select(c => c.Id).FirstOrDefault();
+                }
+
                 await tx.CommitAsync();
-
-                await ClsLogs.Add("CRUD", $"{company.Name} updated by {username}", userId);
-
-                if (Data != null)
-                    foreach (var item in Data) await ClsFiles.Add(item, "Customers", company.Id, tableName.Customer);
-
-                return Ok(new ApiResponse<string> { Message = "Done" });
+                return Ok(new ApiResponse<List<CompanyContactReadDto>> { Message = "Done", Data = created });
             }
             catch (Exception ex)
             {
@@ -313,7 +217,392 @@ namespace Loujico.Controllers
                 await ClsLogs.Add("Error", ex.Message, null);
                 return BadRequest(new ApiResponse<string> { Message = ex.Message });
             }
-        }*/
+        }
+
+        [HttpPut("EditContacts")]
+        public async Task<ActionResult<ApiResponse<List<CompanyContactReadDto>>>> EditContacts(int companyId, [FromBody] List<CompanyContactCreateDto> dtos)
+        {
+            if (dtos == null) return BadRequest(new ApiResponse<string> { Message = "Payload is required" });
+
+            await using var tx = await CTX.Database.BeginTransactionAsync();
+            try
+            {
+                var company = await CTX.Co_Companies.FirstOrDefaultAsync(c => c.Id == companyId && !c.IsDeleted);
+                if (company == null) return NotFound(new ApiResponse<string> { Message = "Company not found" });
+
+                // اختياري: تحقق من وجود ContactTypeIds المقدمة (مفضل لتجنب FK exceptions)
+                var distinctTypeIds = dtos.Select(d => d.ContactTypeId).Distinct().ToList();
+                var validTypeIds = await CTX.TbContact.Where(t => distinctTypeIds.Contains(t.Id)).Select(t => t.Id).ToListAsync();
+                var invalid = distinctTypeIds.Except(validTypeIds).ToList();
+                if (invalid.Any())
+                    return BadRequest(new ApiResponse<string> { Message = $"Invalid ContactTypeIds: {string.Join(',', invalid)}" });
+
+                // حذف كل جهات الاتصال الحالية للشركة
+                var oldContacts = await CTX.Co_Contacts.Where(c => c.CompanyId == companyId).ToListAsync();
+                if (oldContacts.Any())
+                    CTX.Co_Contacts.RemoveRange(oldContacts);
+
+                // إضافة الجديدة
+                var toAdd = dtos.Select(d => new Co_Contact
+                {
+                    CompanyId = companyId,
+                    ContactTypeId = d.ContactTypeId,
+                    Name = d.Name
+                }).ToList();
+
+                if (toAdd.Any())
+                    await CTX.Co_Contacts.AddRangeAsync(toAdd);
+
+                await CTX.SaveChangesAsync();
+                await tx.CommitAsync();
+
+                // بناء قائمة الــ Read DTOs مع أسماء أنواع الاتصال
+                var added = await CTX.Co_Contacts
+                    .AsNoTracking()
+                    .Where(c => c.CompanyId == companyId)
+                    .Include(c => c.ContactType)
+                    .Select(c => new CompanyContactReadDto
+                    {
+                        Id = c.Id,
+                        CompanyId = c.CompanyId,
+                        ContactTypeId = c.ContactTypeId,
+                        ContactTypeName = c.ContactType != null ? c.ContactType.Name : "",
+                        Name = c.Name
+                    })
+                    .ToListAsync();
+
+                await ClsLogs.Add("CRUD", $"Contacts replaced for CompanyId {companyId} by {UserManager.GetUserId(User)}", UserManager.GetUserId(User));
+
+                return Ok(new ApiResponse<List<CompanyContactReadDto>> { Message = "Done", Data = added });
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<string> { Message = ex.Message });
+            }
+        }
+
+
+
+
+        [HttpPost("AddActivities/{companyId:int}")]
+        public async Task<ActionResult<ApiResponse<List<CompanyActivityReadDto>>>> AddActivities(int companyId, [FromBody] List<CompanyActivityLinkDto> dtos)
+        {
+            if (dtos == null || !dtos.Any())
+                return BadRequest(new ApiResponse<string> { Message = "No activity ids supplied" });
+
+            var companyExists = await CTX.Co_Companies.AnyAsync(c => c.Id == companyId && !c.IsDeleted);
+            if (!companyExists) return NotFound(new ApiResponse<string> { Message = "Company not found" });
+
+            var activityIds = dtos.Select(d => d.ActivityId).Distinct().ToList();
+
+            // جلب الـ activities مع IndustryId واسم Industry للتحقق والتعبئة
+            var activities = await CTX.Co_Activities
+                                      .Where(a => activityIds.Contains(a.Id))
+                                      .Select(a => new { a.Id, a.Name, a.IndustryId, IndustryName = a.Industry != null ? a.Industry.Name : string.Empty })
+                                      .ToListAsync();
+
+            var validActivityIds = activities.Select(a => a.Id).ToList();
+            var invalid = activityIds.Except(validActivityIds).ToList();
+            if (invalid.Any())
+                return BadRequest(new ApiResponse<string> { Message = $"Invalid activity ids: {string.Join(',', invalid)}" });
+
+            // existing links to avoid duplicates
+            var existingLinks = await CTX.Co_CompanyActivities
+                                         .Where(x => x.CompanyId == companyId && activityIds.Contains(x.ActivityId))
+                                         .Select(x => x.ActivityId)
+                                         .ToListAsync();
+
+            var toAdd = activities
+                        .Where(a => !existingLinks.Contains(a.Id))
+                        .Select(a => new CompanyActivity
+                        {
+                            CompanyId = companyId,
+                            ActivityId = a.Id,
+                            IndustryId = a.IndustryId
+                        })
+                        .ToList();
+
+            if (!toAdd.Any())
+                return Ok(new ApiResponse<string> { Message = "No new activities to add" });
+
+            await CTX.Co_CompanyActivities.AddRangeAsync(toAdd);
+            await CTX.SaveChangesAsync();
+
+            // إحضار الروابط الحالية بعد الإضافة مع أسماء النشاط والصناعة
+            var added = await CTX.Co_CompanyActivities
+                                 .AsNoTracking()
+                                 .Where(x => x.CompanyId == companyId && activityIds.Contains(x.ActivityId))
+                                 .Include(x => x.Activity)
+                                 .ThenInclude(a => a.Industry)
+                                 .Select(x => new CompanyActivityReadDto
+                                 {
+                                     Id = x.Id,
+                                     CompanyId = x.CompanyId,
+                                     ActivityId = x.ActivityId,
+                                     ActivityName = x.Activity != null ? x.Activity.Name : string.Empty,
+                                     IndustryId = x.IndustryId,
+                                     IndustryName = x.Activity != null && x.Activity.Industry != null ? x.Activity.Industry.Name : string.Empty
+                                 })
+                                 .ToListAsync();
+
+            await ClsLogs.Add("CRUD", $"Added activities to CompanyId {companyId}", UserManager.GetUserId(User));
+            return Ok(new ApiResponse<List<CompanyActivityReadDto>> { Message = "Done", Data = added });
+        }
+        [HttpPut("ReplaceActivities/{companyId:int}")]
+        public async Task<ActionResult<ApiResponse<List<CompanyActivityReadDto>>>> ReplaceActivities(int companyId, [FromBody] List<CompanyActivityLinkDto> dtos)
+        {
+            if (dtos == null)
+                return BadRequest(new ApiResponse<string> { Message = "Payload required" });
+
+            var distinctIds = dtos.Select(d => d.ActivityId).Where(id => id > 0).Distinct().ToList();
+
+            await using var tx = await CTX.Database.BeginTransactionAsync();
+            try
+            {
+                var company = await CTX.Co_Companies.FirstOrDefaultAsync(c => c.Id == companyId && !c.IsDeleted);
+                if (company == null)
+                    return NotFound(new ApiResponse<string> { Message = "Company not found" });
+
+                // If no ids sent => we should remove all existing links and return empty list
+                if (!distinctIds.Any())
+                {
+                    var allOld = await CTX.Co_CompanyActivities.Where(x => x.CompanyId == companyId).ToListAsync();
+                    if (allOld.Any()) CTX.Co_CompanyActivities.RemoveRange(allOld);
+
+                    await CTX.SaveChangesAsync();
+                    await tx.CommitAsync();
+
+                    await ClsLogs.Add("CRUD", $"Replaced activities for CompanyId {companyId} (cleared all)", UserManager.GetUserId(User));
+                    return Ok(new ApiResponse<List<CompanyActivityReadDto>> { Message = "Done", Data = new List<CompanyActivityReadDto>() });
+                }
+
+                // جلب الـ activities المطلوبة مع IndustryId للتحقق والتعبئة
+                var activities = await CTX.Co_Activities
+                                          .Where(a => distinctIds.Contains(a.Id))
+                                          .Select(a => new { a.Id, a.Name, a.IndustryId, IndustryName = a.Industry != null ? a.Industry.Name : string.Empty })
+                                          .ToListAsync();
+
+                var validActivityIds = activities.Select(a => a.Id).ToList();
+                var invalid = distinctIds.Except(validActivityIds).ToList();
+                if (invalid.Any())
+                    return BadRequest(new ApiResponse<string> { Message = $"Invalid activity ids: {string.Join(',', invalid)}" });
+
+                // حذف كل الروابط القديمة للشركة
+                var oldLinks = await CTX.Co_CompanyActivities.Where(x => x.CompanyId == companyId).ToListAsync();
+                if (oldLinks.Any()) CTX.Co_CompanyActivities.RemoveRange(oldLinks);
+
+                // تحضير وإضافة الروابط الجديدة مع تعبئة IndustryId من activities
+                var newLinks = activities.Select(a => new CompanyActivity
+                {
+                    CompanyId = companyId,
+                    ActivityId = a.Id,
+                    IndustryId = a.IndustryId
+                }).ToList();
+
+                if (newLinks.Any()) await CTX.Co_CompanyActivities.AddRangeAsync(newLinks);
+
+                await CTX.SaveChangesAsync();
+                await tx.CommitAsync();
+
+                // جلب الحالة النهائية بعد التغيير مع أسماء النشاط والصناعة
+                var result = await CTX.Co_CompanyActivities
+                                      .AsNoTracking()
+                                      .Where(x => x.CompanyId == companyId)
+                                      .Include(x => x.Activity)
+                                      .ThenInclude(a => a.Industry)
+                                      .Select(x => new CompanyActivityReadDto
+                                      {
+                                          Id = x.Id,
+                                          CompanyId = x.CompanyId,
+                                          ActivityId = x.ActivityId,
+                                          ActivityName = x.Activity != null ? x.Activity.Name : string.Empty,
+                                          IndustryId = x.IndustryId,
+                                          IndustryName = x.Activity != null && x.Activity.Industry != null ? x.Activity.Industry.Name : string.Empty
+                                      })
+                                      .ToListAsync();
+
+                await ClsLogs.Add("CRUD", $"Replaced activities for CompanyId {companyId}", UserManager.GetUserId(User));
+                return Ok(new ApiResponse<List<CompanyActivityReadDto>> { Message = "Done", Data = result });
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<string> { Message = ex.Message });
+            }
+        }
+
+
+        [HttpPost("AddFiles/{companyId:int}")]
+        public async Task<ActionResult<ApiResponse<string>>> AddCompanyFiles(int companyId, [FromForm] List<FileModel>? Data)
+        {
+            if (Data == null || !Data.Any())
+                return BadRequest(new ApiResponse<string> { Message = "No files supplied" });
+
+            var company = await CTX.Co_Companies.FirstOrDefaultAsync(c => c.Id == companyId && !c.IsDeleted);
+            if (company == null)
+                return NotFound(new ApiResponse<string> { Message = "Company not found" });
+
+            var username = UserManager.GetUserName(User);
+            var userId = UserManager.GetUserId(User);
+
+            await using var tx = await CTX.Database.BeginTransactionAsync();
+            try
+            {
+                if (Data != null)
+                {
+                    foreach (var item in Data)
+                    {
+                        await ClsFiles.Add(item, "Companys", companyId, tableName.Company);
+                    }
+                }
+                await CTX.SaveChangesAsync();
+                await tx.CommitAsync();
+
+                await ClsLogs.Add("Files", $"Added {Data.Count(f => f?.Files != null)} files for Company {company.Id} by {username}", userId);
+                return Ok(new ApiResponse<string> { Message = "Files uploaded" });
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<string> { Message = ex.Message });
+            }
+        }
+
+
+        [HttpPost("AddEmployees/{companyId:int}")]
+        public async Task<ActionResult<ApiResponse<List<CompanyEmployeeReadDto>>>> AddEmployees(   int companyId,  [FromBody] List<CompanyEmployeeCreateDto> dtos)
+        {
+            if (dtos == null || !dtos.Any())
+                return BadRequest(new ApiResponse<string> { Message = "No employees supplied" });
+
+            // تحقق من وجود الشركة
+            var exists = await CTX.Co_Companies
+                                  .AnyAsync(c => c.Id == companyId && !c.IsDeleted);
+            if (!exists)
+                return NotFound(new ApiResponse<string> { Message = "Company not found" });
+
+            var username = UserManager.GetUserName(User);
+            var userId = UserManager.GetUserId(User);
+
+            await using var tx = await CTX.Database.BeginTransactionAsync();
+            try
+            {
+                // بناء كائنات الكيان من الـ DTOs
+                var entities = dtos.Select(dto => new Co_CompanyEmployee
+                {
+                    CompanyId = companyId,
+                    FirstName = dto.FirstName,
+                    LastName = dto.LastName,
+                    Position = dto.Position,
+                    Department = dto.Department,
+                    Notes = dto.Notes
+                }).ToList();
+
+                await CTX.Co_CompanyEmployees.AddRangeAsync(entities);
+                await CTX.SaveChangesAsync();
+                await tx.CommitAsync();
+
+                // بناء قائمة القراءة مع القيم المولّدة (Id)
+                var result = entities.Select(e => new CompanyEmployeeReadDto
+                {
+                    Id = e.Id,
+                    CompanyId = e.CompanyId,
+                    FirstName = e.FirstName,
+                    LastName = e.LastName,
+                    Position = e.Position,
+                    Department = e.Department,
+                    Notes = e.Notes
+                }).ToList();
+
+                await ClsLogs.Add("CRUD",
+                                  $"Added {result.Count} employees to Company {companyId} by {username}",
+                                  userId);
+
+                return Ok(new ApiResponse<List<CompanyEmployeeReadDto>>
+                {
+                    Message = "Done",
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<string> { Message = ex.Message });
+            }
+        }
+        [HttpPut("EditEmployees/{companyId:int}")]
+        public async Task<ActionResult<ApiResponse<List<CompanyEmployeeReadDto>>>> EditEmployees(
+     int companyId, [FromBody] List<CompanyEmployeeUpdateDto> dtos)
+        {
+            if (dtos == null)
+                return BadRequest(new ApiResponse<string> { Message = "Payload is required" });
+
+            await using var tx = await CTX.Database.BeginTransactionAsync();
+            try
+            {
+                var company = await CTX.Co_Companies
+                    .FirstOrDefaultAsync(c => c.Id == companyId && !c.IsDeleted);
+                if (company == null)
+                    return NotFound(new ApiResponse<string> { Message = "Company not found" });
+
+                // احذف كل الموظفين الحاليين
+                var oldEmployees = await CTX.Co_CompanyEmployees
+                    .Where(e => e.CompanyId == companyId)
+                    .ToListAsync();
+                if (oldEmployees.Any())
+                    CTX.Co_CompanyEmployees.RemoveRange(oldEmployees);
+
+                // أضف القائمة الجديدة
+                var toAdd = dtos.Select(d => new Co_CompanyEmployee
+                {
+                    CompanyId = companyId,
+                    FirstName = d.FirstName,
+                    LastName = d.LastName,
+                    Position = d.Position,
+                    Department = d.Department,
+                    Notes = d.Notes
+                }).ToList();
+
+                if (toAdd.Any())
+                    await CTX.Co_CompanyEmployees.AddRangeAsync(toAdd);
+
+                await CTX.SaveChangesAsync();
+                await tx.CommitAsync();
+
+                // رجّع النتيجة
+                var added = await CTX.Co_CompanyEmployees
+                    .AsNoTracking()
+                    .Where(e => e.CompanyId == companyId)
+                    .Select(e => new CompanyEmployeeReadDto
+                    {
+                        Id = e.Id,
+                        CompanyId = e.CompanyId,
+                        FirstName = e.FirstName,
+                        LastName = e.LastName,
+                        Position = e.Position,
+                        Department = e.Department,
+                        Notes = e.Notes
+                    })
+                    .ToListAsync();
+
+                await ClsLogs.Add("CRUD", $"Employees replaced for CompanyId {companyId}", UserManager.GetUserId(User));
+
+                return Ok(new ApiResponse<List<CompanyEmployeeReadDto>> { Message = "Done", Data = added });
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<string> { Message = ex.Message });
+            }
+        }
+
+
         [HttpGet("GetAllId")]
         public async Task<ActionResult<ApiResponse<List<object>>>> GetAllId()
         {
@@ -340,7 +629,7 @@ namespace Loujico.Controllers
             }
         }
         [HttpGet("GetAll")]
-        public async Task<ActionResult<ApiResponse<List<Co_Company_Name>>>> GetAll([FromQuery] int Page, [FromQuery] int count, [FromQuery]string? legals)
+        public async Task<ActionResult<ApiResponse<List<Co_Company_Name>>>> GetAll([FromQuery] int Page, [FromQuery] int count, [FromQuery]int? legals)
         {
 
             try
@@ -348,7 +637,7 @@ namespace Loujico.Controllers
                 var Company = await ClsCompanys.GetAll(Page, count,legals);
                 if (Company == null)
                     return NotFound(new ApiResponse<string> { Message = "There is no Companys" });
-                return Ok(new ApiResponse<List<Co_Company_Name>>
+                return Ok(new 
                 {
                     Data = Company
                 });
@@ -529,3 +818,273 @@ namespace Loujico.Controllers
 
     }
 }
+        /*        [HttpPost("Add")]
+                public async Task<ActionResult<ApiResponse<string>>> Add([FromBody] AddCompany dto, [FromForm] List<FileModel>? Data)
+                {
+                    if (!ModelState.IsValid)
+                        return BadRequest(new ApiResponse<string> { Message = "Invalid model" });
+
+                    try
+                    {
+                        var username = UserManager.GetUserName(User);
+                        var userId = UserManager.GetUserId(User);
+
+                        var company = new Co_Company_Name
+                        {
+                            Name = dto.Name,
+                            Comm_No = dto.Comm_No,
+                            Tax_No = dto.Tax_No,
+                            Found_Date = dto.Found_Date,
+                            CompanyDescription = dto.CompanyDescription,
+                            CreatedAt = DateTime.UtcNow,
+                            CreatedBy = username,
+                            IsDeleted = false,
+                            Addresses = new List<Co_Address>(),
+                            Contacts = new List<Co_Contact>(),
+                            CompanyEmployees = new List<Co_CompanyEmployee>(),
+                         //   CompanyLegals = new List<CompanyLegal>(),
+                            CompanyActivities = new List<CompanyActivity>()
+                        };
+
+                        // Addresses
+                        if (dto.Addresses != null)
+                        {
+                            foreach (var a in dto.Addresses)
+                            {
+                                company.Addresses.Add(new Co_Address
+                                {
+                                    CountryId = a.CountryId,
+                                    StateId = a.StateId,
+                                    CityId = a.CityId,
+                                    AddressLine = a.AddressLine
+                                });
+                            }
+                        }
+
+                        // Contacts
+                        if (dto.Contacts != null)
+                        {
+                            foreach (var c in dto.Contacts)
+                            {
+                                company.Contacts.Add(new Co_Contact
+                                {
+                                    ContactTypeId = c.ContactTypeId,
+                                    Name = c.Name
+                                });
+                            }
+                        }
+
+                        // Company Employees
+                        if (dto.CompanyEmployees != null)
+                        {
+                            foreach (var emp in dto.CompanyEmployees)
+                            {
+                                company.CompanyEmployees.Add(new Co_CompanyEmployee
+                                {
+                                    FirstName = emp.FirstName,
+                                    LastName = emp.LastName,
+                                    Position = emp.Position,
+                                    Department = emp.Department,
+                                    Notes = emp.Notes
+                                });
+                            }
+                        }
+
+                        // CompanyLegals: ربط عبر LegalId فقط (لا إنشاء جديد لأن DTO لا يحمل بيانات الإنشاء)
+                     */
+        
+        /*
+
+                        // CompanyActivities: ربط عبر ActivityId فقط (لا إنشاء جديد)
+                        if (dto.Activities != null)
+                        {
+                            foreach (var aDto in dto.Activities)
+                            {
+                                if (aDto.ActivityId>=0 && aDto.ActivityId >= 0)
+                                {
+                                    company.CompanyActivities.Add(new CompanyActivity
+                                    {
+                                        Company = company,
+                                        ActivityId = aDto.ActivityId
+                                    });
+                                }
+                            }
+                        }
+
+                        CTX.Co_Companies.Add(company);
+                        await CTX.SaveChangesAsync();
+
+                        await ClsLogs.Add("CRUD", $"{company.Name} added to the System by {username}", userId);
+
+                        if (Data != null)
+                        {
+                            foreach (var item in Data)
+                            {
+                                await ClsFiles.Add(item, "Companys", company.Id, tableName.Company);
+                            }
+                        }
+
+                        return Ok(new ApiResponse<string> { Message = "Done" });
+                    }
+                    catch (DbUpdateException dbEx)
+                    {
+                        // FK conflict محتمل: اعط رد واضح
+                        await ClsLogs.Add("Error", dbEx.Message, null);
+                        return BadRequest(new ApiResponse<string> { Message = "Database update error. Check that provided LegalId and ActivityId values exist." });
+                    }
+                    catch (Exception ex)
+                    {
+                        await ClsLogs.Add("Error", ex.Message, null);
+                        return BadRequest(new ApiResponse<string> { Message = ex.Message });
+                    }
+                }*/
+        /*        [HttpPatch("Edit")]
+                public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] CompanyEditDto dto, [FromForm] List<FileModel>? Data)
+                {
+                    if (!ModelState.IsValid)
+                        return BadRequest(new ApiResponse<string> { Message = "Invalid model or id mismatch" });
+
+                    await using var tx = await CTX.Database.BeginTransactionAsync();
+                    try
+                    {
+                        var username = UserManager.GetUserName(User);
+                        var userId = UserManager.GetUserId(User);
+
+                        var company = await CTX.Co_Companies
+                            .Include(c => c.Addresses)
+                            .Include(c => c.Contacts)
+                            .Include(c => c.CompanyLegals).ThenInclude(cl => cl.Legal)
+                            .Include(c => c.CompanyActivities).ThenInclude(ca => ca.Activity)
+                            .Include(c => c.CompanyEmployees)
+                            .FirstOrDefaultAsync(c => c.Id == dto.Id && !c.IsDeleted);
+
+                        if (company == null) return NotFound(new ApiResponse<string> { Message = "Company not found" });
+
+                        // update basic fields
+                        company.Name = dto.Name;
+                        company.Comm_No = dto.Comm_No;
+                        company.Tax_No = dto.Tax_No;
+                        company.Found_Date = dto.Found_Date;
+                        company.CompanyDescription = dto.CompanyDescription;
+                        company.UpdatedAt = DateTime.UtcNow;
+                        company.UpdatedBy = username;
+
+                        // --- حذف كل العناصر الفرعية الحالية (المتعلقة بهذه الشركة) ---
+                        // لا نحذف Co_Activities أو Co_Legals الافتراضية من الجداول العامة، بل نحذف سجلات الربط
+                        CTX.Co_Address.RemoveRange(company.Addresses);
+                        CTX.Co_Contacts.RemoveRange(company.Contacts);
+                        CTX.Co_CompanyEmployees.RemoveRange(company.CompanyEmployees);
+
+                        // حذف روابط CompanyLegals و CompanyActivities
+                        var existingCompanyLegals = company.CompanyLegals.ToList();
+                        var existingCompanyActivities = company.CompanyActivities.ToList();
+
+                        CTX.Co_CompanyLegals.RemoveRange(existingCompanyLegals);
+                        CTX.Co_CompanyActivities.RemoveRange(existingCompanyActivities);
+
+                        // --- إعادة الإضافة من DTOs (إن وجدت) ---
+                        company.Addresses = dto.Addresses?.Select(a => new Co_Address
+                        {
+                            CountryId = a.CountryId,
+                            StateId = a.StateId,
+                            CityId = a.CityId,
+                            AddressLine = a.AddressLine
+                        }).ToList() ?? new List<Co_Address>();
+
+                        company.Contacts = dto.Contacts?.Select(c => new Co_Contact
+                        {
+                            ContactTypeId = c.ContactTypeId,
+                            Name = c.Name
+                        }).ToList() ?? new List<Co_Contact>();
+
+                        company.CompanyEmployees = dto.CompanyEmployees?.Select(e => new Co_CompanyEmployee
+                        {
+                            FirstName = e.FirstName,
+                            LastName = e.LastName,
+                            Position = e.Position,
+                            Department = e.Department,
+                            Notes = e.Notes
+                        }).ToList() ?? new List<Co_CompanyEmployee>();
+
+                        // --- معالجة الـ Legals: ربط أو إنشاء جديد ثم إضافة CompanyLegal ---
+                        company.CompanyLegals = new List<CompanyLegal>();
+                        if (dto.Legals != null)
+                        {
+                            foreach (var lDto in dto.Legals)
+                            {
+                                Co_Legal legalEntity = null;
+                                if (lDto.Id.HasValue)
+                                {
+                                    legalEntity = await CTX.Co_Legals.FindAsync(lDto.Id.Value);
+                                }
+
+                                if (legalEntity == null)
+                                {
+                                    legalEntity = new Co_Legal
+                                    {
+                                   //     LegalInfo = lDto.LegalInfo
+                                    };
+                                    CTX.Co_Legals.Add(legalEntity);
+                                    await CTX.SaveChangesAsync(); // حفظ مؤقت للحصول على Id الجديد قبل إنشاء رابط
+                                }
+
+                                company.CompanyLegals.Add(new CompanyLegal
+                                {
+                                    CompanyId = company.Id,
+                                    LegalId = legalEntity.Id,
+                                    Legal = legalEntity,
+                                    Company = company
+                                });
+                            }
+                        }
+
+                        // --- معالجة الـ Activities: ربط أو إنشاء جديد ثم إضافة CompanyActivity ---
+                        company.CompanyActivities = new List<CompanyActivity>();
+                        if (dto.Activities != null)
+                        {
+                            foreach (var aDto in dto.Activities)
+                            {
+                                Co_Activity activityEntity = null;
+                                if (aDto.Id.HasValue)
+                                {
+                                    activityEntity = await CTX.Co_Activities.FindAsync(aDto.Id.Value);
+                                }
+
+                                if (activityEntity == null)
+                                {
+                                    activityEntity = new Co_Activity
+                                    {
+                                        Name = aDto.Name,
+                                        IndustryId = aDto.IndustryId
+                                    };
+                                    CTX.Co_Activities.Add(activityEntity);
+                                    await CTX.SaveChangesAsync(); // حفظ مؤقت للحصول على Id الجديد
+                                }
+
+                                company.CompanyActivities.Add(new CompanyActivity
+                                {
+                                    CompanyId = company.Id,
+                                    ActivityId = activityEntity.Id,
+                                    Activity = activityEntity,
+                                    Company = company
+                                });
+                            }
+                        }
+
+                        await CTX.SaveChangesAsync();
+                        await tx.CommitAsync();
+
+                        await ClsLogs.Add("CRUD", $"{company.Name} updated by {username}", userId);
+
+                        if (Data != null)
+                            foreach (var item in Data) await ClsFiles.Add(item, "Customers", company.Id, tableName.Customer);
+
+                        return Ok(new ApiResponse<string> { Message = "Done" });
+                    }
+                    catch (Exception ex)
+                    {
+                        await tx.RollbackAsync();
+                        await ClsLogs.Add("Error", ex.Message, null);
+                        return BadRequest(new ApiResponse<string> { Message = ex.Message });
+                    }
+                }*/

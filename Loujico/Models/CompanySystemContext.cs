@@ -58,7 +58,12 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(modelBuilder);
 
-     
+
+        modelBuilder.Entity<Co_Company_Name>()
+      .HasOne(c => c.Legal)
+      .WithMany() // بدون "Company"
+      .HasForeignKey(c => c.LegalId)
+      .HasConstraintName("FK_Companies_Legals");
 
         modelBuilder.Entity<TbCustomer>(entity =>
         {

@@ -177,9 +177,6 @@ namespace Loujico.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("Co_LegalId")
-                        .HasColumnType("int");
-
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
 
@@ -208,8 +205,6 @@ namespace Loujico.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Co_LegalId");
 
                     b.HasIndex("CompanyId");
 
@@ -1252,10 +1247,6 @@ namespace Loujico.Migrations
 
             modelBuilder.Entity("Loujico.Models.Co_CompanyEmployee", b =>
                 {
-                    b.HasOne("Loujico.Models.Co_Legal", null)
-                        .WithMany("Company")
-                        .HasForeignKey("Co_LegalId");
-
                     b.HasOne("Loujico.Models.Co_Company_Name", "Company")
                         .WithMany("CompanyEmployees")
                         .HasForeignKey("CompanyId")
@@ -1269,7 +1260,8 @@ namespace Loujico.Migrations
                 {
                     b.HasOne("Loujico.Models.Co_Legal", "Legal")
                         .WithMany()
-                        .HasForeignKey("LegalId");
+                        .HasForeignKey("LegalId")
+                        .HasConstraintName("FK_Companies_Legals");
 
                     b.Navigation("Legal");
                 });
@@ -1500,11 +1492,6 @@ namespace Loujico.Migrations
                     b.Navigation("Activities");
 
                     b.Navigation("CompanyActivity");
-                });
-
-            modelBuilder.Entity("Loujico.Models.Co_Legal", b =>
-                {
-                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("Loujico.Models.TbContact", b =>

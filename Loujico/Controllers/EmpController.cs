@@ -33,7 +33,7 @@ namespace Loujico.Controllers
             ClsFiles = clsFiles;
         }
         [HttpPost("Add")]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbEmployee emp, [FromForm]  List<FileModel>? Data )
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] TbEmployee emp, [FromForm] List<FileModel>? Data)
         {
 
             if (!ModelState.IsValid)
@@ -49,7 +49,7 @@ namespace Loujico.Controllers
             }
             try
             {
-               
+
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
                 emp.CreatedBy = username;
@@ -58,16 +58,16 @@ namespace Loujico.Controllers
                 await ClsLogs.Add("CRUD", $"{emp.FirstName} added to the System by {username} ", userId);
 
                 // لهون هو تسجيل الlog
-                if (Data!= null)
+                if (Data != null)
                 {
                     foreach (var item in Data)
                     {
-                      await  ClsFiles.Add(item, "Employees", emp.Id, tableName.Employee);
+                        await ClsFiles.Add(item, "Employees", emp.Id, tableName.Employee);
                     }
                 }
                 return Ok(new ApiResponse<String>
                 {
-                 
+
                     Message = "Done"
 
                 });
@@ -84,6 +84,10 @@ namespace Loujico.Controllers
 
 
         }
+
+      
+
+
         [HttpGet("GetAllId")]
         public async Task<ActionResult<ApiResponse<List<object>>>> GetAllId()
         {

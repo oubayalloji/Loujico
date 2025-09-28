@@ -11,6 +11,7 @@ namespace Loujico.Models
         [StringLength(200)]
         public string LegalInfo { get; set; }
 
+        [NotMapped]
         public ICollection<Co_CompanyEmployee> Company { get; set; }
 
     }
