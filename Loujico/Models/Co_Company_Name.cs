@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Loujico.Models
 {
@@ -6,6 +7,8 @@ namespace Loujico.Models
     {
         public int Id { get; set; }
         public int? LegalId { get; set; }
+
+        [ForeignKey(nameof(LegalId))]
         public Co_Legal? Legal { get; set; }
 
         [Required(ErrorMessage = "اسم الشركة مطلوب")]

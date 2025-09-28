@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Loujico.Migrations
 {
     [DbContext(typeof(CompanySystemContext))]
-    [Migration("20250924104354_legals")]
-    partial class legals
+    [Migration("20250927192530_s")]
+    partial class s
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -180,6 +180,9 @@ namespace Loujico.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("Co_LegalId")
+                        .HasColumnType("int");
+
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
 
@@ -208,6 +211,8 @@ namespace Loujico.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Co_LegalId");
 
                     b.HasIndex("CompanyId");
 
@@ -247,6 +252,9 @@ namespace Loujico.Migrations
                     b.Property<DateTime?>("LastVisit")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("LegalId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -264,6 +272,8 @@ namespace Loujico.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("LegalId");
 
                     b.ToTable("Co_Companies");
                 });
@@ -351,36 +361,18 @@ namespace Loujico.Migrations
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
 
+                    b.Property<int>("IndustryId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ActivityId");
 
                     b.HasIndex("CompanyId");
 
+                    b.HasIndex("IndustryId");
+
                     b.ToTable("Co_CompanyActivities");
-                });
-
-            modelBuilder.Entity("Loujico.Models.CompanyLegal", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CompanyId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("LegalId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
-
-                    b.HasIndex("LegalId");
-
-                    b.ToTable("Co_CompanyLegals");
                 });
 
             modelBuilder.Entity("Loujico.Models.TbCity", b =>
@@ -1263,6 +1255,10 @@ namespace Loujico.Migrations
 
             modelBuilder.Entity("Loujico.Models.Co_CompanyEmployee", b =>
                 {
+                    b.HasOne("Loujico.Models.Co_Legal", null)
+                        .WithMany("Company")
+                        .HasForeignKey("Co_LegalId");
+
                     b.HasOne("Loujico.Models.Co_Company_Name", "Company")
                         .WithMany("CompanyEmployees")
                         .HasForeignKey("CompanyId")
@@ -1270,6 +1266,16 @@ namespace Loujico.Migrations
                         .IsRequired();
 
                     b.Navigation("Company");
+                });
+
+            modelBuilder.Entity("Loujico.Models.Co_Company_Name", b =>
+                {
+                    b.HasOne("Loujico.Models.Co_Legal", "Legal")
+                        .WithMany()
+                        .HasForeignKey("LegalId")
+                        .HasConstraintName("FK_Companies_Legals");
+
+                    b.Navigation("Legal");
                 });
 
             modelBuilder.Entity("Loujico.Models.Co_Contact", b =>
@@ -1311,28 +1317,17 @@ namespace Loujico.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Loujico.Models.Co_Industry", "Industry")
+                        .WithMany("CompanyActivity")
+                        .HasForeignKey("IndustryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Activity");
 
                     b.Navigation("Company");
-                });
 
-            modelBuilder.Entity("Loujico.Models.CompanyLegal", b =>
-                {
-                    b.HasOne("Loujico.Models.Co_Company_Name", "Company")
-                        .WithMany("CompanyLegals")
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Loujico.Models.Co_Legal", "Legal")
-                        .WithMany("CompanyLegals")
-                        .HasForeignKey("LegalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Company");
-
-                    b.Navigation("Legal");
+                    b.Navigation("Industry");
                 });
 
             modelBuilder.Entity("Loujico.Models.TbCity", b =>
@@ -1501,19 +1496,19 @@ namespace Loujico.Migrations
 
                     b.Navigation("CompanyEmployees");
 
-                    b.Navigation("CompanyLegals");
-
                     b.Navigation("Contacts");
                 });
 
             modelBuilder.Entity("Loujico.Models.Co_Industry", b =>
                 {
                     b.Navigation("Activities");
+
+                    b.Navigation("CompanyActivity");
                 });
 
             modelBuilder.Entity("Loujico.Models.Co_Legal", b =>
                 {
-                    b.Navigation("CompanyLegals");
+                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("Loujico.Models.TbContact", b =>

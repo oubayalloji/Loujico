@@ -8,7 +8,7 @@ namespace Loujico.BL
 {
     public interface ICompanys
     {
-        public  Task<List<Co_Company_Name>> GetAll(int id, int count, string? legalFilter);
+        public Task<object> GetAll(int page, int count, int? legalFilter);
         public Task<List<object>> GetAllCustomersIdAndName();
         public Task<object> GetById(int id);
         public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
@@ -31,29 +31,71 @@ namespace Loujico.BL
             ClsHistory = clsHistory;
         }
 
-        public async Task<List<Co_Company_Name>> GetAll(int id, int count, string? legalFilter )
+        public async Task<object> GetAll(int page, int count, int? legalFilter)
         {
             try
             {
                 var query = CTX.Co_Companies
-                               .AsNoTracking()
-                               .Include(c => c.Addresses)
-                               .Include(c => c.Contacts)
-                             //  .Include(c => c.CompanyLegals)
-                               .Where(x => !x.IsDeleted);
+                    .AsNoTracking()
+                    .Include(c => c.Addresses)
+                    .Include(c => c.Contacts)
+                    .Include(c => c.CompanyActivities)
+                        .ThenInclude(ca => ca.Activity)
+                    .Include(c => c.Legal)
+                    .Where(x => !x.IsDeleted);
 
-                // إذا في فلترة على الـ legals
-                if (!string.IsNullOrEmpty(legalFilter))
+                // تطبيق الفلترة على الـ Legal إذا كانت موجودة
+                if (legalFilter>1)
                 {
-                //    query = query.Where(c => c.CompanyLegals.Any(l => l.Legal.LegalInfo == legalFilter));
-
-                    // أو إذا بدك بحث جزئي:
-                    // query = query.Where(x => x.Legals.Contains(legalFilter));
+                    query = query.Where(c => c.LegalId== legalFilter);
                 }
 
-                return await query.Skip((id - 1) * count)
-                                  .Take(count)
-                                  .ToListAsync();
+                var result = await query
+                    .Skip((page - 1) * count)
+                    .Take(count)
+                    .Select(c => new
+                    {
+                        c.Id,
+                        c.Name,
+                        c.Comm_No,
+                        c.Tax_No,
+                        c.Found_Date,
+                        c.CompanyDescription,
+                        c.CreatedAt,
+                        c.UpdatedAt,
+                        c.LastVisit,
+                        c.CreatedBy,
+                        c.UpdatedBy,
+                        Legal = c.Legal == null
+                            ? null
+                            : new { c.Legal.Id, c.Legal.LegalInfo },
+
+                        Addresses = c.Addresses.Select(a => new
+                        {
+                            a.Id,
+                            a.CountryId,
+                            a.StateId,
+                            a.CityId,
+                            a.AddressLine
+                        }),
+
+                        Contacts = c.Contacts.Select(ct => new
+                        {
+                            ct.Id,
+                            ct.ContactTypeId,
+                            ct.Name
+                        }),
+
+                        Activities = c.CompanyActivities.Select(ca => new
+                        {
+                            ca.ActivityId,
+                            ca.Activity.Name,
+                            ca.Activity.IndustryId
+                        })
+                    })
+                    .ToListAsync();
+
+                return result;
             }
             catch (Exception ex)
             {
@@ -81,6 +123,11 @@ namespace Loujico.BL
                         c.LastVisit,
                         c.CreatedBy,
                         c.UpdatedBy,
+                        c.Legal.LegalInfo,
+                        Legal = c.Legal == null
+            ? null
+            : new { Id = c.Legal.Id, LegalInfo = c.Legal.LegalInfo },
+
 
                         Addresses = c.Addresses.Select(a => new
                         {
@@ -96,13 +143,19 @@ namespace Loujico.BL
                             ct.Id,
                             ct.ContactTypeId,
                             ct.Name
-                        }),
-
-                 /*       Legals = c.CompanyLegals.Select(cl => new
+                        }), 
+                        Employees = c.CompanyEmployees.Select(ct => new
                         {
-                            cl.LegalId,
-                            cl.Legal.LegalInfo
-                        }),*/
+                            ct.Id,
+                            ct.Department,
+                            ct.FirstName,
+                            ct.LastName,
+                            ct.Contacts,
+                            ct.Notes,
+                            ct.Position,
+                        }),
+                     
+                    
 
                         Activities = c.CompanyActivities.Select(ca => new
                         {
