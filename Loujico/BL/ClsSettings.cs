@@ -17,6 +17,8 @@ namespace Loujico.BL
         public  Task<List<object>> GetAllActivityType();
         public  Task<bool> DeleteActivity(int Id);
         public Task<bool> AddActivity(Co_Activity Legal);
+        public Task<List<object>> GetActivityByIndustry(int Id);
+
     }
     public class ClsSettings : Isettings
     {
@@ -276,7 +278,35 @@ namespace Loujico.BL
                 await ClsLogs.Add("Error", ex.Message, null);
                 return null;
             }
-        } 
+        }
         #endregion
+        public async Task<List<object>> GetActivityByIndustry(int Id)
+        {
+            try
+            {
+                var result = await CTX.Co_Activities
+                    .AsNoTracking()
+                    .Where(a => a.IndustryId == Id)
+                    .Select(a => new
+                    {
+                        a.Id,
+                        a.Name
+                    })
+                    .ToListAsync();
+
+                if (result == null)
+                {
+                    return null;
+                }
+
+                    return result.Cast<object>().ToList();
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        }
+
     }
 }

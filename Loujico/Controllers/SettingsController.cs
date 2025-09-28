@@ -417,13 +417,13 @@ namespace Loujico.Controllers
 
                 });
             }
-        }  
+        }
         [HttpDelete("DeleteActivity/{id}")]
         public async Task<ActionResult<ApiResponse<string>>> DeleteActivity(int id)
         {
             try
             {
-               var Cont= CTX.TbContact.FirstOrDefault(x => x.Id == id);
+                var Cont = CTX.TbContact.FirstOrDefault(x => x.Id == id);
                 var Emp = await ClsSettings.DeleteActivity(id);
                 if (Emp == false)
                 {
@@ -452,6 +452,31 @@ namespace Loujico.Controllers
                     Message = ex.Message,
 
                 });
+            }
+        }
+        [HttpGet("GetActivityByIndustry/{id}")]
+        public async Task<ActionResult<ApiResponse<List<object>>>> GetActivityByIndustry(int id)
+        {
+
+            try
+            {
+                var ActivityByIndustry = await ClsSettings.GetActivityByIndustry(id);
+                if (ActivityByIndustry == null)
+                    return NotFound(new ApiResponse<string> { Message = "There is no ActivityByIndustry" });
+                return Ok(new ApiResponse<List<object>>
+                {
+                    Data = ActivityByIndustry
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<object>>
+                {
+                    Message = ex.Message,
+
+                });
+
             }
         }
     }
