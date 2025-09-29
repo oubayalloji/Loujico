@@ -138,11 +138,11 @@ namespace Loujico.BL
                             a.AddressLine
                         }),
 
-                        Contacts = c.Contacts.Select(ct => new
+                        Contacts = c.Contacts.Select(ct => new ContactModel
                         {
-                            ct.Id,
-                            ct.ContactTypeId,
-                            ct.Name
+                            ContactType = ct.ContactType.Name,
+                            ContactName = ct.Name,
+                            Id = ct.Id,
                         }), 
                         Employees = c.CompanyEmployees.Select(ct => new
                         {
@@ -150,25 +150,24 @@ namespace Loujico.BL
                             ct.Department,
                             ct.FirstName,
                             ct.LastName,
-                            Contacts = ct.Contacts.Select(ct => new
+                            Contacts = c.Contacts.Select(ct => new ContactModel
                             {
-                              
-                                ct.Name,
-                                ct.ContactType,
-                                
-                            }), 
+                                ContactType = ct.ContactType.Name,
+                                ContactName = ct.Name,
+                                Id = ct.Id,
+                            }),
                             ct.Notes,
                             ct.Position,
                         }),
                      
                     
 
-                        Activities = c.CompanyActivities.Select(ca => new
+                        Activities = c.CompanyActivities.Select(ct => new ActivityModel
                         {
-                            ca.ActivityId,
-                            ca.Activity.Name,
-                            ca.Activity.IndustryId
-                        })
+                            IdustryName = ct.Industry.Name,
+                            ActivityName = ct.Activity.Name,
+                            Id = ct.Id,
+                        }),
                     })
                     .FirstOrDefaultAsync();
 

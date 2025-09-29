@@ -129,7 +129,31 @@ namespace Loujico.Controllers
 
             }
         }
+        [HttpGet("GetActivityByIndustry/{id}")]
+        public async Task<ActionResult<ApiResponse<List<object>>>> GetActivityByIndustry(int id)
+        {
 
+            try
+            {
+                var ActivityByIndustry = await ClsSettings.GetActivityByIndustry(id);
+                if (ActivityByIndustry == null)
+                    return NotFound(new ApiResponse<string> { Message = "There is no ActivityByIndustry" });
+                return Ok(new ApiResponse<List<object>>
+                {
+                    Data = ActivityByIndustry
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<object>>
+                {
+                    Message = ex.Message,
+
+                });
+
+            }
+        }
 
 
 
@@ -150,7 +174,14 @@ namespace Loujico.Controllers
                 var userId = UserManager.GetUserId(User);
                 Co_Industry co_Industry = new Co_Industry();
                 co_Industry.Name = Name;
-                await ClsSettings.AddIndustry(co_Industry);
+                if (await ClsSettings.AddIndustry(co_Industry))
+                {
+                    return BadRequest(new ApiResponse<string>
+                    {
+                        Message = "the industry can not be added "
+                    });
+                }
+               
                 // من هون 
                 await ClsLogs.Add("CRUD", $"{co_Industry.Name} added to the System by {username} ", userId);
                 return Ok(new ApiResponse<String>
@@ -178,7 +209,7 @@ namespace Loujico.Controllers
 
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<String>
+                return BadRequest(new ApiResponse<string>
                 {
                     Message = "wronge"
                 });
@@ -190,7 +221,14 @@ namespace Loujico.Controllers
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
 
-                await ClsSettings.AddContact(contact);
+                if (await ClsSettings.AddContact(contact))
+                {
+                    return BadRequest(new ApiResponse<string>
+                    {
+                        Message = "the contact can not be added "
+                    });
+                }
+               
                 // من هون 
                 await ClsLogs.Add("CRUD", $"{contact.Name} added to the System by {username} ", userId);
                 return Ok(new ApiResponse<string>
@@ -461,30 +499,6 @@ namespace Loujico.Controllers
                 });
             }
         }
-        [HttpGet("GetActivityByIndustry/{id}")]
-        public async Task<ActionResult<ApiResponse<List<object>>>> GetActivityByIndustry(int id)
-        {
 
-            try
-            {
-                var ActivityByIndustry = await ClsSettings.GetActivityByIndustry(id);
-                if (ActivityByIndustry == null)
-                    return NotFound(new ApiResponse<string> { Message = "There is no ActivityByIndustry" });
-                return Ok(new ApiResponse<List<object>>
-                {
-                    Data = ActivityByIndustry
-                });
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<List<object>>
-                {
-                    Message = ex.Message,
-
-                });
-
-            }
-        }
     }
 }

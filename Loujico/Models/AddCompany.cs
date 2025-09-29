@@ -110,6 +110,7 @@ namespace Loujico.Models
         public int Id { get; set; }
         public int ContactTypeId { get; set; }
         public string Name { get; set; } = null!;
+        public int CompanyId { get; set; }
     }
 
     public class CompanyContactReadDto
@@ -140,6 +141,7 @@ namespace Loujico.Models
     }
     public class CompanyEmployeeCreateDto
     {
+        public int CompanyId { get; set; }
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
         public string Position { get; set; } = null!;
@@ -152,6 +154,7 @@ namespace Loujico.Models
     public class CompanyEmployeeUpdateDto
     {
         public int Id { get; set; }
+        public int CompanyId { get; set; }
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
         public string Position { get; set; } = null!;
@@ -172,5 +175,17 @@ namespace Loujico.Models
         public string? Notes { get; set; }
         public string ContactName { get; set; } // اسم وسيلة الاتصال المرتبطة بالموظف
         public int ContactTypeId { get; set; }  // نوع وسيلة الاتصال (هاتف، إيميل، إلخ)
+    }
+    public class ContactModel
+    {
+        public int Id { get; set; }
+        public string ContactName { get; set; }
+        public string ContactType { get; set; }
+    }
+    public class ActivityModel
+    {
+        public int Id { get; set; }
+        public string ActivityName { get; set; }
+        public string IdustryName { get; set; }
     }
 }

@@ -164,8 +164,8 @@ namespace Loujico.Controllers
 
 
         // POST: api/companies/{companyId}/contacts
-        [HttpPost("AddContact")]
-        public async Task<ActionResult<ApiResponse<List<CompanyContactReadDto>>>> AddContact([FromForm] List<CompanyContactCreateDto> dtos)
+        [HttpPost("AddContacts/{companyId:int}")]
+        public async Task<ActionResult<ApiResponse<List<CompanyContactReadDto>>>> AddContacts(int companyId,[FromForm] List<CompanyContactCreateDto> dtos)
         {
             if (dtos == null || !dtos.Any())
                 return BadRequest(new ApiResponse<string> { Message = "No contacts supplied" });
@@ -184,7 +184,7 @@ namespace Loujico.Controllers
 
                     var contact = new Co_Contact
                     {
-                        CompanyId = dto.CompanyId,        // إذا DTO لا يحمل CompanyId, استخدم مسار api/companies/{id}/contacts بدلًا من قائمة عامة
+                        CompanyId = companyId,        // إذا DTO لا يحمل CompanyId, استخدم مسار api/companies/{id}/contacts بدلًا من قائمة عامة
                         ContactTypeId = dto.ContactTypeId,
                         Name = dto.Name
                     };
@@ -219,7 +219,7 @@ namespace Loujico.Controllers
             }
         }
 
-        [HttpPut("EditContacts")]
+        [HttpPatch("EditContacts/{companyId:int}")]
         public async Task<ActionResult<ApiResponse<List<CompanyContactReadDto>>>> EditContacts(int companyId, [FromForm] List<CompanyContactCreateDto> dtos)
         {
             if (dtos == null) return BadRequest(new ApiResponse<string> { Message = "Payload is required" });
@@ -350,8 +350,8 @@ namespace Loujico.Controllers
             await ClsLogs.Add("CRUD", $"Added activities to CompanyId {companyId}", UserManager.GetUserId(User));
             return Ok(new ApiResponse<List<CompanyActivityReadDto>> { Message = "Done", Data = added });
         }
-        [HttpPut("ReplaceActivities/{companyId:int}")]
-        public async Task<ActionResult<ApiResponse<List<CompanyActivityReadDto>>>> ReplaceActivities(int companyId, [FromForm] List<CompanyActivityLinkDto> dtos)
+        [HttpPatch("EditActivities/{companyId:int}")]
+        public async Task<ActionResult<ApiResponse<List<CompanyActivityReadDto>>>> EditActivities(int companyId, [FromForm] List<CompanyActivityLinkDto> dtos)
         {
             if (dtos == null)
                 return BadRequest(new ApiResponse<string> { Message = "Payload required" });
@@ -562,8 +562,7 @@ namespace Loujico.Controllers
 
 
         [HttpPatch("EditEmployees/{companyId:int}")]
-        public async Task<ActionResult<ApiResponse<List<CompanyEmployeeReadDto>>>> EditEmployees(
-      int companyId, [FromForm] List<CompanyEmployeeUpdateDto> dtos)
+        public async Task<ActionResult<ApiResponse<List<CompanyEmployeeReadDto>>>> EditEmployees( int companyId, [FromForm] List<CompanyEmployeeUpdateDto> dtos)
         {
             if (dtos == null || !dtos.Any())
                 return BadRequest(new ApiResponse<string> { Message = "Payload is required" });
@@ -719,7 +718,12 @@ namespace Loujico.Controllers
                 var file = await ClsFiles.GetById(id, tableName.Company);
                 if (file == null)
                     return NotFound(new ApiResponse<string> { Message = "the file is deleted or not found " });
-                await ClsFiles.Delete(id, tableName.Company);
+                if (!await ClsFiles.Delete(id, tableName.Company))
+                {
+                    return NotFound(new ApiResponse<string> { Message = "the file can not be deleted" });
+
+                }
+
 
                 // من هون 
                 var username = UserManager.GetUserName(User);
@@ -752,7 +756,11 @@ namespace Loujico.Controllers
                 var Customer = await ClsCompanys.GetById(id);
                 if (Customer == null)
                     return NotFound(new ApiResponse<string> { Message = "the field is deleted or not found " });
-                await ClsCompanys.Delete(id);
+                if (!await ClsCompanys.Delete(id))
+                {
+                    return NotFound(new ApiResponse<string> { Message = "the company can not be deleted" });
+
+                };
                 // من هون 
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
