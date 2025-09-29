@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Loujico.BL;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -56,6 +57,8 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
 
     {
+      
+    
         base.OnModelCreating(modelBuilder);
 
 
@@ -64,6 +67,8 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
       .WithMany() // بدون "Company"
       .HasForeignKey(c => c.LegalId)
       .HasConstraintName("FK_Companies_Legals");
+        modelBuilder.Entity<Co_Company_Name>()
+          .ToTable(tb => tb.HasTrigger("TRG_CoCompanies_History"));
 
         modelBuilder.Entity<TbCustomer>(entity =>
         {
