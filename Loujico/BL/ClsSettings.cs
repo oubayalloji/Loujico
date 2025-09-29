@@ -263,7 +263,8 @@ namespace Loujico.BL
                     .Select(x => new
                     {
                         x.Id,
-                        x.Name
+                        x.Name,
+                        Industry = x.Industry.Name
                     })
                     .ToListAsync();
                 if (result == null)

@@ -150,7 +150,13 @@ namespace Loujico.BL
                             ct.Department,
                             ct.FirstName,
                             ct.LastName,
-                            ct.Contacts,
+                            Contacts = ct.Contacts.Select(ct => new
+                            {
+                              
+                                ct.Name,
+                                ct.ContactType,
+                                
+                            }), 
                             ct.Notes,
                             ct.Position,
                         }),
@@ -207,6 +213,22 @@ namespace Loujico.BL
                 return false;
             }
         }
+
+        //public async Task<bool> Delete(int id)
+        //{
+        //    try
+        //    {
+        //        // استخدم SQL مباشرة
+        //        var result = await CTX.Database.ExecuteSqlRawAsync(
+        //            "UPDATE Co_Companies SET IsDeleted = 1 WHERE Id = {0}", id);
+        //        return result > 0;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await ClsLogs.Add("Error", ex.Message, null);
+        //        return false;
+        //    }
+        //}
         public async Task<bool> Delete(int id)
         {
             try

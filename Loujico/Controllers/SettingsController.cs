@@ -423,7 +423,14 @@ namespace Loujico.Controllers
         {
             try
             {
-                var Cont = CTX.TbContact.FirstOrDefault(x => x.Id == id);
+                var Cont = CTX.Co_Activities.FirstOrDefault(x => x.Id == id);
+                if (Cont==null)
+                {
+                    return NotFound(new ApiResponse<List<TbEmployee>>
+                    {
+                        Message = "النشاط غير موجد",
+                    });
+                }
                 var Emp = await ClsSettings.DeleteActivity(id);
                 if (Emp == false)
                 {

@@ -36,7 +36,7 @@ namespace Loujico.Controllers
             ClsCompanys = clsCompanys;
         }
         [HttpPost("AddCompany")]
-        public async Task<ActionResult<ApiResponse<CompanyReadDto>>> AddCompany([FromBody] CompanyCreateDto dto)
+        public async Task<ActionResult<ApiResponse<CompanyReadDto>>> AddCompany([FromForm] CompanyCreateDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new ApiResponse<string> { Message = "Invalid model" });
@@ -165,7 +165,7 @@ namespace Loujico.Controllers
 
         // POST: api/companies/{companyId}/contacts
         [HttpPost("AddContact")]
-        public async Task<ActionResult<ApiResponse<List<CompanyContactReadDto>>>> AddContact([FromBody] List<CompanyContactCreateDto> dtos)
+        public async Task<ActionResult<ApiResponse<List<CompanyContactReadDto>>>> AddContact([FromForm] List<CompanyContactCreateDto> dtos)
         {
             if (dtos == null || !dtos.Any())
                 return BadRequest(new ApiResponse<string> { Message = "No contacts supplied" });
@@ -220,7 +220,7 @@ namespace Loujico.Controllers
         }
 
         [HttpPut("EditContacts")]
-        public async Task<ActionResult<ApiResponse<List<CompanyContactReadDto>>>> EditContacts(int companyId, [FromBody] List<CompanyContactCreateDto> dtos)
+        public async Task<ActionResult<ApiResponse<List<CompanyContactReadDto>>>> EditContacts(int companyId, [FromForm] List<CompanyContactCreateDto> dtos)
         {
             if (dtos == null) return BadRequest(new ApiResponse<string> { Message = "Payload is required" });
 
@@ -287,7 +287,7 @@ namespace Loujico.Controllers
 
 
         [HttpPost("AddActivities/{companyId:int}")]
-        public async Task<ActionResult<ApiResponse<List<CompanyActivityReadDto>>>> AddActivities(int companyId, [FromBody] List<CompanyActivityLinkDto> dtos)
+        public async Task<ActionResult<ApiResponse<List<CompanyActivityReadDto>>>> AddActivities(int companyId, [FromForm] List<CompanyActivityLinkDto> dtos)
         {
             if (dtos == null || !dtos.Any())
                 return BadRequest(new ApiResponse<string> { Message = "No activity ids supplied" });
@@ -351,7 +351,7 @@ namespace Loujico.Controllers
             return Ok(new ApiResponse<List<CompanyActivityReadDto>> { Message = "Done", Data = added });
         }
         [HttpPut("ReplaceActivities/{companyId:int}")]
-        public async Task<ActionResult<ApiResponse<List<CompanyActivityReadDto>>>> ReplaceActivities(int companyId, [FromBody] List<CompanyActivityLinkDto> dtos)
+        public async Task<ActionResult<ApiResponse<List<CompanyActivityReadDto>>>> ReplaceActivities(int companyId, [FromForm] List<CompanyActivityLinkDto> dtos)
         {
             if (dtos == null)
                 return BadRequest(new ApiResponse<string> { Message = "Payload required" });
@@ -474,7 +474,7 @@ namespace Loujico.Controllers
 
 
         [HttpPost("AddEmployees/{companyId:int}")]
-        public async Task<ActionResult<ApiResponse<List<CompanyEmployeeReadDto>>>> AddEmployees(   int companyId,  [FromBody] List<CompanyEmployeeCreateDto> dtos)
+        public async Task<ActionResult<ApiResponse<List<CompanyEmployeeReadDto>>>> AddEmployees(int companyId,[FromForm] List<CompanyEmployeeCreateDto> dtos)
         {
             if (dtos == null || !dtos.Any())
                 return BadRequest(new ApiResponse<string> { Message = "No employees supplied" });
@@ -491,8 +491,8 @@ namespace Loujico.Controllers
             await using var tx = await CTX.Database.BeginTransactionAsync();
             try
             {
-                // بناء كائنات الكيان من الـ DTOs
-                var entities = dtos.Select(dto => new Co_CompanyEmployee
+                // 1) أضف الموظفين
+                var employees = dtos.Select(dto => new Co_CompanyEmployee
                 {
                     CompanyId = companyId,
                     FirstName = dto.FirstName,
@@ -502,12 +502,35 @@ namespace Loujico.Controllers
                     Notes = dto.Notes
                 }).ToList();
 
-                await CTX.Co_CompanyEmployees.AddRangeAsync(entities);
-                await CTX.SaveChangesAsync();
+                await CTX.Co_CompanyEmployees.AddRangeAsync(employees);
+                await CTX.SaveChangesAsync(); // لازم نحفظ أول حتى ناخد الـ Ids
+
+                // 2) أضف وسائل الاتصال المرتبطة (إذا مرسلة بالـ DTO)
+                var contacts = new List<Co_Contact>();
+                foreach (var (dto, emp) in dtos.Zip(employees, (dto, emp) => (dto, emp)))
+                {
+                    if (!string.IsNullOrWhiteSpace(dto.ContactName) && dto.ContactTypeId > 0)
+                    {
+                        contacts.Add(new Co_Contact
+                        {
+                            CompanyId = companyId,
+                            EmployeeId = emp.Id,
+                            ContactTypeId = dto.ContactTypeId,
+                            Name = dto.ContactName
+                        });
+                    }
+                }
+
+                if (contacts.Any())
+                {
+                    await CTX.Co_Contacts.AddRangeAsync(contacts);
+                    await CTX.SaveChangesAsync();
+                }
+
                 await tx.CommitAsync();
 
-                // بناء قائمة القراءة مع القيم المولّدة (Id)
-                var result = entities.Select(e => new CompanyEmployeeReadDto
+                // 3) بناء النتيجة
+                var result = employees.Select(e => new CompanyEmployeeReadDto
                 {
                     Id = e.Id,
                     CompanyId = e.CompanyId,
@@ -535,11 +558,14 @@ namespace Loujico.Controllers
                 return BadRequest(new ApiResponse<string> { Message = ex.Message });
             }
         }
-        [HttpPut("EditEmployees/{companyId:int}")]
+
+
+
+        [HttpPatch("EditEmployees/{companyId:int}")]
         public async Task<ActionResult<ApiResponse<List<CompanyEmployeeReadDto>>>> EditEmployees(
-     int companyId, [FromBody] List<CompanyEmployeeUpdateDto> dtos)
+      int companyId, [FromForm] List<CompanyEmployeeUpdateDto> dtos)
         {
-            if (dtos == null)
+            if (dtos == null || !dtos.Any())
                 return BadRequest(new ApiResponse<string> { Message = "Payload is required" });
 
             await using var tx = await CTX.Database.BeginTransactionAsync();
@@ -550,15 +576,24 @@ namespace Loujico.Controllers
                 if (company == null)
                     return NotFound(new ApiResponse<string> { Message = "Company not found" });
 
-                // احذف كل الموظفين الحاليين
+                // 1) احذف كل الموظفين الحاليين
                 var oldEmployees = await CTX.Co_CompanyEmployees
                     .Where(e => e.CompanyId == companyId)
                     .ToListAsync();
                 if (oldEmployees.Any())
                     CTX.Co_CompanyEmployees.RemoveRange(oldEmployees);
 
-                // أضف القائمة الجديدة
-                var toAdd = dtos.Select(d => new Co_CompanyEmployee
+                // 2) احذف كل وسائل الاتصال المرتبطة بالموظفين
+                var oldContacts = await CTX.Co_Contacts
+                    .Where(c => c.CompanyId == companyId && c.EmployeeId != null)
+                    .ToListAsync();
+                if (oldContacts.Any())
+                    CTX.Co_Contacts.RemoveRange(oldContacts);
+
+                await CTX.SaveChangesAsync();
+
+                // 3) أضف الموظفين الجدد
+                var employees = dtos.Select(d => new Co_CompanyEmployee
                 {
                     CompanyId = companyId,
                     FirstName = d.FirstName,
@@ -568,13 +603,36 @@ namespace Loujico.Controllers
                     Notes = d.Notes
                 }).ToList();
 
-                if (toAdd.Any())
-                    await CTX.Co_CompanyEmployees.AddRangeAsync(toAdd);
+                if (employees.Any())
+                    await CTX.Co_CompanyEmployees.AddRangeAsync(employees);
 
-                await CTX.SaveChangesAsync();
+                await CTX.SaveChangesAsync(); // لازم نحفظ حتى ناخد Ids
+
+                // 4) أضف وسائل الاتصال المرتبطة (إذا مرسلة بالـ DTO)
+                var contacts = new List<Co_Contact>();
+                foreach (var (dto, emp) in dtos.Zip(employees, (dto, emp) => (dto, emp)))
+                {
+                    if (!string.IsNullOrWhiteSpace(dto.ContactName) && dto.ContactTypeId > 0)
+                    {
+                        contacts.Add(new Co_Contact
+                        {
+                            CompanyId = companyId,
+                            EmployeeId = emp.Id,
+                            ContactTypeId = dto.ContactTypeId,
+                            Name = dto.ContactName
+                        });
+                    }
+                }
+
+                if (contacts.Any())
+                {
+                    await CTX.Co_Contacts.AddRangeAsync(contacts);
+                    await CTX.SaveChangesAsync();
+                }
+
                 await tx.CommitAsync();
 
-                // رجّع النتيجة
+                // 5) رجّع النتيجة
                 var added = await CTX.Co_CompanyEmployees
                     .AsNoTracking()
                     .Where(e => e.CompanyId == companyId)
@@ -819,7 +877,7 @@ namespace Loujico.Controllers
     }
 }
         /*        [HttpPost("Add")]
-                public async Task<ActionResult<ApiResponse<string>>> Add([FromBody] AddCompany dto, [FromForm] List<FileModel>? Data)
+                public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] AddCompany dto, [FromForm] List<FileModel>? Data)
                 {
                     if (!ModelState.IsValid)
                         return BadRequest(new ApiResponse<string> { Message = "Invalid model" });
@@ -939,7 +997,7 @@ namespace Loujico.Controllers
                     }
                 }*/
         /*        [HttpPatch("Edit")]
-                public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] CompanyEditDto dto, [FromForm] List<FileModel>? Data)
+                public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] CompanyEditDto dto, [FromForm] List<FileModel>? Data)
                 {
                     if (!ModelState.IsValid)
                         return BadRequest(new ApiResponse<string> { Message = "Invalid model or id mismatch" });
