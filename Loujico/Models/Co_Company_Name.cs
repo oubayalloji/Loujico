@@ -26,6 +26,8 @@ namespace Loujico.Models
         public DateTime? Found_Date { get; set; }
 
 
+
+
         [Required(ErrorMessage = "وصف الشركة مطلوب")]
         [StringLength(1000, ErrorMessage = "الوصف يجب ألا يتجاوز 1000 خانة")]
 

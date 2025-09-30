@@ -18,6 +18,10 @@ namespace Loujico.BL
         public  Task<bool> DeleteActivity(int Id);
         public Task<bool> AddActivity(Co_Activity Legal);
         public Task<List<object>> GetActivityByIndustry(int Id);
+        public Task<bool> AddState(TbState State);
+        public  Task<bool> DeleteState(int Id);
+        public  Task<List<object>> GetAllStateType();
+        public  Task<List<object>> GetStateByIndustry(int Id);
 
     }
     public class ClsSettings : Isettings
@@ -32,6 +36,188 @@ namespace Loujico.BL
             ClsLogs = clsLogs;
             ClsHistory = clsHistory;
         }
+        #region State
+
+        public async Task<bool> AddState(TbState State)
+        {
+            try
+            {
+                await CTX.TbStates.AddAsync(State);
+                await CTX.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return false;
+            }
+        }
+        public async Task<bool> DeleteState(int Id)
+        {
+            try
+            {
+                var State = await CTX.TbStates.FirstOrDefaultAsync(x => x.Id == Id);
+                if (State == null)
+                {
+                    return false;
+                }
+                CTX.TbStates.Remove(State);
+                await CTX.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return false;
+            }
+        }
+        public async Task<List<object>> GetAllStateType()
+        {
+            try
+            {
+                var result = await CTX.TbStates
+                    .AsNoTracking()
+                    .Select(x => new
+                    {
+                        x.Id,
+                        x.Name,
+ 
+
+                    })
+                    .ToListAsync();
+                if (result == null)
+                {
+                    return null;
+                }
+
+                return result.Cast<object>().ToList();
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        }
+        public async Task<List<object>> GetStateByIndustry(int Id)
+        {
+            try
+            {
+                var result = await CTX.TbStates
+                    .AsNoTracking()
+                    .Where(a => a.CountrId == Id)
+                    .Select(a => new
+                    {
+                        a.Id,
+                        a.Name
+                    })
+                    .ToListAsync();
+
+                if (result == null)
+                {
+                    return null;
+                }
+
+                return result.Cast<object>().ToList();
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        }
+        #endregion
+
+        #region Activity
+
+        public async Task<bool> AddActivity(Co_Activity Activity)
+        {
+            try
+            {
+                await CTX.Co_Activities.AddAsync(Activity);
+                await CTX.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return false;
+            }
+        }
+        public async Task<bool> DeleteActivity(int Id)
+        {
+            try
+            {
+                var contact = await CTX.Co_Activities.FirstOrDefaultAsync(x => x.Id == Id);
+                if (contact == null)
+                {
+                    return false;
+                }
+                CTX.Co_Activities.Remove(contact);
+                await CTX.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return false;
+            }
+        }
+        public async Task<List<object>> GetAllActivityType()
+        {
+            try
+            {
+                var result = await CTX.Co_Activities
+                    .AsNoTracking()
+                    .Include(x => x.CompanyActivities)
+                    .Select(x => new
+                    {
+                        x.Id,
+                        x.Name,
+                        Industry = x.Industry.Name
+                    })
+                    .ToListAsync();
+                if (result == null)
+                {
+                    return null;
+                }
+
+                return result.Cast<object>().ToList();
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        }
+        public async Task<List<object>> GetActivityByIndustry(int Id)
+        {
+            try
+            {
+                var result = await CTX.Co_Activities
+                    .AsNoTracking()
+                    .Where(a => a.IndustryId == Id)
+                    .Select(a => new
+                    {
+                        a.Id,
+                        a.Name
+                    })
+                    .ToListAsync();
+
+                if (result == null)
+                {
+                    return null;
+                }
+
+                return result.Cast<object>().ToList();
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        }
+
+        #endregion
 
         #region Industry
         public async Task<bool> AddIndustry(Co_Industry Industry)
@@ -218,96 +404,7 @@ namespace Loujico.BL
         } 
         #endregion 
 
-        #region Activity
-
-        public async Task<bool> AddActivity(Co_Activity Activity)
-        {
-            try
-            {
-                await CTX.Co_Activities.AddAsync(Activity);
-                await CTX.SaveChangesAsync();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return false;
-            }
-        }
-        public async Task<bool> DeleteActivity(int Id)
-        {
-            try
-            {
-                var contact = await CTX.Co_Activities.FirstOrDefaultAsync(x => x.Id == Id);
-                if (contact == null)
-                {
-                    return false;
-                }
-                CTX.Co_Activities.Remove(contact);
-                await CTX.SaveChangesAsync();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return false;
-            }
-        }
-        public async Task<List<object>> GetAllActivityType()
-        {
-            try
-            {
-                var result = await CTX.Co_Activities
-                    .AsNoTracking()
-                    .Include(x=>x.CompanyActivities)
-                    .Select(x => new
-                    {
-                        x.Id,
-                        x.Name,
-                        Industry = x.Industry.Name
-                    })
-                    .ToListAsync();
-                if (result == null)
-                {
-                    return null;
-                }
-
-                return result.Cast<object>().ToList();
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return null;
-            }
-        }
-        #endregion
-        public async Task<List<object>> GetActivityByIndustry(int Id)
-        {
-            try
-            {
-                var result = await CTX.Co_Activities
-                    .AsNoTracking()
-                    .Where(a => a.IndustryId == Id)
-                    .Select(a => new
-                    {
-                        a.Id,
-                        a.Name
-                    })
-                    .ToListAsync();
-
-                if (result == null)
-                {
-                    return null;
-                }
-
-                    return result.Cast<object>().ToList();
-            }
-            catch (Exception ex)
-            {
-                await ClsLogs.Add("Error", ex.Message, null);
-                return null;
-            }
-        }
+   
 
     }
 }
