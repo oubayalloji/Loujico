@@ -22,6 +22,10 @@ namespace Loujico.BL
         public  Task<bool> DeleteState(int Id);
         public  Task<List<object>> GetAllStateType();
         public  Task<List<object>> GetStateByIndustry(int Id);
+        public Task<bool> AddCity(TbCity City);
+        public Task<bool> DeleteCity(int Id);
+        public Task<List<object>> GetAllCityType();
+        public Task<List<object>> GetCityByIndustry(int Id);
 
     }
     public class ClsSettings : Isettings
@@ -105,6 +109,98 @@ namespace Loujico.BL
                 var result = await CTX.TbStates
                     .AsNoTracking()
                     .Where(a => a.CountrId == Id)
+                    .Select(a => new
+                    {
+                        a.Id,
+                        a.Name
+                    })
+                    .ToListAsync();
+
+                if (result == null)
+                {
+                    return null;
+                }
+
+                return result.Cast<object>().ToList();
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        }
+        #endregion
+
+
+        #region City
+
+        public async Task<bool> AddCity(TbCity City)
+        {
+            try
+            {
+                await CTX.TbCities.AddAsync(City);
+                await CTX.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return false;
+            }
+        }
+        public async Task<bool> DeleteCity(int Id)
+        {
+            try
+            {
+                var City = await CTX.TbCities.FirstOrDefaultAsync(x => x.Id == Id);
+                if (City == null)
+                {
+                    return false;
+                }
+                CTX.TbCities.Remove(City);
+                await CTX.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return false;
+            }
+        }
+        public async Task<List<object>> GetAllCityType()
+        {
+            try
+            {
+                var result = await CTX.TbCities
+                    .AsNoTracking()
+                    .Select(x => new
+                    {
+                        x.Id,
+                        x.Name,
+
+
+                    })
+                    .ToListAsync();
+                if (result == null)
+                {
+                    return null;
+                }
+
+                return result.Cast<object>().ToList();
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        }
+        public async Task<List<object>> GetCityByIndustry(int Id)
+        {
+            try
+            {
+                var result = await CTX.TbCities
+                    .AsNoTracking()
+                    .Where(a => a.StateId == Id)
                     .Select(a => new
                     {
                         a.Id,
