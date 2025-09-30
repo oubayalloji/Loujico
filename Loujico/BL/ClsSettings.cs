@@ -497,10 +497,69 @@ namespace Loujico.BL
                 await ClsLogs.Add("Error", ex.Message, null);
                 return null;
             }
-        } 
-        #endregion 
+        }
+        #endregion
 
-   
+        #region Country
+        public async Task<bool> AddCountry(TbCountry Country)
+        {
+            try
+            {
+                await CTX.TbCountries.AddAsync(Country);
+                await CTX.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return false;
+            }
+        }
+        public async Task<List<object>> GetAllCountryType()
+        {
+            try
+            {
+                var result = await CTX.TbCountries
+                    .AsNoTracking()
+                    .Select(x => new
+                    {
+                        x.Id,
+                        x.Name
+                    })
+                    .ToListAsync();
+                if (result == null)
+                {
+                    return null;
+                }
 
+                return result.Cast<object>().ToList();
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
+            }
+        }
+        public async Task<bool> DeleteCountry(int Id)
+        {
+            try
+            {
+                var Country = await CTX.TbCountries.FirstOrDefaultAsync(x => x.Id == Id);
+                if (Country == null)
+                {
+                    return false;
+                }
+                CTX.TbCountries.Remove(Country);
+                await CTX.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return false;
+            }
+        }
+
+        #endregion
     }
 }
