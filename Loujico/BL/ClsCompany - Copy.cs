@@ -141,6 +141,7 @@ namespace Loujico.BL
                         Contacts = c.Contacts.Select(ct => new ContactModel
                         {
                             ContactType = ct.ContactType.Name,
+                            ContactTypeId = ct.ContactType.Id,
                             ContactName = ct.Name,
                             Id = ct.Id,
                         }), 
@@ -153,6 +154,7 @@ namespace Loujico.BL
                             Contacts = c.Contacts.Select(ct => new ContactModel
                             {
                                 ContactType = ct.ContactType.Name,
+                                ContactTypeId = ct.ContactType.Id,
                                 ContactName = ct.Name,
                                 Id = ct.Id,
                             }),
@@ -164,9 +166,9 @@ namespace Loujico.BL
 
                         Activities = c.CompanyActivities.Select(ct => new ActivityModel
                         {
-                            IdustryName = ct.Industry.Name,
+                            IndustryName = ct.Industry.Name,
                             ActivityName = ct.Activity.Name,
-                            Id = ct.Id,
+                            activityId = ct.Activity.Id,
                         }),
                     })
                     .FirstOrDefaultAsync();

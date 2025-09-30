@@ -101,7 +101,7 @@ namespace Loujico.Models
     public class CompanyContactCreateDto
     {
         public int ContactTypeId { get; set; }
-        public int CompanyId { get; set; }
+     
         public string Name { get; set; } = null!;
     }
 
@@ -127,7 +127,7 @@ namespace Loujico.Models
     }
     public class CompanyActivityLinkDto
     {
-        public int ActivityId { get; set; }
+        public int activityId { get; set; }
     }
 
     public class CompanyActivityReadDto
@@ -141,27 +141,25 @@ namespace Loujico.Models
     }
     public class CompanyEmployeeCreateDto
     {
-        public int CompanyId { get; set; }
+      
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
         public string Position { get; set; } = null!;
         public string? Department { get; set; }
         public string? Notes { get; set; }
-        public string ContactName { get; set; } // اسم وسيلة الاتصال المرتبطة بالموظف
-        public int ContactTypeId { get; set; }
+        public List<CompanyContactCreateDto>? Contacts { get; set; }
     }
 
     public class CompanyEmployeeUpdateDto
     {
         public int Id { get; set; }
-        public int CompanyId { get; set; }
+
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
         public string Position { get; set; } = null!;
         public string? Department { get; set; }
         public string? Notes { get; set; }
-        public string ContactName { get; set; } // اسم وسيلة الاتصال المرتبطة بالموظف
-        public int ContactTypeId { get; set; }
+        public List<CompanyContactCreateDto>? Contacts { get; set; }
     }
 
     public class CompanyEmployeeReadDto
@@ -173,19 +171,20 @@ namespace Loujico.Models
         public string Position { get; set; } = null!;
         public string? Department { get; set; }
         public string? Notes { get; set; }
-        public string ContactName { get; set; } // اسم وسيلة الاتصال المرتبطة بالموظف
-        public int ContactTypeId { get; set; }  // نوع وسيلة الاتصال (هاتف، إيميل، إلخ)
+     // نوع وسيلة الاتصال (هاتف، إيميل، إلخ)
+        public List<CompanyContactCreateDto>? Contacts { get; set; }
     }
     public class ContactModel
     {
         public int Id { get; set; }
         public string ContactName { get; set; }
+        public int ContactTypeId { get; set; }
         public string ContactType { get; set; }
     }
     public class ActivityModel
     {
-        public int Id { get; set; }
+        public int activityId { get; set; }
         public string ActivityName { get; set; }
-        public string IdustryName { get; set; }
+        public string IndustryName { get; set; }
     }
 }

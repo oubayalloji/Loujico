@@ -174,7 +174,7 @@ namespace Loujico.Controllers
                 var userId = UserManager.GetUserId(User);
                 Co_Industry co_Industry = new Co_Industry();
                 co_Industry.Name = Name;
-                if (await ClsSettings.AddIndustry(co_Industry))
+                if (!await ClsSettings.AddIndustry(co_Industry))
                 {
                     return BadRequest(new ApiResponse<string>
                     {
@@ -221,7 +221,7 @@ namespace Loujico.Controllers
                 var username = UserManager.GetUserName(User);
                 var userId = UserManager.GetUserId(User);
 
-                if (await ClsSettings.AddContact(contact))
+                if (!await ClsSettings.AddContact(contact))
                 {
                     return BadRequest(new ApiResponse<string>
                     {

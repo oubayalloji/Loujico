@@ -165,7 +165,7 @@ namespace Loujico.Controllers
 
         // POST: api/companies/{companyId}/contacts
         [HttpPost("AddContacts/{companyId:int}")]
-        public async Task<ActionResult<ApiResponse<List<CompanyContactReadDto>>>> AddContacts(int companyId,[FromForm] List<CompanyContactCreateDto> dtos)
+        public async Task<ActionResult<ApiResponse<List<CompanyContactReadDto>>>> AddContacts(int companyId,[FromBody] List<CompanyContactCreateDto> dtos)
         {
             if (dtos == null || !dtos.Any())
                 return BadRequest(new ApiResponse<string> { Message = "No contacts supplied" });
@@ -173,7 +173,7 @@ namespace Loujico.Controllers
             await using var tx = await CTX.Database.BeginTransactionAsync();
             try
             {
-                var companyIds = dtos.Select(d => d.CompanyId).Distinct().ToList();
+           //     var companyIds = dtos.Select(d => companyId).Distinct().ToList();
                 // optional: validate single companyId or existence of company(ies) / contact types here
 
                 var created = new List<CompanyContactReadDto>();
@@ -220,9 +220,10 @@ namespace Loujico.Controllers
         }
 
         [HttpPatch("EditContacts/{companyId:int}")]
-        public async Task<ActionResult<ApiResponse<List<CompanyContactReadDto>>>> EditContacts(int companyId, [FromForm] List<CompanyContactCreateDto> dtos)
+        public async Task<ActionResult<ApiResponse<List<CompanyContactReadDto>>>> EditContacts(int companyId, [FromBody] List<CompanyContactCreateDto> dtos)
         {
-            if (dtos == null) return BadRequest(new ApiResponse<string> { Message = "Payload is required" });
+            if (dtos == null) 
+                return BadRequest(new ApiResponse<string> { Message = "Payload is required" });
 
             await using var tx = await CTX.Database.BeginTransactionAsync();
             try
@@ -287,7 +288,7 @@ namespace Loujico.Controllers
 
 
         [HttpPost("AddActivities/{companyId:int}")]
-        public async Task<ActionResult<ApiResponse<List<CompanyActivityReadDto>>>> AddActivities(int companyId, [FromForm] List<CompanyActivityLinkDto> dtos)
+        public async Task<ActionResult<ApiResponse<List<CompanyActivityReadDto>>>> AddActivities(int companyId, [FromBody] List<CompanyActivityLinkDto> dtos)
         {
             if (dtos == null || !dtos.Any())
                 return BadRequest(new ApiResponse<string> { Message = "No activity ids supplied" });
@@ -295,7 +296,7 @@ namespace Loujico.Controllers
             var companyExists = await CTX.Co_Companies.AnyAsync(c => c.Id == companyId && !c.IsDeleted);
             if (!companyExists) return NotFound(new ApiResponse<string> { Message = "Company not found" });
 
-            var activityIds = dtos.Select(d => d.ActivityId).Distinct().ToList();
+            var activityIds = dtos.Select(d => d.activityId).Distinct().ToList();
 
             // جلب الـ activities مع IndustryId واسم Industry للتحقق والتعبئة
             var activities = await CTX.Co_Activities
@@ -350,42 +351,44 @@ namespace Loujico.Controllers
             await ClsLogs.Add("CRUD", $"Added activities to CompanyId {companyId}", UserManager.GetUserId(User));
             return Ok(new ApiResponse<List<CompanyActivityReadDto>> { Message = "Done", Data = added });
         }
+
         [HttpPatch("EditActivities/{companyId:int}")]
-        public async Task<ActionResult<ApiResponse<List<CompanyActivityReadDto>>>> EditActivities(int companyId, [FromForm] List<CompanyActivityLinkDto> dtos)
+        public async Task<ActionResult<ApiResponse<List<CompanyActivityReadDto>>>> EditActivities(
+      int companyId, [FromBody] List<CompanyActivityLinkDto> dtos)
         {
             if (dtos == null)
-                return BadRequest(new ApiResponse<string> { Message = "Payload required" });
+                return BadRequest(new ApiResponse<string> { Message = "Payload is required" });
 
-            var distinctIds = dtos.Select(d => d.ActivityId).Where(id => id > 0).Distinct().ToList();
+            // جمع الـ ids المرسلة والتحقق من القيم الإيجابية
+            var distinctIds = dtos.Select(d => d.activityId).Where(id => id > 0).Distinct().ToList();
 
             await using var tx = await CTX.Database.BeginTransactionAsync();
             try
             {
                 var company = await CTX.Co_Companies.FirstOrDefaultAsync(c => c.Id == companyId && !c.IsDeleted);
-                if (company == null)
-                    return NotFound(new ApiResponse<string> { Message = "Company not found" });
+                if (company == null) return NotFound(new ApiResponse<string> { Message = "Company not found" });
 
-                // If no ids sent => we should remove all existing links and return empty list
+                // حالة المسح الكامل إذا القائمة فارغة
                 if (!distinctIds.Any())
                 {
-                    var allOld = await CTX.Co_CompanyActivities.Where(x => x.CompanyId == companyId).ToListAsync();
-                    if (allOld.Any()) CTX.Co_CompanyActivities.RemoveRange(allOld);
+                    var oldAll = await CTX.Co_CompanyActivities.Where(x => x.CompanyId == companyId).ToListAsync();
+                    if (oldAll.Any()) CTX.Co_CompanyActivities.RemoveRange(oldAll);
 
                     await CTX.SaveChangesAsync();
                     await tx.CommitAsync();
 
-                    await ClsLogs.Add("CRUD", $"Replaced activities for CompanyId {companyId} (cleared all)", UserManager.GetUserId(User));
-                    return Ok(new ApiResponse<List<CompanyActivityReadDto>> { Message = "Done", Data = new List<CompanyActivityReadDto>() });
+                    await ClsLogs.Add("CRUD", $"Activities replaced for CompanyId {companyId} (cleared all)", UserManager.GetUserId(User));
+                   return Ok(new ApiResponse<List<CompanyActivityReadDto>> { Message = "Done", Data = new List<CompanyActivityReadDto>() });
                 }
 
-                // جلب الـ activities المطلوبة مع IndustryId للتحقق والتعبئة
-                var activities = await CTX.Co_Activities
-                                          .Where(a => distinctIds.Contains(a.Id))
-                                          .Select(a => new { a.Id, a.Name, a.IndustryId, IndustryName = a.Industry != null ? a.Industry.Name : string.Empty })
-                                          .ToListAsync();
+                // تحقق من وجود الأنشطة المرسلة في الجدول لتجنب FK errors
+                var validActivities = await CTX.Co_Activities
+                    .Where(a => distinctIds.Contains(a.Id))
+                    .Select(a => new { a.Id, a.Name, a.IndustryId, IndustryName = a.Industry != null ? a.Industry.Name : string.Empty })
+                    .ToListAsync();
 
-                var validActivityIds = activities.Select(a => a.Id).ToList();
-                var invalid = distinctIds.Except(validActivityIds).ToList();
+                var foundIds = validActivities.Select(a => a.Id).ToList();
+                var invalid = distinctIds.Except(foundIds).ToList();
                 if (invalid.Any())
                     return BadRequest(new ApiResponse<string> { Message = $"Invalid activity ids: {string.Join(',', invalid)}" });
 
@@ -393,8 +396,8 @@ namespace Loujico.Controllers
                 var oldLinks = await CTX.Co_CompanyActivities.Where(x => x.CompanyId == companyId).ToListAsync();
                 if (oldLinks.Any()) CTX.Co_CompanyActivities.RemoveRange(oldLinks);
 
-                // تحضير وإضافة الروابط الجديدة مع تعبئة IndustryId من activities
-                var newLinks = activities.Select(a => new CompanyActivity
+                // إضافة الروابط الجديدة مع تعبئة IndustryId من validActivities
+                var newLinks = validActivities.Select(a => new CompanyActivity
                 {
                     CompanyId = companyId,
                     ActivityId = a.Id,
@@ -406,25 +409,25 @@ namespace Loujico.Controllers
                 await CTX.SaveChangesAsync();
                 await tx.CommitAsync();
 
-                // جلب الحالة النهائية بعد التغيير مع أسماء النشاط والصناعة
-                var result = await CTX.Co_CompanyActivities
-                                      .AsNoTracking()
-                                      .Where(x => x.CompanyId == companyId)
-                                      .Include(x => x.Activity)
-                                      .ThenInclude(a => a.Industry)
-                                      .Select(x => new CompanyActivityReadDto
-                                      {
-                                          Id = x.Id,
-                                          CompanyId = x.CompanyId,
-                                          ActivityId = x.ActivityId,
-                                          ActivityName = x.Activity != null ? x.Activity.Name : string.Empty,
-                                          IndustryId = x.IndustryId,
-                                          IndustryName = x.Activity != null && x.Activity.Industry != null ? x.Activity.Industry.Name : string.Empty
-                                      })
-                                      .ToListAsync();
+                // جلب النتيجة النهائية مع أسماء النشاط والصناعة
+                var added = await CTX.Co_CompanyActivities
+                    .AsNoTracking()
+                    .Where(x => x.CompanyId == companyId)
+                    .Include(x => x.Activity)
+                    .ThenInclude(a => a.Industry)
+                    .Select(x => new CompanyActivityReadDto
+                    {
+                        Id = x.Id,
+                        CompanyId = x.CompanyId,
+                        ActivityId = x.ActivityId,
+                        ActivityName = x.Activity != null ? x.Activity.Name : string.Empty,
+                        IndustryId = x.IndustryId,
+                        IndustryName = x.Activity != null && x.Activity.Industry != null ? x.Activity.Industry.Name : string.Empty
+                    })
+                    .ToListAsync();
 
-                await ClsLogs.Add("CRUD", $"Replaced activities for CompanyId {companyId}", UserManager.GetUserId(User));
-                return Ok(new ApiResponse<List<CompanyActivityReadDto>> { Message = "Done", Data = result });
+                await ClsLogs.Add("CRUD", $"Activities replaced for CompanyId {companyId} by {UserManager.GetUserId(User)}", UserManager.GetUserId(User));
+                return Ok(new ApiResponse<List<CompanyActivityReadDto>> { Message = "Done", Data = added });
             }
             catch (Exception ex)
             {
@@ -433,8 +436,6 @@ namespace Loujico.Controllers
                 return BadRequest(new ApiResponse<string> { Message = ex.Message });
             }
         }
-
-
         [HttpPost("AddFiles/{companyId:int}")]
         public async Task<ActionResult<ApiResponse<string>>> AddCompanyFiles(int companyId, [FromForm] List<FileModel>? Data)
         {
@@ -472,126 +473,42 @@ namespace Loujico.Controllers
             }
         }
 
-
         [HttpPost("AddEmployees/{companyId:int}")]
-        public async Task<ActionResult<ApiResponse<List<CompanyEmployeeReadDto>>>> AddEmployees(int companyId,[FromForm] List<CompanyEmployeeCreateDto> dtos)
+        public async Task<ActionResult<ApiResponse<List<CompanyEmployeeReadDto>>>> AddEmployees(
+            int companyId, [FromBody] List<CompanyEmployeeCreateDto> dtos)
         {
             if (dtos == null || !dtos.Any())
                 return BadRequest(new ApiResponse<string> { Message = "No employees supplied" });
 
-            // تحقق من وجود الشركة
-            var exists = await CTX.Co_Companies
-                                  .AnyAsync(c => c.Id == companyId && !c.IsDeleted);
-            if (!exists)
+            var company = await CTX.Co_Companies.FirstOrDefaultAsync(c => c.Id == companyId && !c.IsDeleted);
+            if (company == null)
                 return NotFound(new ApiResponse<string> { Message = "Company not found" });
 
-            var username = UserManager.GetUserName(User);
-            var userId = UserManager.GetUserId(User);
+            // تحقق من ContactTypeIds الموجودين في كل الـ DTOs لتجنب FK exceptions
+            var contactTypeIds = dtos
+                .Where(d => d.Contacts != null)
+                .SelectMany(d => d.Contacts!)
+                .Select(c => c.ContactTypeId)
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+
+            if (contactTypeIds.Any())
+            {
+                var validTypes = await CTX.TbContact
+                    .Where(t => contactTypeIds.Contains(t.Id))
+                    .Select(t => t.Id)
+                    .ToListAsync();
+
+                var invalid = contactTypeIds.Except(validTypes).ToList();
+                if (invalid.Any())
+                    return BadRequest(new ApiResponse<string> { Message = $"Invalid ContactTypeIds: {string.Join(',', invalid)}" });
+            }
 
             await using var tx = await CTX.Database.BeginTransactionAsync();
             try
             {
-                // 1) أضف الموظفين
-                var employees = dtos.Select(dto => new Co_CompanyEmployee
-                {
-                    CompanyId = companyId,
-                    FirstName = dto.FirstName,
-                    LastName = dto.LastName,
-                    Position = dto.Position,
-                    Department = dto.Department,
-                    Notes = dto.Notes
-                }).ToList();
-
-                await CTX.Co_CompanyEmployees.AddRangeAsync(employees);
-                await CTX.SaveChangesAsync(); // لازم نحفظ أول حتى ناخد الـ Ids
-
-                // 2) أضف وسائل الاتصال المرتبطة (إذا مرسلة بالـ DTO)
-                var contacts = new List<Co_Contact>();
-                foreach (var (dto, emp) in dtos.Zip(employees, (dto, emp) => (dto, emp)))
-                {
-                    if (!string.IsNullOrWhiteSpace(dto.ContactName) && dto.ContactTypeId > 0)
-                    {
-                        contacts.Add(new Co_Contact
-                        {
-                            CompanyId = companyId,
-                            EmployeeId = emp.Id,
-                            ContactTypeId = dto.ContactTypeId,
-                            Name = dto.ContactName
-                        });
-                    }
-                }
-
-                if (contacts.Any())
-                {
-                    await CTX.Co_Contacts.AddRangeAsync(contacts);
-                    await CTX.SaveChangesAsync();
-                }
-
-                await tx.CommitAsync();
-
-                // 3) بناء النتيجة
-                var result = employees.Select(e => new CompanyEmployeeReadDto
-                {
-                    Id = e.Id,
-                    CompanyId = e.CompanyId,
-                    FirstName = e.FirstName,
-                    LastName = e.LastName,
-                    Position = e.Position,
-                    Department = e.Department,
-                    Notes = e.Notes
-                }).ToList();
-
-                await ClsLogs.Add("CRUD",
-                                  $"Added {result.Count} employees to Company {companyId} by {username}",
-                                  userId);
-
-                return Ok(new ApiResponse<List<CompanyEmployeeReadDto>>
-                {
-                    Message = "Done",
-                    Data = result
-                });
-            }
-            catch (Exception ex)
-            {
-                await tx.RollbackAsync();
-                await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<string> { Message = ex.Message });
-            }
-        }
-
-
-
-        [HttpPatch("EditEmployees/{companyId:int}")]
-        public async Task<ActionResult<ApiResponse<List<CompanyEmployeeReadDto>>>> EditEmployees( int companyId, [FromForm] List<CompanyEmployeeUpdateDto> dtos)
-        {
-            if (dtos == null || !dtos.Any())
-                return BadRequest(new ApiResponse<string> { Message = "Payload is required" });
-
-            await using var tx = await CTX.Database.BeginTransactionAsync();
-            try
-            {
-                var company = await CTX.Co_Companies
-                    .FirstOrDefaultAsync(c => c.Id == companyId && !c.IsDeleted);
-                if (company == null)
-                    return NotFound(new ApiResponse<string> { Message = "Company not found" });
-
-                // 1) احذف كل الموظفين الحاليين
-                var oldEmployees = await CTX.Co_CompanyEmployees
-                    .Where(e => e.CompanyId == companyId)
-                    .ToListAsync();
-                if (oldEmployees.Any())
-                    CTX.Co_CompanyEmployees.RemoveRange(oldEmployees);
-
-                // 2) احذف كل وسائل الاتصال المرتبطة بالموظفين
-                var oldContacts = await CTX.Co_Contacts
-                    .Where(c => c.CompanyId == companyId && c.EmployeeId != null)
-                    .ToListAsync();
-                if (oldContacts.Any())
-                    CTX.Co_Contacts.RemoveRange(oldContacts);
-
-                await CTX.SaveChangesAsync();
-
-                // 3) أضف الموظفين الجدد
+                // 1) أنشئ الموظفين أولاً للحصول على الـ Ids
                 var employees = dtos.Select(d => new Co_CompanyEmployee
                 {
                     CompanyId = companyId,
@@ -605,51 +522,47 @@ namespace Loujico.Controllers
                 if (employees.Any())
                     await CTX.Co_CompanyEmployees.AddRangeAsync(employees);
 
-                await CTX.SaveChangesAsync(); // لازم نحفظ حتى ناخد Ids
+                await CTX.SaveChangesAsync(); // نحصل على Ids
 
-                // 4) أضف وسائل الاتصال المرتبطة (إذا مرسلة بالـ DTO)
-                var contacts = new List<Co_Contact>();
-                foreach (var (dto, emp) in dtos.Zip(employees, (dto, emp) => (dto, emp)))
+                // 2) أنشئ Contacts المرتبطة بكل موظف (إذا وُجدت)
+                var contactsToAdd = new List<Co_Contact>();
+                for (int i = 0; i < dtos.Count; i++)
                 {
-                    if (!string.IsNullOrWhiteSpace(dto.ContactName) && dto.ContactTypeId > 0)
+                    var dto = dtos[i];
+                    var emp = employees.ElementAtOrDefault(i);
+                    if (emp == null) continue;
+
+                    if (dto.Contacts != null && dto.Contacts.Any())
                     {
-                        contacts.Add(new Co_Contact
+                        foreach (var cDto in dto.Contacts)
                         {
-                            CompanyId = companyId,
-                            EmployeeId = emp.Id,
-                            ContactTypeId = dto.ContactTypeId,
-                            Name = dto.ContactName
-                        });
+                            if (string.IsNullOrWhiteSpace(cDto.Name) || cDto.ContactTypeId <= 0) continue;
+
+                            contactsToAdd.Add(new Co_Contact
+                            {
+                                CompanyId = companyId,
+                                EmployeeId = emp.Id,
+                                ContactTypeId = cDto.ContactTypeId,
+                                Name = cDto.Name
+                            });
+                        }
                     }
                 }
 
-                if (contacts.Any())
+                if (contactsToAdd.Any())
                 {
-                    await CTX.Co_Contacts.AddRangeAsync(contacts);
+                    await CTX.Co_Contacts.AddRangeAsync(contactsToAdd);
                     await CTX.SaveChangesAsync();
                 }
 
                 await tx.CommitAsync();
 
-                // 5) رجّع النتيجة
-                var added = await CTX.Co_CompanyEmployees
-                    .AsNoTracking()
-                    .Where(e => e.CompanyId == companyId)
-                    .Select(e => new CompanyEmployeeReadDto
-                    {
-                        Id = e.Id,
-                        CompanyId = e.CompanyId,
-                        FirstName = e.FirstName,
-                        LastName = e.LastName,
-                        Position = e.Position,
-                        Department = e.Department,
-                        Notes = e.Notes
-                    })
-                    .ToListAsync();
+                // 3) إرجاع النتيجة: الموظفين مع قائمة Contacts لكل واحد (بأسماء أنواع الاتصال)
+               
 
-                await ClsLogs.Add("CRUD", $"Employees replaced for CompanyId {companyId}", UserManager.GetUserId(User));
+                await ClsLogs.Add("CRUD", $"Added {dtos.Count} employees (with contacts) to Company {companyId}", UserManager.GetUserId(User));
 
-                return Ok(new ApiResponse<List<CompanyEmployeeReadDto>> { Message = "Done", Data = added });
+                return Ok(new ApiResponse<List<CompanyEmployeeReadDto>> { Message = "Done" });
             }
             catch (Exception ex)
             {
@@ -659,6 +572,122 @@ namespace Loujico.Controllers
             }
         }
 
+
+        [HttpPatch("EditEmployees/{companyId:int}")]
+        public async Task<ActionResult<ApiResponse<List<CompanyEmployeeReadDto>>>> EditEmployees(
+    int companyId, [FromBody] List<CompanyEmployeeUpdateDto> dtos)
+        {
+            if (dtos == null )
+                return BadRequest(new ApiResponse<string> { Message = "Payload is required" });
+
+            await using var tx = await CTX.Database.BeginTransactionAsync();
+            try
+            {
+                var company = await CTX.Co_Companies
+                    .FirstOrDefaultAsync(c => c.Id == companyId && !c.IsDeleted);
+                if (company == null)
+                    return NotFound(new ApiResponse<string> { Message = "Company not found" });
+
+                // validate contact types provided across all contacts
+                var contactTypeIds = dtos
+                    .Where(d => d.Contacts != null)
+                    .SelectMany(d => d.Contacts!)
+                    .Select(c => c.ContactTypeId)
+                    .Where(id => id > 0)
+                    .Distinct()
+                    .ToList();
+
+                if (contactTypeIds.Any())
+                {
+                    var validTypes = await CTX.TbContact
+                        .Where(t => contactTypeIds.Contains(t.Id))
+                        .Select(t => t.Id)
+                        .ToListAsync();
+
+                    var invalidTypes = contactTypeIds.Except(validTypes).ToList();
+                    if (invalidTypes.Any())
+                        return BadRequest(new ApiResponse<string> { Message = $"Invalid ContactTypeIds: {string.Join(',', invalidTypes)}" });
+                }
+
+                // 1) حذف كل الموظفين الحاليين للشركة
+                var oldEmployees = await CTX.Co_CompanyEmployees
+                    .Where(e => e.CompanyId == companyId)
+                    .ToListAsync();
+                if (oldEmployees.Any())
+                    CTX.Co_CompanyEmployees.RemoveRange(oldEmployees);
+
+                // 2) حذف كل وسائل الاتصال المرتبطة بموظفين هذه الشركة (EmployeeId != null)
+                var oldContacts = await CTX.Co_Contacts
+                    .Where(c => c.CompanyId == companyId && c.EmployeeId != null)
+                    .ToListAsync();
+                if (oldContacts.Any())
+                    CTX.Co_Contacts.RemoveRange(oldContacts);
+
+                await CTX.SaveChangesAsync();
+
+                // 3) إنشاء الموظفين الجدد (بدون Contacts) حتى نحصل على Ids
+                var employees = dtos.Select(d => new Co_CompanyEmployee
+                {
+                    CompanyId = companyId,
+                    FirstName = d.FirstName,
+                    LastName = d.LastName,
+                    Position = d.Position,
+                    Department = d.Department,
+                    Notes = d.Notes
+                }).ToList();
+
+                if (employees.Any())
+                    await CTX.Co_CompanyEmployees.AddRangeAsync(employees);
+
+                await CTX.SaveChangesAsync(); // نحصل على Ids للموظفين
+
+                // 4) بناء وإضافة وسائل الاتصال المرتبطة بكل موظف
+                var contactsToAdd = new List<Co_Contact>();
+                for (int i = 0; i < dtos.Count; i++)
+                {
+                    var dto = dtos[i];
+                    var emp = employees.ElementAtOrDefault(i);
+                    if (emp == null) continue;
+
+                    if (dto.Contacts != null && dto.Contacts.Any())
+                    {
+                        foreach (var cDto in dto.Contacts)
+                        {
+                            if (string.IsNullOrWhiteSpace(cDto.Name) || cDto.ContactTypeId <= 0) continue;
+
+                            contactsToAdd.Add(new Co_Contact
+                            {
+                                CompanyId = companyId,
+                                EmployeeId = emp.Id,
+                                ContactTypeId = cDto.ContactTypeId,
+                                Name = cDto.Name
+                            });
+                        }
+                    }
+                }
+
+                if (contactsToAdd.Any())
+                {
+                    await CTX.Co_Contacts.AddRangeAsync(contactsToAdd);
+                    await CTX.SaveChangesAsync();
+                }
+
+                await tx.CommitAsync();
+
+                // 5) بناء نتيجة القراءة: الموظف مع وسائل الاتصال (مع أسماء أنواع الاتصال)
+             
+
+                await ClsLogs.Add("CRUD", $"Employees replaced (with contacts) for CompanyId {companyId}", UserManager.GetUserId(User));
+
+                return Ok(new ApiResponse<List<CompanyEmployeeReadDto>> { Message = "Done" });
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<string> { Message = ex.Message });
+            }
+        }
 
         [HttpGet("GetAllId")]
         public async Task<ActionResult<ApiResponse<List<object>>>> GetAllId()
@@ -885,7 +914,7 @@ namespace Loujico.Controllers
     }
 }
         /*        [HttpPost("Add")]
-                public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] AddCompany dto, [FromForm] List<FileModel>? Data)
+                public async Task<ActionResult<ApiResponse<string>>> Add([FromBody] AddCompany dto, [FromBody] List<FileModel>? Data)
                 {
                     if (!ModelState.IsValid)
                         return BadRequest(new ApiResponse<string> { Message = "Invalid model" });
@@ -1005,7 +1034,7 @@ namespace Loujico.Controllers
                     }
                 }*/
         /*        [HttpPatch("Edit")]
-                public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] CompanyEditDto dto, [FromForm] List<FileModel>? Data)
+                public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] CompanyEditDto dto, [FromBody] List<FileModel>? Data)
                 {
                     if (!ModelState.IsValid)
                         return BadRequest(new ApiResponse<string> { Message = "Invalid model or id mismatch" });
