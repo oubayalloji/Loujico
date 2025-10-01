@@ -436,6 +436,8 @@ namespace Loujico.Controllers
                 return BadRequest(new ApiResponse<string> { Message = ex.Message });
             }
         }
+
+
         [HttpPost("AddFiles/{companyId:int}")]
         public async Task<ActionResult<ApiResponse<string>>> AddCompanyFiles(int companyId, [FromForm] List<FileModel>? Data)
         {
@@ -472,6 +474,9 @@ namespace Loujico.Controllers
                 return BadRequest(new ApiResponse<string> { Message = ex.Message });
             }
         }
+
+
+
 
         [HttpPost("AddEmployees/{companyId:int}")]
         public async Task<ActionResult<ApiResponse<List<CompanyEmployeeReadDto>>>> AddEmployees(
@@ -688,6 +693,102 @@ namespace Loujico.Controllers
                 return BadRequest(new ApiResponse<string> { Message = ex.Message });
             }
         }
+
+        [HttpPost("AddAddress/{companyId:int}")]
+        public async Task<ActionResult<ApiResponse<CompanyAddressReadDto>>> AddAddress(int companyId, [FromBody] CompanyAddressCreateDto dto)
+        {
+            if (dto == null) return BadRequest(new ApiResponse<string> { Message = "Payload required" });
+
+            var company = await CTX.Co_Companies.FirstOrDefaultAsync(c => c.Id == companyId && !c.IsDeleted);
+            if (company == null) return NotFound(new ApiResponse<string> { Message = "Company not found" });
+
+            // اختياري: تحقق من وجود Country/State/City
+            var valid = await CTX.TbCountries.AnyAsync(x => x.Id == dto.CountryId)
+                     && await CTX.TbStates.AnyAsync(x => x.Id == dto.StateId)
+                     && await CTX.TbCities.AnyAsync(x => x.Id == dto.CityId);
+            if (!valid) return BadRequest(new ApiResponse<string> { Message = "Invalid location ids" });
+
+            var addr = new Co_Address
+            {
+                CompanyId = companyId,
+                CountryId = dto.CountryId,
+                StateId = dto.StateId,
+                CityId = dto.CityId,
+                AddressLine = dto.AddressLine
+            };
+
+            CTX.Co_Address.Add(addr);
+            await CTX.SaveChangesAsync();
+
+            var read = new CompanyAddressReadDto
+            {
+                Id = addr.Id,
+                CompanyId = companyId,
+                CountryId = addr.CountryId,
+                CountryName = (await CTX.TbCountries.FindAsync(addr.CountryId))?.Name ?? "",
+                StateId = addr.StateId,
+                StateName = (await CTX.TbStates.FindAsync(addr.StateId))?.Name ?? "",
+                CityId = addr.CityId,
+                CityName = (await CTX.TbCities.FindAsync(addr.CityId))?.Name ?? "",
+                AddressLine = addr.AddressLine
+            };
+
+            return Ok(new ApiResponse<CompanyAddressReadDto> { Message = "Done", Data = read });
+        }
+        [HttpPatch("EditAddresses/{companyId:int}")]
+        public async Task<ActionResult<ApiResponse<List<CompanyAddressReadDto>>>> EditAddresses(int companyId, [FromBody] List<CompanyAddressCreateDto> dtos)
+        {
+            if (dtos == null) return BadRequest(new ApiResponse<string> { Message = "Payload required" });
+
+            var company = await CTX.Co_Companies.FirstOrDefaultAsync(c => c.Id == companyId && !c.IsDeleted);
+            if (company == null) return NotFound(new ApiResponse<string> { Message = "Company not found" });
+
+            await using var tx = await CTX.Database.BeginTransactionAsync();
+            try
+            {
+                var old = await CTX.Co_Address.Where(a => a.CompanyId == companyId).ToListAsync();
+                if (old.Any()) CTX.Co_Address.RemoveRange(old);
+                await CTX.SaveChangesAsync();
+
+                var toAdd = dtos.Select(d => new Co_Address
+                {
+                    CompanyId = companyId,
+                    CountryId = d.CountryId,
+                    StateId = d.StateId,
+                    CityId = d.CityId,
+                    AddressLine = d.AddressLine
+                }).ToList();
+
+                if (toAdd.Any()) await CTX.Co_Address.AddRangeAsync(toAdd);
+                await CTX.SaveChangesAsync();
+                await tx.CommitAsync();
+
+                var result = await CTX.Co_Address
+                    .AsNoTracking()
+                    .Where(a => a.CompanyId == companyId)
+                    .Select(a => new CompanyAddressReadDto
+                    {
+                        Id = a.Id,
+                        CompanyId = a.CompanyId,
+                        CountryId = a.CountryId,
+                        CountryName = a.Country.Name,
+                        StateId = a.StateId,
+                        StateName = a.State.Name,
+                        CityId = a.CityId,
+                        CityName = a.City.Name,
+                        AddressLine = a.AddressLine
+                    }).ToListAsync();
+
+                return Ok(new ApiResponse<List<CompanyAddressReadDto>> { Message = "Done", Data = result });
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<string> { Message = ex.Message });
+            }
+        }
+
 
         [HttpGet("GetAllId")]
         public async Task<ActionResult<ApiResponse<List<object>>>> GetAllId()

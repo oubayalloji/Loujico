@@ -174,6 +174,26 @@ namespace Loujico.Models
      // نوع وسيلة الاتصال (هاتف، إيميل، إلخ)
         public List<CompanyContactCreateDto>? Contacts { get; set; }
     }
+    public class CompanyAddressCreateDto
+    {
+        public int CountryId { get; set; }
+        public int StateId { get; set; }
+        public int CityId { get; set; }
+        public string? AddressLine { get; set; }
+    }
+
+    public class CompanyAddressReadDto
+    {
+        public int Id { get; set; }
+        public int CompanyId { get; set; }
+        public int CountryId { get; set; }
+        public string CountryName { get; set; } = "";
+        public int StateId { get; set; }
+        public string StateName { get; set; } = "";
+        public int CityId { get; set; }
+        public string CityName { get; set; } = "";
+        public string? AddressLine { get; set; }
+    }
     public class ContactModel
     {
         public int Id { get; set; }
