@@ -24,10 +24,10 @@ namespace Loujico.Controllers
         UserManager<ApplicationUser> UserManager;
         IFiles ClsFiles;
         ICompanys ClsCompanys;
-        IMapper Mapper;
+        IMapper IMapper;
         public CompanyController(CompanySystemContext cTX, ICustomers clsCustomers, Ilog clsLogs, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles, ICompanys clsCompanys,IMapper mapper)
         {
-            Mapper = mapper;
+            IMapper = mapper;
             CTX = cTX;
             ClsCustomers = clsCustomers;
             ClsLogs = clsLogs;
@@ -55,7 +55,7 @@ namespace Loujico.Controllers
                         return BadRequest(new ApiResponse<string> { Message = $"Invalid LegalId: {dto.LegalId.Value}" });
                 }
 
-                var company = Mapper.Map<Co_Company_Name>(dto);
+                var company = IMapper.Map<Co_Company_Name>(dto);
                 company.CreatedBy = username; // تعيين يدوي
 
                 CTX.Co_Companies.Add(company);
@@ -64,32 +64,11 @@ namespace Loujico.Controllers
                 await ClsLogs.Add("CRUD", $"{company.Name} added to the System by {username}", userId);
 
                 // بناء رد مع بيانات الـ Legal إن وُجدت
-                var read = new CompanyReadDto
-                {
-                    Id = company.Id,
-                    Name = company.Name,
-                    Comm_No = company.Comm_No,
-                    Tax_No = company.Tax_No,
-                    Found_Date = company.Found_Date,
-                    CompanyDescription = company.CompanyDescription,
-                    CreatedAt = company.CreatedAt,
-                    CreatedBy = company.CreatedBy,
-                    LegalId = company.LegalId
-                };
+        
 
-                if (company.LegalId.HasValue)
-                {
-                    var legal = await CTX.Co_Legals
-                                         .AsNoTracking()
-                                         .Where(l => l.Id == company.LegalId.Value)
-                                         .Select(l => new { l.Id, l.LegalInfo })
-                                         .FirstOrDefaultAsync();
+         
 
-                    if (legal != null)
-                        read.LegalInfo = legal.LegalInfo;
-                }
-
-                return Ok(new ApiResponse<CompanyReadDto> { Message = "Done", Data = read });
+                return Ok(new ApiResponse<CompanyReadDto> { Message = "Done" });
             }
             catch (Exception ex)
             {
@@ -122,17 +101,9 @@ namespace Loujico.Controllers
             try
             {
                 // تحديث الحقول الأساسية
-                company.Name = dto.Name;
-                company.Comm_No = dto.Comm_No;
-                company.Tax_No = dto.Tax_No;
-                company.Found_Date = dto.Found_Date;
-                company.CompanyDescription = dto.CompanyDescription;
-
-                // ربط/إلغاء ربط الـ Legal بحسب قيمة الـ DTO
-                company.LegalId = dto.LegalId; // يمكن أن تكون null => فك الربط
-
-                company.UpdatedAt = DateTime.UtcNow;
-                company.UpdatedBy = username;
+                company = IMapper.Map<Co_Company_Name>(dto);
+                company.UpdatedBy = userId;
+               
 
                 await CTX.SaveChangesAsync();
                 await ClsLogs.Add("CRUD", $"{company.Name} updated by {username}", userId);
