@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+
 
 namespace Loujico.Controllers
 {
@@ -19,6 +21,7 @@ namespace Loujico.Controllers
         Ilog ClsLogs;
         IHistory ClsHistory;
         IFiles ClsFiles;
+        IMapper mapper;
 
         CompanySystemContext CTX;
         UserManager<ApplicationUser> UserManager;
