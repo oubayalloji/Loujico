@@ -1,4 +1,5 @@
-﻿using Loujico.BL;
+﻿using AutoMapper;
+using Loujico.BL;
 using Loujico.Migrations;
 using Loujico.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -23,10 +24,10 @@ namespace Loujico.Controllers
         UserManager<ApplicationUser> UserManager;
         IFiles ClsFiles;
         ICompanys ClsCompanys;
-        
-        public CompanyController(CompanySystemContext cTX, ICustomers clsCustomers, Ilog clsLogs, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles, ICompanys clsCompanys)
+        IMapper Mapper;
+        public CompanyController(CompanySystemContext cTX, ICustomers clsCustomers, Ilog clsLogs, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles, ICompanys clsCompanys,IMapper mapper)
         {
-
+            Mapper = mapper;
             CTX = cTX;
             ClsCustomers = clsCustomers;
             ClsLogs = clsLogs;
@@ -54,18 +55,8 @@ namespace Loujico.Controllers
                         return BadRequest(new ApiResponse<string> { Message = $"Invalid LegalId: {dto.LegalId.Value}" });
                 }
 
-                var company = new Co_Company_Name
-                {
-                    Name = dto.Name,
-                    Comm_No = dto.Comm_No,
-                    Tax_No = dto.Tax_No,
-                    Found_Date = dto.Found_Date,
-                    CompanyDescription = dto.CompanyDescription,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = username,
-                    IsDeleted = false,
-                    LegalId = dto.LegalId   // ربط الـ LegalId مباشرة
-                };
+                var company = Mapper.Map<Co_Company_Name>(dto);
+                company.CreatedBy = username; // تعيين يدوي
 
                 CTX.Co_Companies.Add(company);
                 await CTX.SaveChangesAsync();
