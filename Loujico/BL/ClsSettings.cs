@@ -25,11 +25,9 @@ namespace Loujico.BL
         public Task<bool> AddCity(TbCity City);
         public Task<bool> DeleteCity(int Id);
         public Task<List<object>> GetAllCityType();
-<<<<<<< HEAD
+
         public Task<List<object>> GetCityByState(int Id);
-=======
-        public Task<List<object>> GetCityByIndustry(int Id);
->>>>>>> origin/boss
+
         public Task<bool> AddCountry(TbCountry Country);
         public Task<bool> DeleteCountry(int Id);
         public Task<List<object>> GetAllCountryType();
