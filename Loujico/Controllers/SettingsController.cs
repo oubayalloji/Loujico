@@ -345,6 +345,52 @@ namespace Loujico.Controllers
 
 
         }
+        [HttpPost("AddCountry")]
+        public async Task<ActionResult<ApiResponse<string>>> AddCountry([FromForm] string Name)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ApiResponse<String>
+                {
+                    Message = "wronge"
+                });
+            }
+            try
+            {
+                var username = UserManager.GetUserName(User);
+                var userId = UserManager.GetUserId(User);
+                TbCountry Country = new TbCountry();
+                Country.Name = Name;
+                if (!await ClsSettings.AddCountry(Country))
+                {
+                    return BadRequest(new ApiResponse<string>
+                    {
+                        Message = "the industry can not be added "
+                    });
+                }
+
+                // من هون 
+                await ClsLogs.Add("CRUD", $"{Country.Name} added to the System by {username} ", userId);
+                return Ok(new ApiResponse<string>
+                {
+
+                    Message = "Done"
+
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbEmployee>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+
+
+        }
 
 
 
@@ -462,7 +508,7 @@ namespace Loujico.Controllers
             try
             {
                 var Cont = CTX.Co_Activities.FirstOrDefault(x => x.Id == id);
-                if (Cont==null)
+                if (Cont == null)
                 {
                     return NotFound(new ApiResponse<List<TbEmployee>>
                     {
@@ -475,6 +521,42 @@ namespace Loujico.Controllers
                     return NotFound(new ApiResponse<List<TbEmployee>>
                     {
                         Message = "النشاط غير موجد",
+                    });
+                }
+
+                // من هون 
+                var username = UserManager.GetUserName(User);
+                var userId = UserManager.GetUserId(User);
+                await ClsLogs.Add("CRUD", $"{Cont.Name} Deleted from the System by {username} ", userId);
+                // لهون هو تسجيل الlog  
+                return Ok(new ApiResponse<String>
+                {
+
+                    Data = "done"
+                });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbEmployee>>
+                {
+                    Message = ex.Message,
+
+                });
+            }
+        }
+        [HttpDelete("DeleteCountry/{id}")]
+        public async Task<ActionResult<ApiResponse<string>>> DeleteCountry(int id)
+        {
+            try
+            {
+                var Cont = CTX.TbCountries.FirstOrDefault(x => x.Id == id);
+                var Emp = await ClsSettings.DeleteCountry(id);
+                if (Emp == false)
+                {
+                    return NotFound(new ApiResponse<List<TbEmployee>>
+                    {
+                        Message = "وسيلة التواصل غير موجد",
                     });
                 }
 
