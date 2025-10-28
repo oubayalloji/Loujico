@@ -7,7 +7,7 @@ namespace Loujico.BL
 
     public interface IProject
     {
-        public  Task<AddProjectModel> GetById(int id);
+        public  Task<ShowProjectModel> GetById(int id);
         public  Task<ShowProject> GetByIdModel(int id);
         public  Task<List<object>> Pagintion(int id, int count);
         public Task<bool> Add(TbProject project);
@@ -79,13 +79,13 @@ namespace Loujico.BL
             }
         }
 
-        public async Task<AddProjectModel> GetById(int id)
+        public async Task<ShowProjectModel> GetById(int id)
         {
             try
             {
                 var projectDto = await CTX.TbProjects
     .Where(p => p.Id == id && !p.IsDeleted)
-    .Select(p => new AddProjectModel
+    .Select(p => new ShowProjectModel
     {
         Id = p.Id,
         Title = p.Title,
@@ -93,7 +93,8 @@ namespace Loujico.BL
         EndDate = p.EndDate,
         Progress = p.Progress,
         Price = p.Price,
-        CustomerId=p.CustomerId,
+        CompanyId = p.CompanyId,
+        CompanyName=p.Company.Name,
         Employees = p.TbProjectsEmployees.Select(pe => new EmployeeOnProjectModel
         {
             EmployeeId = pe.EmployeeId,
@@ -129,7 +130,7 @@ namespace Loujico.BL
                         p.EndDate,
                         p.Progress,
                         p.Price,
-                        p.CustomerId,
+                        p.Company.Name,
                     }).ToListAsync();
 
                 return projects.Cast<object>().ToList();
@@ -229,7 +230,8 @@ namespace Loujico.BL
                             a.ProjectType.ToString().Contains(name) ||
                             a.Price.ToString().Contains(name) ||
                             a.StartDate.ToString().Contains(name) ||
-                            a.EndDate.ToString().Contains(name)
+                            a.EndDate.ToString().Contains(name)||
+                               EF.Functions.Like(a.Company.Name, $"%{name}%")
                         )
                     );
 
@@ -295,7 +297,7 @@ namespace Loujico.BL
             {
                 var projectDto = await CTX.TbProjects
             .Where(p => p.Id == id && !p.IsDeleted)
-           // .Include(i => i.TbInvoices)
+    
             .Include(i => i.TbProjectsEmployees).Select(p => new
             {
                 p.Id,
@@ -304,7 +306,8 @@ namespace Loujico.BL
                 p.EndDate,
                 p.Progress,
                 p.Price,
-                p.CustomerId,
+                p.CompanyId,
+                Companyname= p.Company.Name,
                 Employees = p.TbProjectsEmployees.Select(pe => new
                 {
                     pe.EmployeeId,

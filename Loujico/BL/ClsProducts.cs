@@ -95,7 +95,7 @@ namespace Loujico.BL
             try
             {
                 var Product = await CTX.TbProducts.Where(p => p.Id == id && p.IsActive && !p.IsDeleted)
-                                .Include(p => p.TbCustomersProducts)
+                                .Include(p => p.TbCompanyProducts)
                                 .Include(i => i.TbProductsEmployees).Select(p => new
                                 {
                                     p.Id,
@@ -114,6 +114,14 @@ namespace Loujico.BL
                                         pe.RoleOnProduct,
                                         pe.Employee.FirstName,
                                         pe.Employee.LastName
+                                    }),
+                                    Company = p.TbCompanyProducts.Select(co=> new
+                                    {
+                                        co.StartDate,
+                                        co.EndDate,
+                                        co.TotalPrice,
+                                        co.Company.Name,
+                                        co.CompanyId
                                     })
                                 
                                 }) .FirstOrDefaultAsync();

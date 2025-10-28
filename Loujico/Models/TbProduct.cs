@@ -39,7 +39,7 @@ namespace Loujico.Models
 
         public String? UpdatedBy { get; set; }
 
-        public virtual ICollection<TbCustomersProduct> TbCustomersProducts { get; set; } = new List<TbCustomersProduct>();
+        public virtual ICollection<TbCompanyProduct> TbCompanyProducts { get; set; } = new List<TbCompanyProduct>();
 
         public virtual ICollection<TbProductsEmployee> TbProductsEmployees { get; set; } = new List<TbProductsEmployee>();
     }

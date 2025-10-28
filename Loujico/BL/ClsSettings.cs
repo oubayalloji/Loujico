@@ -21,11 +21,14 @@ namespace Loujico.BL
         public Task<bool> AddState(TbState State);
         public  Task<bool> DeleteState(int Id);
         public  Task<List<object>> GetAllStateType();
-        public  Task<List<object>> GetStateByIndustry(int Id);
+        public  Task<List<object>> GetStateByCountry(int Id);
         public Task<bool> AddCity(TbCity City);
         public Task<bool> DeleteCity(int Id);
         public Task<List<object>> GetAllCityType();
-        public Task<List<object>> GetCityByIndustry(int Id);
+        public Task<List<object>> GetCityByState(int Id);
+        public Task<bool> AddCountry(TbCountry Country);
+        public Task<bool> DeleteCountry(int Id);
+        public Task<List<object>> GetAllCountryType();
 
     }
     public class ClsSettings : Isettings
@@ -102,7 +105,7 @@ namespace Loujico.BL
                 return null;
             }
         }
-        public async Task<List<object>> GetStateByIndustry(int Id)
+        public async Task<List<object>> GetStateByCountry(int Id)
         {
             try
             {
@@ -194,7 +197,7 @@ namespace Loujico.BL
                 return null;
             }
         }
-        public async Task<List<object>> GetCityByIndustry(int Id)
+        public async Task<List<object>> GetCityByState(int Id)
         {
             try
             {

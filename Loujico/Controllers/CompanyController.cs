@@ -17,18 +17,18 @@ namespace Loujico.Controllers
     public class CompanyController : ControllerBase
     {
         CompanySystemContext CTX;
-        ICustomers ClsCustomers;
+        //ICustomers ClsCustomers;
         Ilog ClsLogs;
         IHistory ClsHistory;
         UserManager<ApplicationUser> UserManager;
         IFiles ClsFiles;
         ICompanys ClsCompanys;
         
-        public CompanyController(CompanySystemContext cTX, ICustomers clsCustomers, Ilog clsLogs, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles, ICompanys clsCompanys)
+        public CompanyController(CompanySystemContext cTX, Ilog clsLogs, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles, ICompanys clsCompanys)
         {
 
             CTX = cTX;
-            ClsCustomers = clsCustomers;
+     //       ClsCustomers = clsCustomers;
             ClsLogs = clsLogs;
             UserManager = userManager;
             ClsHistory = clsHistory;
@@ -958,7 +958,7 @@ namespace Loujico.Controllers
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<List<TbCustomer>>
+                return BadRequest(new ApiResponse<List<string>>
                 {
                     Message = ex.Message,
 
@@ -985,7 +985,7 @@ namespace Loujico.Controllers
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
-                return BadRequest(new ApiResponse<List<TbCustomer>>
+                return BadRequest(new ApiResponse<List<string>>
                 {
                     Message = ex.Message,
 

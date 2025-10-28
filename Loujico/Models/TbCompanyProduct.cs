@@ -4,11 +4,11 @@ using System.Text.Json.Serialization;
 
 namespace Loujico.Models;
 
-public partial class TbCustomersProduct
+public partial class TbCompanyProduct
 {
     public int Id { get; set; }
 
-    public int CustomerId { get; set; }
+    public int CompanyId { get; set; }
 
     public int ProductId { get; set; }
 
@@ -20,7 +20,7 @@ public partial class TbCustomersProduct
 
     public decimal? TotalPrice { get; set; }
     [JsonIgnore]
-    public virtual TbCustomer Customer { get; set; } = null!;
+    public virtual Co_Company_Name Company { get; set; } = null!;
     [JsonIgnore]
     public virtual TbProduct Product { get; set; } = null!;
 }

@@ -2,9 +2,14 @@
 
 namespace Loujico.Models
 {
-    public class AddProductModel
+    public class EditProductModel : AddProductModel
     {
         public int Id { get; set; }
+    }
+        public class AddProductModel
+    {
+       
+      
 
         [Required(ErrorMessage = "يرجى ادخال اسم المنتج")]
         [StringLength(150, MinimumLength = 2, ErrorMessage = "اسم المنتج يجب أن يكون بين 2 و 150 حرف")]
@@ -29,6 +34,14 @@ namespace Loujico.Models
         public bool IsActive { get; set; }
         public bool IsDeleted { get; set; }
         public List<EmployeeOnProjectModel>? Employees { get; set; } = new List<EmployeeOnProjectModel>();
+        public List<AddCompanyModel>? Company { get; set; } = new List<AddCompanyModel>();
 
+    }
+    public class AddCompanyModel()
+    {
+        public int CompanyId { get; set; }
+        public DateOnly StartDate { get; set; }
+        public DateOnly EndDate { get; set; }
+        public decimal Price { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-﻿using Loujico.BL;
+﻿/*using Loujico.BL;
 using Loujico.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -14,16 +14,16 @@ namespace Loujico.Controllers
     public class CustomerController : ControllerBase
     {
         CompanySystemContext CTX;
-        ICustomers ClsCustomers;
+
         Ilog ClsLogs;
         IHistory ClsHistory;
         UserManager<ApplicationUser> UserManager;
         IFiles ClsFiles;
-        public CustomerController(CompanySystemContext cTX, ICustomers clsCustomers, Ilog clsLogs, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles)
+        public CustomerController(CompanySystemContext cTX, Ilog clsLogs, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles)
         {
 
             CTX = cTX;
-            ClsCustomers = clsCustomers;
+           // ClsCustomers = clsCustomers;
             ClsLogs = clsLogs;
             UserManager = userManager;
             ClsHistory = clsHistory;
@@ -340,4 +340,4 @@ namespace Loujico.Controllers
         }
 
     }
-}
+}*/

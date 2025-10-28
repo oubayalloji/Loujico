@@ -23,7 +23,7 @@ namespace Loujico.Models
 
         public string? ProjectType { get; set; }
 
-        public int CustomerId { get; set; }
+        public int CompanyId { get; set; }
 
         [Range(0, 100, ErrorMessage = "نسبة الإنجاز يجب أن تكون بين 0 و 100")]
 
@@ -58,7 +58,7 @@ namespace Loujico.Models
 
         public String? UpdatedBy { get; set; }
         [JsonIgnore]
-        public virtual TbCustomer Customer { get; set; } = null!;
+        public virtual Co_Company_Name Company { get; set; } = null!;
 
         // public virtual ICollection<TbInvoice> TbInvoices { get; set; } = new List<TbInvoice>();
 

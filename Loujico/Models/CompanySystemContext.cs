@@ -24,15 +24,14 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
     public virtual DbSet<TbState> TbStates { get; set; }
     public virtual DbSet<TbCity> TbCities { get; set; }
     public virtual DbSet<Co_Industry> Co_Industries { get; set; }
-    public  virtual DbSet<Co_Activity> Co_Activities { get; set; }
-    public  virtual DbSet<Co_Address> Co_Address { get; set; }
+    public virtual DbSet<Co_Activity> Co_Activities { get; set; }
+    public virtual DbSet<Co_Address> Co_Address { get; set; }
     public virtual DbSet<Co_Company_Name> Co_Companies { get; set; }
     public virtual DbSet<Co_CompanyEmployee> Co_CompanyEmployees { get; set; }
     public virtual DbSet<Co_Contact> Co_Contacts { get; set; }
     public virtual DbSet<Co_Legal> Co_Legals { get; set; }
-    public virtual DbSet<TbCustomer> TbCustomers { get; set; }
-
-    public virtual DbSet<TbCustomersProduct> TbCustomersProducts { get; set; }
+  
+    public virtual DbSet<TbCompanyProduct> TbCompanyProducts { get; set; }
 
     public virtual DbSet<TbEmployee> TbEmployees { get; set; }
 
@@ -70,53 +69,15 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
         modelBuilder.Entity<Co_Company_Name>()
           .ToTable(tb => tb.HasTrigger("TRG_CoCompanies_History"));
 
-        modelBuilder.Entity<TbCustomer>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK__TbCustom__3213E83F06F3797B");
-
-            entity.ToTable(tb => tb.HasTrigger("TRG_Customers_History"));
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.CompanyDescription).HasColumnName("company_description");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(sysutcdatetime())")
-                .HasColumnName("created_at");
-            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.CustomerAddress)
-                .HasMaxLength(255)
-                .HasColumnName("customerAddress");
-            entity.Property(e => e.CustomerName)
-                .HasMaxLength(100)
-                .HasColumnName("customerName");
-            entity.Property(e => e.Email)
-                .HasMaxLength(150)
-                .HasColumnName("email");
-            entity.Property(e => e.Industry)
-                .HasMaxLength(100)
-                .HasColumnName("industry");
-            entity.Property(e => e.Inquiry).HasColumnName("inquiry");
-            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
-            entity.Property(e => e.LastVisit).HasColumnName("last_visit");
-            entity.Property(e => e.Phone)
-                .HasMaxLength(20)
-                .HasColumnName("phone");
-            entity.Property(e => e.ServiceProvided)
-                .HasMaxLength(150)
-                .HasColumnName("service_provided");
-            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
-            entity.Property(e => e.WorkDate).HasColumnName("work_date");
-            entity.Property(e => e.WorkDuration).HasColumnName("work_duration");
-        });
-
-        modelBuilder.Entity<TbCustomersProduct>(entity =>
+    
+        modelBuilder.Entity<TbCompanyProduct>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__TbCustom__3213E83FAAA2AEA6");
 
-            entity.ToTable("TbCustomers_Products");
+            entity.ToTable("TbCompanyProducts");
 
             entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.CustomerId).HasColumnName("customer_id");
+            entity.Property(e => e.CompanyId).HasColumnName("CompanyId");
             entity.Property(e => e.EndDate).HasColumnName("endDate");
             entity.Property(e => e.ProductId).HasColumnName("product_id");
             entity.Property(e => e.StartDate).HasColumnName("startDate");
@@ -127,13 +88,14 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
                 .HasColumnType("decimal(10, 2)")
                 .HasColumnName("total_price");
 
-            entity.HasOne(d => d.Customer).WithMany(p => p.TbCustomersProducts)
-                .HasForeignKey(d => d.CustomerId)
-                .HasConstraintName("FK_customers_products_customers");
+            entity.HasOne(d => d.Company).WithMany(p => p.TbCompanysProducts)
+                .HasForeignKey(d => d.CompanyId)
+           .HasConstraintName("FK_TbCompanyProducts_CoCompanies_CompanyId");
 
-            entity.HasOne(d => d.Product).WithMany(p => p.TbCustomersProducts)
+            entity.HasOne(d => d.Product).WithMany(p => p.TbCompanyProducts)
                 .HasForeignKey(d => d.ProductId)
-                .HasConstraintName("FK_customers_products_products");
+                 .OnDelete(DeleteBehavior.Restrict)
+           .HasConstraintName("FK_TbCompanyProducts_TbProducts_ProductId");
         });
 
         modelBuilder.Entity<TbEmployee>(entity =>
@@ -223,42 +185,7 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
                 .HasColumnName("table_name");
         });
 
-        //modelBuilder.Entity<TbInvoice>(entity =>
-        //{
-        //    entity.HasKey(e => e.Id).HasName("PK__TbInvoic__3213E83FB6962AD5");
-
-        //    entity.ToTable(tb => tb.HasTrigger("TRG_Invoices_History"));
-
-        //    entity.Property(e => e.Id).HasColumnName("id");
-        //    entity.Property(e => e.Amount)
-        //        .HasDefaultValue(0.00m)
-        //        .HasColumnType("decimal(10, 2)")
-        //        .HasColumnName("amount");
-        //    entity.Property(e => e.CreatedAt)
-        //        .HasDefaultValueSql("(sysutcdatetime())")
-        //        .HasColumnName("created_at");
-        //    entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-        //    entity.Property(e => e.CustomerId).HasColumnName("customer_id");
-        //    entity.Property(e => e.DueDate).HasColumnName("due_date");
-        //    entity.Property(e => e.InvoiceStatus).HasMaxLength(50);
-        //    entity.Property(e => e.InvoicesDate)
-        //        .HasDefaultValueSql("(sysutcdatetime())")
-        //        .HasColumnName("invoices_date");
-        //    entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
-        //    entity.Property(e => e.LastVisit).HasColumnName("last_visit");
-        //    entity.Property(e => e.ProjectId).HasColumnName("project_id");
-        //    entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-        //    entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
-
-        //    entity.HasOne(d => d.Customer).WithMany(p => p.TbInvoices)
-        //        .HasForeignKey(d => d.CustomerId)
-        //        .HasConstraintName("FK_invoices_customers");
-
-        //    entity.HasOne(d => d.Project).WithMany(p => p.TbInvoices)
-        //        .HasForeignKey(d => d.ProjectId)
-        //        .OnDelete(DeleteBehavior.SetNull)
-        //        .HasConstraintName("FK_invoices_projects");
-        //});
+      
 
         modelBuilder.Entity<TbLog>(entity =>
         {
@@ -339,7 +266,7 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
                 .HasDefaultValueSql("(sysutcdatetime())")
                 .HasColumnName("created_at");
             entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.CustomerId).HasColumnName("customer_id");
+            entity.Property(e => e.CompanyId).HasColumnName("CompanyId");
             entity.Property(e => e.EndDate).HasColumnName("endDate");
             entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
             entity.Property(e => e.LastVisit).HasColumnName("last_visit");
@@ -355,9 +282,9 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
             entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
 
-            entity.HasOne(d => d.Customer).WithMany(p => p.TbProjects)
+        /*    entity.HasOne(d => d.Customer).WithMany(p => p.TbProjects)
                 .HasForeignKey(d => d.CustomerId)
-                .HasConstraintName("FK_projects_customers");
+                .HasConstraintName("FK_projects_customers");*/
         });
 
         modelBuilder.Entity<TbProjectsEmployee>(entity =>

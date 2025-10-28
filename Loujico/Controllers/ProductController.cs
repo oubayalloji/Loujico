@@ -35,7 +35,7 @@ namespace Loujico.Controllers
         }
         [HttpPost("Add")]
         [Authorize]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] AddProductModel dto, [FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromBody] AddProductModel dto, [FromForm] List<FileModel>? Data)
         {
             try
             {
@@ -52,10 +52,19 @@ namespace Loujico.Controllers
                     IsActive = dto.IsActive,
                     CreatedAt = DateTime.Now,
                     CreatedBy = username,
-                   
+              
 
                 };
-
+                foreach (var Co in dto.Company)
+                {
+                    product.TbCompanyProducts.Add(new TbCompanyProduct
+                    {
+                      CompanyId=Co.CompanyId,
+                      StartDate=Co.StartDate,
+                      EndDate=Co.EndDate,
+                      TotalPrice = Co.Price
+                    });
+                }
                 // ربط الموظفين بالمشروع
                 foreach (var emp in dto.Employees)
                 {
@@ -113,7 +122,7 @@ namespace Loujico.Controllers
             }
         }
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] AddProductModel dto, [FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] EditProductModel dto, [FromForm] List<FileModel>? Data)
         {
 
             if (!ModelState.IsValid)

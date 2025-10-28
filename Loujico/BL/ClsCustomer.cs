@@ -1,4 +1,4 @@
-﻿using FuzzySharp;
+﻿/*using FuzzySharp;
 using Loujico.Models;
 using Microsoft.EntityFrameworkCore;
 using FuzzySharp;
@@ -52,7 +52,7 @@ namespace Loujico.BL
                 var cus = await CTX.TbCustomers
                                 .AsNoTracking()
                                 .Include(c => c.TbCustomersProducts)
-                                .Include(c => c.TbProjects)
+                                //.Include(c => c.TbProjects)
                                // .Include(c => c.TbInvoices)
                                 .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
                 if (cus == null)
@@ -218,4 +218,4 @@ namespace Loujico.BL
             }
         }
     }
-}
+}*/

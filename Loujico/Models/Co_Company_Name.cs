@@ -53,6 +53,9 @@ namespace Loujico.Models
 /*        public ICollection<CompanyLegal> CompanyLegals { get; set; }
 */
         public ICollection<Co_CompanyEmployee> CompanyEmployees { get; set; }
+        public virtual ICollection<TbProject> TbProjects { get; set; } = new List<TbProject>();
+        public virtual ICollection<TbCompanyProduct> TbCompanysProducts { get; set; } = new List<TbCompanyProduct>();
+
     }
 
 

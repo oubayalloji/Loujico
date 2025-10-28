@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Loujico.Migrations
 {
     [DbContext(typeof(CompanySystemContext))]
-    [Migration("20250927192530_s")]
-    partial class s
+    [Migration("20251026194623_ChangeTablename")]
+    partial class ChangeTablename
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -180,9 +180,6 @@ namespace Loujico.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("Co_LegalId")
-                        .HasColumnType("int");
-
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
 
@@ -211,8 +208,6 @@ namespace Loujico.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Co_LegalId");
 
                     b.HasIndex("CompanyId");
 
@@ -275,7 +270,12 @@ namespace Loujico.Migrations
 
                     b.HasIndex("LegalId");
 
-                    b.ToTable("Co_Companies");
+                    b.ToTable("Co_Companies", t =>
+                        {
+                            t.HasTrigger("TRG_CoCompanies_History");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
 
             modelBuilder.Entity("Loujico.Models.Co_Contact", b =>
@@ -573,7 +573,7 @@ namespace Loujico.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("TbCustomers_Products", (string)null);
+                    b.ToTable("TbCompanyProducts", (string)null);
                 });
 
             modelBuilder.Entity("Loujico.Models.TbEmployee", b =>
@@ -932,6 +932,10 @@ namespace Loujico.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int")
+                        .HasColumnName("CompanyId");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -941,10 +945,6 @@ namespace Loujico.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("created_by");
-
-                    b.Property<int>("CustomerId")
-                        .HasColumnType("int")
-                        .HasColumnName("customer_id");
 
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("date")
@@ -1000,7 +1000,7 @@ namespace Loujico.Migrations
                     b.HasKey("Id")
                         .HasName("PK__TbProjec__3213E83F4F2AA381");
 
-                    b.HasIndex("CustomerId");
+                    b.HasIndex("CompanyId");
 
                     b.ToTable("TbProjects", t =>
                         {
@@ -1255,10 +1255,6 @@ namespace Loujico.Migrations
 
             modelBuilder.Entity("Loujico.Models.Co_CompanyEmployee", b =>
                 {
-                    b.HasOne("Loujico.Models.Co_Legal", null)
-                        .WithMany("Company")
-                        .HasForeignKey("Co_LegalId");
-
                     b.HasOne("Loujico.Models.Co_Company_Name", "Company")
                         .WithMany("CompanyEmployees")
                         .HasForeignKey("CompanyId")
@@ -1385,14 +1381,13 @@ namespace Loujico.Migrations
 
             modelBuilder.Entity("Loujico.Models.TbProject", b =>
                 {
-                    b.HasOne("Loujico.Models.TbCustomer", "Customer")
+                    b.HasOne("Loujico.Models.Co_Company_Name", "Company")
                         .WithMany("TbProjects")
-                        .HasForeignKey("CustomerId")
+                        .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_projects_customers");
+                        .IsRequired();
 
-                    b.Navigation("Customer");
+                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("Loujico.Models.TbProjectsEmployee", b =>
@@ -1497,6 +1492,8 @@ namespace Loujico.Migrations
                     b.Navigation("CompanyEmployees");
 
                     b.Navigation("Contacts");
+
+                    b.Navigation("TbProjects");
                 });
 
             modelBuilder.Entity("Loujico.Models.Co_Industry", b =>
@@ -1504,11 +1501,6 @@ namespace Loujico.Migrations
                     b.Navigation("Activities");
 
                     b.Navigation("CompanyActivity");
-                });
-
-            modelBuilder.Entity("Loujico.Models.Co_Legal", b =>
-                {
-                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("Loujico.Models.TbContact", b =>
@@ -1524,8 +1516,6 @@ namespace Loujico.Migrations
             modelBuilder.Entity("Loujico.Models.TbCustomer", b =>
                 {
                     b.Navigation("TbCustomersProducts");
-
-                    b.Navigation("TbProjects");
                 });
 
             modelBuilder.Entity("Loujico.Models.TbEmployee", b =>

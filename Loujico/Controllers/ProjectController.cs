@@ -19,9 +19,10 @@ namespace Loujico.Controllers
         IProject ClsProject;
         Ilog ClsLogs;
         IHistory ClsHistory;
+        ICompanys ClsCompanys;
         CompanySystemContext CTX;
         UserManager<ApplicationUser> UserManager;
-        public ProjectController(IProject clsProject, CompanySystemContext context, UserManager<ApplicationUser> userManager, Ilog ilog, IHistory clsHistory, IFiles clsFiles)
+        public ProjectController(IProject clsProject, CompanySystemContext context, UserManager<ApplicationUser> userManager, Ilog ilog, IHistory clsHistory, IFiles clsFiles, ICompanys clsCompanys)
         {
             ClsLogs = ilog;
             ClsProject = clsProject;
@@ -30,6 +31,7 @@ namespace Loujico.Controllers
             ClsHistory = clsHistory;
             ClsFiles = clsFiles;
             UserManager = userManager;
+            ClsCompanys = clsCompanys;
         }
         [HttpPost("Add")]
         public async Task<IActionResult> Add([FromForm] AddProjectModel dto,[FromForm]  List<FileModel>? Data)
@@ -38,9 +40,10 @@ namespace Loujico.Controllers
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
-                if (dto.CustomerId == 0)
+              
+                if (await ClsCompanys.GetById(dto.CompanyId) == null)
                 {
-                    return BadRequest("please enter customer id");
+                    return BadRequest("please enter a valid customer id");
                 }
                 var username = UserManager.GetUserName(User);
                 var project = new TbProject
@@ -52,7 +55,7 @@ namespace Loujico.Controllers
                     Progress = dto.Progress,
                     CreatedAt = DateTime.Now,
                     CreatedBy = username,
-                    CustomerId = dto.CustomerId,
+                    CompanyId = dto.CompanyId,
                 };
 
                 // ربط الموظفين بالمشروع
@@ -123,7 +126,7 @@ namespace Loujico.Controllers
 
         [HttpPatch("Edit")]
         public async Task<ActionResult<ApiResponse<string>>> Edit(
-      [FromForm] AddProjectModel dto,
+      [FromForm] EditProjectModel dto,
       [FromForm] List<FileModel>? Data)
         {
             if (!ModelState.IsValid)
@@ -146,7 +149,7 @@ namespace Loujico.Controllers
             proj.EndDate = dto.EndDate;
             proj.Price = dto.Price;
             proj.Progress = dto.Progress;
-            proj.CustomerId = dto.CustomerId;
+            proj.CompanyId = dto.CompanyId;
             proj.UpdatedAt = DateTime.Now;
             proj.UpdatedBy = username;
 

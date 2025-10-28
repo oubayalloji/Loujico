@@ -170,6 +170,14 @@ namespace Loujico.BL
                             ActivityName = ct.Activity.Name,
                             activityId = ct.Activity.Id,
                         }),
+                        projects = c.TbProjects.Select(a => new
+                        {
+                            a.Id,
+                            a.ProjectStatus,
+                            a.Progress,
+                            a.Title,
+                           
+                        })
                     })
                     .FirstOrDefaultAsync();
 
