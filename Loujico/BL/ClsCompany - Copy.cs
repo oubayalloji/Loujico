@@ -133,8 +133,11 @@ namespace Loujico.BL
                         {
                             a.Id,
                             a.CountryId,
+                           Country= a.Country.Name,
                             a.StateId,
+                         State=   a.State.Name,
                             a.CityId,
+                          City=  a.City.Name,
                             a.AddressLine
                         }),
 

@@ -307,6 +307,10 @@ namespace Loujico.BL
                 p.Progress,
                 p.Price,
                 p.CompanyId,
+                p.CreatedBy,
+                p.UpdatedBy,
+                p.UpdatedAt,
+                p.CreatedAt,
                 Companyname= p.Company.Name,
                 Employees = p.TbProjectsEmployees.Select(pe => new
                 {

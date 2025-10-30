@@ -8,7 +8,7 @@ namespace Loujico.BL
 {
     public interface IProducts
     {
-        public Task<List<TbProduct>> GetAllProducts(int id, int count);
+        public Task<List<object>> GetAllProducts(int id, int count);
         public Task<ProductModel?> GetById(int id);
         public Task<TbProduct?> GetByIdModel(int id);
         public Task<bool> Add(TbProduct product);
@@ -69,24 +69,30 @@ namespace Loujico.BL
                 return false;
             }
         }
-        public async Task<List<TbProduct>> GetAllProducts(int id, int count)
+        public async Task<List<object>> GetAllProducts(int id, int count)
         {
             try
             {
-                var Prod = await CTX.TbProducts
-                                .Where(p => p.IsActive && !p.IsDeleted).Skip((id - 1) * count)
-                                .Take(count)
-                                .ToListAsync();
-                if (Prod == null)
-                {
-                    return null;
-                }
-                return Prod;
+                var products = await CTX.TbProducts
+                    .Where(p => p.IsActive && !p.IsDeleted)
+                    .Skip((id - 1) * count)
+                    .Take(count)
+                    .Select(p => new
+                    {
+                        p.Id,
+                        p.ProductName,
+                        p.BillingCycle,
+                        p.IsActive,
+                        p.Price
+                    })
+                    .ToListAsync();
+
+                return products.Cast<object>().ToList(); // تحويل إلى List<object> إذا كان مطلوبًا
             }
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
-                return null;
+                return new List<object>(); // إرجاع قائمة فارغة بدلًا من null
             }
         }
 

@@ -32,7 +32,7 @@ namespace Loujico.Models
         public string? BillingCycle { get; set; }
 
         public bool IsActive { get; set; }
-        public bool IsDeleted { get; set; }
+ 
         public List<EmployeeOnProjectModel>? Employees { get; set; } = new List<EmployeeOnProjectModel>();
         public List<AddCompanyModel>? Company { get; set; } = new List<AddCompanyModel>();
 

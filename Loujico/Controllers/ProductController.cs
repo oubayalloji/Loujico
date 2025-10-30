@@ -35,7 +35,7 @@ namespace Loujico.Controllers
         }
         [HttpPost("Add")]
         [Authorize]
-        public async Task<ActionResult<ApiResponse<string>>> Add([FromBody] AddProductModel dto, [FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Add([FromForm] AddProductModel dto, [FromForm] List<FileModel>? Data)
         {
             try
             {
@@ -292,7 +292,7 @@ namespace Loujico.Controllers
                 {
                     return NotFound(new ApiResponse<List<TbProduct>> { Message ="There is no projects"});
                 }
-                return Ok(new ApiResponse<List<TbProduct>>
+                return Ok(new ApiResponse<List<object>>
                 {
                     Data = Products
                 }) ;

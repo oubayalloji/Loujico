@@ -1,5 +1,7 @@
 ﻿using Loujico.BL;
 using Loujico.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +11,8 @@ namespace Loujico.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+
     public class LocationController : ControllerBase
     {
         Isettings ClsSettings;
@@ -376,7 +380,7 @@ namespace Loujico.Controllers
         {
             try
             {
-                var City = CTX.TbStates.FirstOrDefault(x => x.Id == id);
+                var City = CTX.TbCities.FirstOrDefault(x => x.Id == id);
                 var del = await ClsSettings.DeleteCity(id);
                 if (del == false)
                 {

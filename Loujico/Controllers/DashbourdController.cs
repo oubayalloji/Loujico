@@ -14,17 +14,17 @@ namespace Loujico.Controllers
 
     public class DashbourdController : ControllerBase
     {
-    //    ICustomers ClsCustomers;
+        ICompanys ClsCompany;
         IEmployees ClsEmployee;
         Ilog ClsLogs;
         IProject ClsProjects;
        // IInvoices ClsInvoices;
         UserManager<ApplicationUser> UserManager;
 
-        public DashbourdController(  Ilog clsLogs, UserManager<ApplicationUser> userManager, IEmployees clsEmployee,IProject clsProject/*IInvoices invoices*/)
+        public DashbourdController(  Ilog clsLogs, UserManager<ApplicationUser> userManager, IEmployees clsEmployee,IProject clsProject,ICompanys companys)
         {
-          
-          //   ClsCustomers= clsCustomers;
+
+            ClsCompany = companys;
              ClsLogs=clsLogs;
             ClsProjects = clsProject;
            
@@ -43,7 +43,7 @@ namespace Loujico.Controllers
             {
                 DashboardModel dashboard = new DashboardModel();
 
-            //    dashboard.Customer = await ClsCustomers.Count(); 
+                dashboard.Customer = await ClsCompany.Count(null); 
                 dashboard.CountActiveEmployee = await ClsEmployee.Count();
                 dashboard.ActiveProjects = await ClsProjects.CountPending();
               //  dashboard.OverDueInvoices = await ClsInvoices.CountOverdue();
