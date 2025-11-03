@@ -52,7 +52,7 @@ namespace Loujico.Controllers
                     IsActive = dto.IsActive,
                     CreatedAt = DateTime.Now,
                     CreatedBy = username,
-              
+                 IsDeleted = false
 
                 };
                 foreach (var Co in dto.Company)
@@ -122,7 +122,7 @@ namespace Loujico.Controllers
             }
         }
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] EditProductModel dto, [FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] EditProductModel dto, [FromForm] List<FileModel>? Data)
         {
 
             if (!ModelState.IsValid)
@@ -144,10 +144,22 @@ namespace Loujico.Controllers
             prod.ProductDescription = dto.ProductDescription;
             prod.BillingCycle = dto.BillingCycle;
             prod.Price = dto.Price;
-
+            
             prod.IsActive = dto.IsActive;
             prod.UpdatedAt = DateTime.Now;
             prod.UpdatedBy = username;
+
+
+            foreach (var Co in dto.Company)
+            {
+                prod.TbCompanyProducts.Add(new TbCompanyProduct
+                {
+                    CompanyId = Co.CompanyId,
+                    StartDate = Co.StartDate,
+                    EndDate = Co.EndDate,
+                    TotalPrice = Co.Price
+                });
+            }
 
             // 1. علّم جميع روابط الموظفين الحالية محذوفة
             foreach (var link in prod.TbProductsEmployees)

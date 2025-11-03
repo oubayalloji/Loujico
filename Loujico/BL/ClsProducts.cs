@@ -74,7 +74,7 @@ namespace Loujico.BL
             try
             {
                 var products = await CTX.TbProducts
-                    .Where(p => p.IsActive && !p.IsDeleted)
+                    .Where(p => !p.IsDeleted)
                     .Skip((id - 1) * count)
                     .Take(count)
                     .Select(p => new
@@ -125,7 +125,7 @@ namespace Loujico.BL
                                     {
                                         co.StartDate,
                                         co.EndDate,
-                                        co.TotalPrice,
+                                        Price= co.TotalPrice,
                                         co.Company.Name,
                                         co.CompanyId
                                     })
