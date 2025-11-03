@@ -36,7 +36,7 @@ namespace Loujico.BL
         {
             try
             {
-                var projectDto = await CTX.TbProducts.Where(p => p.Id == id && p.IsActive && !p.IsDeleted).FirstOrDefaultAsync();
+                var projectDto = await CTX.TbProducts.Where(p => p.Id == id  && !p.IsDeleted).FirstOrDefaultAsync();
                     if (projectDto == null)
                 {
                     return null;
@@ -100,7 +100,7 @@ namespace Loujico.BL
         {
             try
             {
-                var Product = await CTX.TbProducts.Where(p => p.Id == id && p.IsActive && !p.IsDeleted)
+                var Product = await CTX.TbProducts.Where(p => p.Id == id  && !p.IsDeleted)
                                 .Include(p => p.TbCompanyProducts)
                                 .Include(i => i.TbProductsEmployees).Select(p => new
                                 {

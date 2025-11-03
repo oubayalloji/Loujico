@@ -52,17 +52,17 @@ namespace Loujico.Controllers
                     IsActive = dto.IsActive,
                     CreatedAt = DateTime.Now,
                     CreatedBy = username,
-                 IsDeleted = false
+                    IsDeleted = false
 
                 };
                 foreach (var Co in dto.Company)
                 {
                     product.TbCompanyProducts.Add(new TbCompanyProduct
                     {
-                      CompanyId=Co.CompanyId,
-                      StartDate=Co.StartDate,
-                      EndDate=Co.EndDate,
-                      TotalPrice = Co.Price
+                        CompanyId = Co.CompanyId,
+                        StartDate = Co.StartDate,
+                        EndDate = Co.EndDate,
+                        TotalPrice = Co.Price
                     });
                 }
                 // ربط الموظفين بالمشروع
@@ -105,7 +105,7 @@ namespace Loujico.Controllers
 
         }
 
-    
+
 
         [HttpGet("GetById/{id}")]
         public async Task<ActionResult<ApiResponse<ProductModel>>> GetById(int id)
@@ -121,8 +121,118 @@ namespace Loujico.Controllers
                 return BadRequest(new ApiResponse<ProductModel> { Message = ex.Message });
             }
         }
+        [HttpDelete("DeleteCompany/{productId}")]
+        public async Task<ActionResult<ApiResponse<string>>> DeleteCompany(int productId,[FromQuery] int companyId)
+        {
+            var prod = await CTX.TbProducts
+                .Include(p => p.TbCompanyProducts)
+                .FirstOrDefaultAsync(p => p.Id == productId && !p.IsDeleted);
+
+            if (prod == null)
+            {
+                return NotFound(new ApiResponse<string>
+                {
+
+                    Message = "المنتج غير موجود أو محذوف",
+
+                });
+            }
+
+            // التحقق من وجود الشركة داخل العلاقات
+            var companyLink = prod.TbCompanyProducts.FirstOrDefault(cp => cp.CompanyId == companyId);
+            if (companyLink == null)
+            {
+                return NotFound(new ApiResponse<string>
+                {
+
+                    Message = "العلاقة مع الشركة غير موجودة",
+                    Data = null
+                });
+            }
+
+            // تنفيذ الحذف أو التعديل المطلوب
+            CTX.TbCompanyProducts.Remove(companyLink);
+            await CTX.SaveChangesAsync();
+
+            return Ok(new ApiResponse<string>
+            {
+
+                Message = "تم حذف العلاقة مع الشركة بنجاح",
+                Data = null
+            });
+        }
+        [HttpPost("AddCompany/{productId}")]
+        public async Task<ActionResult<ApiResponse<string>>> AddCompanyToProduct(int productId, [FromBody] List<AddCompanyModel> dto)
+        {
+            if (dto == null || !dto.Any())
+                return BadRequest(new ApiResponse<string> {  Message = "No company data provided." });
+
+            var prod = await CTX.TbProducts
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == productId && !p.IsDeleted);
+
+            if (prod == null)
+                return NotFound(new ApiResponse<string> { Message = "Product not found." });
+
+            using var tx = await CTX.Database.BeginTransactionAsync();
+            try
+            {
+                int added = 0;
+                int skipped = 0;
+
+                foreach (var c in dto)
+                {
+                    if (c.CompanyId <= 0)
+                    {
+                        skipped++;
+                        continue;
+                    }
+
+                    // تأكد من عدم وجود رابط سابق بنفس زوج المفاتيح (نتجاهل الروابط السابقة حتى لو IsDeleted = true)
+                    var exists = await CTX.TbCompanyProducts
+                        .AnyAsync(cp => cp.ProductId == productId && cp.CompanyId == c.CompanyId);
+
+                    if (exists)
+                    {
+                        // يوجد رابط سابق -> نتجاهل لأنك طلبت "إضافة فقط"
+                        skipped++;
+                        continue;
+                    }
+
+                    // إنشاء رابط جديد
+                    var link = new TbCompanyProduct
+                    {
+                        ProductId = productId,
+                        CompanyId = c.CompanyId,
+                        StartDate = c.StartDate,
+                        EndDate = c.EndDate,
+                        TotalPrice = c.Price,
+              
+                    };
+
+                    CTX.TbCompanyProducts.Add(link);
+                    added++;
+                }
+
+                await CTX.SaveChangesAsync();
+                await tx.CommitAsync();
+
+                var message = $"Added: {added}, Skipped (already exist or invalid): {skipped}";
+                return Ok(new ApiResponse<string> {  Message = message });
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                await ClsLogs.Add("Error", ex.Message, null);
+                return StatusCode(500, new ApiResponse<string> {  Message = "Internal server error." });
+            }
+        }
+
+
+
+
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Edit([FromBody] EditProductModel dto, [FromForm] List<FileModel>? Data)
+        public async Task<ActionResult<ApiResponse<string>>> Edit([FromForm] EditProductModel dto, [FromForm] List<FileModel>? Data)
         {
 
             if (!ModelState.IsValid)
