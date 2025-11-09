@@ -51,7 +51,7 @@ namespace Loujico.Controllers
                 dashboard.User = username;
 
                 if (dashboard == null)
-                    return NotFound(new ApiResponse<string> { Message = "There is no data" });
+                    return NotFound(new ApiResponse<int> { Message = "There is no data", Data = 0 });
                 return Ok(new ApiResponse<DashboardModel>
                 {
                     Data = dashboard

@@ -19,7 +19,6 @@ namespace Loujico.Controllers
         Ilog ClsLogs;
         IHistory ClsHistory;
         IFiles ClsFiles;
-
         CompanySystemContext CTX;
         UserManager<ApplicationUser> UserManager;
         public ProductController(IProducts clsProducts, CompanySystemContext context, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles, Ilog clsLogs)

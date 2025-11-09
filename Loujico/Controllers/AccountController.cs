@@ -189,7 +189,27 @@ namespace Loujico.Controllers
 
             // التحقق من وجود المستخدم مسبقاً
             var existingUser = await userManager.FindByEmailAsync(model.Email);
-            if (existingUser != null)
+            if (existingUser.IsDeleted)
+            {
+                existingUser.UserName = model.UserName;
+                existingUser.Email = model.Email;
+                var currentRoles = await userManager.GetRolesAsync(existingUser);
+                var selectedRole = model.roles;
+
+                foreach (var role in currentRoles)
+                {
+                    await userManager.RemoveFromRoleAsync(existingUser, role);
+                }
+
+                if (!string.IsNullOrEmpty(selectedRole))
+                {
+                    await userManager.AddToRoleAsync(existingUser, selectedRole);
+                }
+                existingUser.IsDeleted= false;
+                var result = await userManager.UpdateAsync(existingUser);
+                return Ok("User has been restored");
+            }
+            if (!existingUser.IsDeleted)
             {
                 return Conflict(new
                 {

@@ -333,6 +333,10 @@ namespace Loujico.Controllers
             try
             {
                 var projectloyee = await ClsProject.Count();
+                if (projectloyee == 0 || projectloyee == null)
+                {
+                    return NotFound(new ApiResponse<int> { Message = "There is no Projects", Data = 0 });
+                }
 
                 return Ok(new ApiResponse<int>
                 {

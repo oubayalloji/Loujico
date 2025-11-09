@@ -994,7 +994,7 @@ namespace Loujico.Controllers
                 var Companys = await ClsCompanys.Count(filter);
                 if (Companys == 0 || Companys == null)
                 {
-                    return NotFound(new ApiResponse<int> { Message = "There is no Companys" });
+                    return NotFound(new ApiResponse<int> { Message = "There is no Companys" , Data = 0 });
                 }
 
                 return Ok(new ApiResponse<int>
