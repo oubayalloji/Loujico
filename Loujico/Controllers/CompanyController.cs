@@ -118,7 +118,7 @@ namespace Loujico.Controllers
 
             var company = await CTX.Co_Companies.FirstOrDefaultAsync(c => c.Id == dto.id && !c.IsDeleted);
             if (company == null)
-                return NotFound(new ApiResponse<string> { Message = "Not found" });
+                return Ok(new ApiResponse<string> { Message = "Not found" });
 
             // إذا أرسلت LegalId فنتحقق من وجوده قبل التغيير لتجنب FK error
             if (dto.LegalId.HasValue)
@@ -994,7 +994,7 @@ namespace Loujico.Controllers
                 var Companys = await ClsCompanys.Count(filter);
                 if (Companys == 0 || Companys == null)
                 {
-                    return NotFound(new ApiResponse<int> { Message = "There is no Companys" , Data = 0 });
+                    return Ok(new ApiResponse<int> { Message = "There is no Companys" , Data = 0 });
                 }
 
                 return Ok(new ApiResponse<int>
@@ -1050,7 +1050,7 @@ namespace Loujico.Controllers
                 var company = await ClsCompanys.Search(name, page, count);
                 if (company == null)
                 {
-                    return NotFound(new ApiResponse<object> { Message = "No result" });
+                    return Ok(new ApiResponse<object> { Message = "No result" });
                 }
                 return Ok(new ApiResponse<object>
                 {
@@ -1076,7 +1076,7 @@ namespace Loujico.Controllers
                 var history = await ClsCompanys.LstEditHistory(page, id, count);
                 if (history == null)
                 {
-                    return NotFound(new ApiResponse<object> { Message = "There is No edit History" });
+                    return Ok(new ApiResponse<object> { Message = "There is No edit History" });
                 }
                 return Ok(new ApiResponse<List<TbHistory>> { Data = history });
             }

@@ -117,10 +117,11 @@ namespace Loujico.BL
                                     Employees = p.TbProductsEmployees.Select(pe => new
                                     {
                                         pe.EmployeeId,
-                                        pe.RoleOnProduct,
+                                       RoleOnProject= pe.RoleOnProduct,
                                         pe.Employee.FirstName,
-                                        pe.Employee.LastName
-                                    }),
+                                        pe.Employee.LastName,
+                                        pe.IsDeleted
+                                    }).Where(a=>a.IsDeleted==false),
                                     Company = p.TbCompanyProducts.Select(co=> new
                                     {
                                         co.StartDate,

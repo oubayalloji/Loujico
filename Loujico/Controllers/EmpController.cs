@@ -121,7 +121,7 @@ namespace Loujico.Controllers
                 var Employee = await ClsEmployees.Count();
                 if (Employee == 0 || Employee == null)
                 {
-                    return NotFound(new ApiResponse<int> { Message = "There is no employees" ,Data =0});
+                    return Ok(new ApiResponse<int> { Message = "There is no employees" ,Data =0});
                 }
 
                 return Ok(new ApiResponse<int>
