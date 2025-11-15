@@ -126,9 +126,8 @@ namespace Loujico
                 app.UseSwaggerUI();
             }
 
-          //  app.UseHttpsRedirection();
-
-
+            //  app.UseHttpsRedirection();
+            app.UseErrorHandlingMiddleware();
             app.UseStaticFiles();
 
             app.UseRouting();

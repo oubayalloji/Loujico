@@ -5,6 +5,7 @@ namespace Loujico.Models
     public class EditProductModel : AddProductModel
     {
         public int Id { get; set; }
+   
     }
         public class AddProductModel
     {
@@ -33,7 +34,7 @@ namespace Loujico.Models
 
         public bool IsActive { get; set; }
  
-        public List<EmployeeOnProjectModel>? Employees { get; set; } = new List<EmployeeOnProjectModel>();
+        public  List<EmployeeOnProjectModel>? Employees { get; set; } = new List<EmployeeOnProjectModel>();
         public List<AddCompanyModel>? Company { get; set; } = new List<AddCompanyModel>();
 
     }
