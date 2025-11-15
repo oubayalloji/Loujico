@@ -391,7 +391,7 @@ namespace Loujico.Controllers
                 issuer: configuration["JwtSettings:Issuer"],
                 audience: configuration["JwtSettings:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(48),
+                expires: DateTime.Now.AddHours(480),
                 signingCredentials: credentials
             );
 
