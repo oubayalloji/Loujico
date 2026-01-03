@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Data;
 using System.IdentityModel.Tokens.Jwt;
@@ -12,7 +13,7 @@ using System.Text;
 
 namespace Loujico.Controllers
 {
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("api/[controller]")]
     [ApiController]
 
@@ -29,9 +30,9 @@ namespace Loujico.Controllers
             userManager = manager;
             ClsLogs = clsLogs;
         }
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,Team_Leader,Programmer")]
         [HttpGet("Header")]
-
-        public  async Task<ActionResult> Header()
+        public async Task<ActionResult> Header()
         {
             try
             {
@@ -57,7 +58,7 @@ namespace Loujico.Controllers
         [HttpPost("LogIn")]
         [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<string>>> LogIn([FromForm] LogInModel model)
-         {
+        {
             try
             {
                 ApiResponse<string> response = new ApiResponse<string>();
@@ -95,32 +96,18 @@ namespace Loujico.Controllers
                     });
                 }
                 var roles = await userManager.GetRolesAsync(user);
-                if (roles.Contains("Admin"))
-                {
-                    user.LastVisit = DateTime.Now;
-                    await userManager.UpdateAsync(user);
-                    await ClsLogs.Add(user.Id, "LogIn", $"{user.UserName} has logged in");
-                    return Ok(new ApiResponse<String>
-                    {
-                        Data = await GenerateToken(user),
-                        Message = "Welcome Admin",
-                        Role = "Admin"
-
-                    });
-                }
-                else
-                {
+           
                     user.LastVisit = DateTime.Now;
                     await userManager.UpdateAsync(user);
                     return Ok(new ApiResponse<String>
                     {
                         Data = await GenerateToken(user),
                         Message = $"Welcome {user.UserName} ",
-                        Role = "User"
+  
 
                     });
 
-                }
+                
             }
             catch (Exception ex)
             {
@@ -133,8 +120,10 @@ namespace Loujico.Controllers
             }
 
         }
+
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         [HttpGet("UserList")]
-      
         public async Task<ActionResult<ApiResponse<List<VmUserRoles>>>> UserList()
         {
             try 
@@ -172,12 +161,52 @@ namespace Loujico.Controllers
 
             }
         }
+        [HttpGet("UserListId")]
+        public async Task<ActionResult> UserListId()
+        {
+            try
+            {
+                var users = userManager.Users.ToList();
+                var userRolesViewModel = new List<object>();
+
+                foreach (var user in users)
+                {
+                    if (user.IsDeleted == true)
+                    {
+                        continue;
+                    }
+                    userRolesViewModel.Add(new 
+                    {
+                        userid = user.Id,
+                        username =user.UserName
+
+                    });
+                }
+
+                return Ok(new ApiResponse<List<object>> { Data = userRolesViewModel });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<VmUserRoles>>
+                {
+                    Message = ex.Message,
+
+                });
+
+            }
+        }
+
+
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         [HttpPost("Add")]
-      
         public async Task<IActionResult> Register([FromForm] Register model)
         {
-            // التحقق من صحة النموذج
-            if (!ModelState.IsValid)
+            try
+            {
+                // التحقق من صحة النموذج
+                if (!ModelState.IsValid)
             {
                 return BadRequest(new
                 {
@@ -188,8 +217,53 @@ namespace Loujico.Controllers
             }
 
             // التحقق من وجود المستخدم مسبقاً
+       
             var existingUser = await userManager.FindByEmailAsync(model.Email);
-            if (existingUser.IsDeleted)
+                if (existingUser == null)
+                {
+                    // إنشاء مستخدم جديد
+                    var user = new ApplicationUser
+                    {
+                        IsDeleted = false,
+                        CreatedAt = DateTime.Now,
+                        Email = model.Email,
+                        UserName = $"{model.UserName.Replace(" ", "_")}_{Guid.NewGuid().ToString()[..2]}",
+
+
+                    };
+
+                    // إنشاء الحساب
+                    var result = await userManager.CreateAsync(user, model.Password);
+
+                    if (!result.Succeeded)
+                    {
+                        return BadRequest(new
+                        {
+                            Status = 400,
+                            Message = "User creation failed",
+                            Errors = result.Errors.Select(e => e.Description)
+                        });
+                    }
+
+
+                    // تعيين دور "Seller" للمستخدم
+                    await userManager.AddToRoleAsync(user, model.roles);
+
+                    // إنشاء وتوقيع Token
+                    var token = await GenerateToken(user);
+                    return CreatedAtAction(nameof(Register), new
+                    {
+                        Status = 201,
+                        Data = new
+                        {
+                            Token = token,
+                            UserId = user.Id,
+                            IsAdmin = false // يمكنك التحقق من الأدوار إذا لزم الأمر
+                        },
+                        Message = "User registered successfully"
+                    });
+                }
+           else if (existingUser.IsDeleted)
             {
                 existingUser.UserName = model.UserName;
                 existingUser.Email = model.Email;
@@ -217,60 +291,7 @@ namespace Loujico.Controllers
                     Message = "The email address is already registered"
                 });
             }
-
-            // إنشاء مستخدم جديد
-            var user = new ApplicationUser
-            {
-                IsDeleted = false,
-                CreatedAt = DateTime.Now,
-                Email = model.Email,
-                UserName = $"{model.UserName.Replace(" ", "_")}_{Guid.NewGuid().ToString()[..8]}",
-
-
-            };
-
-            try
-            {
-                // إنشاء الحساب
-                var result = await userManager.CreateAsync(user, model.Password);
-
-                if (!result.Succeeded)
-                {
-                    return BadRequest(new
-                    {
-                        Status = 400,
-                        Message = "User creation failed",
-                        Errors = result.Errors.Select(e => e.Description)
-                    });
-                }
-
-                // رفع صورة الملف الشخصي إذا وجدت
-                /*   if (File1 != null && File1.Count > 0)
-                   {
-                       var uploadResult = await _imageService.UploadImageAsync(File1[0], "ProfileImg");
-                       if (uploadResult.Success)
-                       {
-                           user. = uploadResult.FilePath;
-                           await userManager.UpdateAsync(user);
-                       }
-                   }*/
-                // تعيين دور "Seller" للمستخدم
-                await userManager.AddToRoleAsync(user, model.roles);
-
-                // إنشاء وتوقيع Token
-                var token = await GenerateToken(user);
-
-                return CreatedAtAction(nameof(Register), new
-                {
-                    Status = 201,
-                    Data = new
-                    {
-                        Token = token,
-                        UserId = user.Id,
-                        IsAdmin = false // يمكنك التحقق من الأدوار إذا لزم الأمر
-                    },
-                    Message = "User registered successfully"
-                });
+                return BadRequest("The user cannot be added");
             }
             catch (Exception ex)
             {
@@ -283,8 +304,8 @@ namespace Loujico.Controllers
             }
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         [HttpDelete("Delete/{userid}")]
-  
         public async Task<ActionResult<ApiResponse<string>>> Delete(string userid)
         {
             try
@@ -322,49 +343,91 @@ namespace Loujico.Controllers
         }
 
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+        /*        [HttpPatch("Edit")]
+                public async Task<ActionResult<ApiResponse<string>>> Save([FromForm]VmEditUser model)
+                {
+                    ApiResponse<List<string>> response = new ApiResponse<List<string>>();
+                    if (!ModelState.IsValid)
+                    {
+                        return BadRequest(response.Message ="validate Error");
+                    }
 
+                    var user = await userManager.FindByIdAsync(model.userid);
+                    if (user == null)
+                    {
+                        return NotFound(response.Message = "Not Found");
+                    }
+
+                    user.UserName = model.username;
+                    user.Email = model.Email;
+
+
+
+                    var currentRoles = await userManager.GetRolesAsync(user);
+                    var selectedRole = model.Roles;
+
+                    foreach (var role in currentRoles)
+                    {
+                        await userManager.RemoveFromRoleAsync(user, role);
+                    }
+
+                    if (!string.IsNullOrEmpty(selectedRole))
+                    {
+                        await userManager.AddToRoleAsync(user, selectedRole);
+                    }
+
+                    var result = await  userManager.UpdateAsync(user);
+                    if (result.Succeeded)
+                    {
+                        return Ok(response.Message = "Done") ;
+                    }
+
+
+                    return Ok( response);
+                }*/
         [HttpPatch("Edit")]
-        public async Task<ActionResult<ApiResponse<string>>> Save([FromForm]VmEditUser model)
+        public async Task<ActionResult<ApiResponse<string>>> Save([FromForm] VmEditUser model)
         {
-            ApiResponse<List<string>> response = new ApiResponse<List<string>>();
+            ApiResponse<string> response = new ApiResponse<string>();
+
             if (!ModelState.IsValid)
-            {
-                return BadRequest(response.Message ="validate Error");
-            }
+                return BadRequest(response.Message = "Validate Error");
 
             var user = await userManager.FindByIdAsync(model.userid);
             if (user == null)
-            {
                 return NotFound(response.Message = "Not Found");
-            }
 
             user.UserName = model.username;
             user.Email = model.Email;
 
+            // تعديل كلمة المرور إن وُجدت
+            if (!string.IsNullOrWhiteSpace(model.password))
+            {
+                var token = await userManager.GeneratePasswordResetTokenAsync(user);
 
+                var passwordResult = await userManager.ResetPasswordAsync(user, token, model.password);
+                if (!passwordResult.Succeeded)
+                {
+                    return BadRequest(passwordResult.Errors.Select(e => e.Description));
+                }
+            }
 
+            // تعديل الأدوار
             var currentRoles = await userManager.GetRolesAsync(user);
-            var selectedRole = model.Roles;
-
             foreach (var role in currentRoles)
-            {
                 await userManager.RemoveFromRoleAsync(user, role);
-            }
 
-            if (!string.IsNullOrEmpty(selectedRole))
-            {
-                await userManager.AddToRoleAsync(user, selectedRole);
-            }
+            if (!string.IsNullOrEmpty(model.Roles))
+                await userManager.AddToRoleAsync(user, model.Roles);
 
-            var result = await  userManager.UpdateAsync(user);
+            var result = await userManager.UpdateAsync(user);
             if (result.Succeeded)
-            {
-                return Ok(response.Message = "Done") ;
-            }
+                return Ok(response.Message = "Done");
 
-        
-            return Ok( response);
+            return BadRequest(result.Errors.Select(e => e.Description));
         }
+
 
         private async Task<string> GenerateToken(ApplicationUser user)
         {
@@ -377,7 +440,11 @@ namespace Loujico.Controllers
         new Claim(ClaimTypes.Email, user.Email),
         new Claim(ClaimTypes.Name, user.UserName)
     };
-
+            var employee = await CTX.TbEmployees.FirstOrDefaultAsync(e => e.UserId == user.Id);
+            if (employee != null)
+            {
+                claims.Add(new Claim("EmployeeId", employee.Id.ToString()));
+            }
             // إضافة أدوار المستخدم كـ Claims
             foreach (var role in userRoles)
             {

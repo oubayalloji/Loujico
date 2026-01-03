@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using static Loujico.Models.TaskDTO;
 
 namespace Loujico.Models
 {
@@ -62,5 +63,6 @@ namespace Loujico.Models
         public int Progress { get; set; }
 
         public List<EmployeeOnProjectModel>? Employees { get; set; } = new List<EmployeeOnProjectModel>();
+        public List<TaskResultDto> Tasks { get; set; }
     }
 }

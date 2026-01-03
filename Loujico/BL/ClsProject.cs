@@ -1,7 +1,10 @@
 ﻿using FuzzySharp;
+using Loujico.Migrations;
 using Loujico.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using static Loujico.Models.TaskDTO;
 namespace Loujico.BL
 {
 
@@ -16,9 +19,11 @@ namespace Loujico.BL
         public Task<int> Count();
         public Task<int> CountPending();
 
-        public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count);
-        public Task<List<TbProject>> Search(string name, int page, int count);
+        public Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count, string table);
+        public  Task<List<TbProject>> Search(string name, int page, int count, int? employeeid)
+;
         public Task<List<object>> GetAllProjectAndInvoice();
+        public  Task<List<object>> PagintionByProg(int page, int count, int employeeid);
 
     }
 
@@ -78,33 +83,36 @@ namespace Loujico.BL
                 return null;
             }
         }
-
         public async Task<ShowProjectModel> GetById(int id)
         {
             try
             {
-                var projectDto = await CTX.TbProjects
-    .Where(p => p.Id == id && !p.IsDeleted)
-    .Select(p => new ShowProjectModel
-    {
-        Id = p.Id,
-        Title = p.Title,
-        StartDate = p.StartDate,
-        EndDate = p.EndDate,
-        Progress = p.Progress,
-        Price = p.Price,
-        CompanyId = p.CompanyId,
-        CompanyName=p.Company.Name,
-        Employees = p.TbProjectsEmployees.Select(pe => new EmployeeOnProjectModel
-        {
-            EmployeeId = pe.EmployeeId,
-            RoleOnProject = pe.RoleOnProject,
-     
-        }).ToList()
-    }).FirstOrDefaultAsync();
+                var project = await CTX.TbProjects
+                    .Where(p => p.Id == id && !p.IsDeleted)
+                    .Select(p => new ShowProjectModel
+                    {
+                        Id = p.Id,
+                        Title = p.Title,
+                        StartDate = p.StartDate,
+                        EndDate = p.EndDate,
+                        Progress = p.Progress,
+                        Price = p.Price,
+                        CompanyId = p.CompanyId,
+                        CompanyName = p.Company.Name,
 
-                return projectDto; // نوع الدالة Task<ProjectWithEmployeesDto>
+                        // الموظفون على المشروع
+                        Employees = p.TbProjectsEmployees.Select(pe => new EmployeeOnProjectModel
+                        {
+                            EmployeeId = pe.EmployeeId,
+                            RoleOnProject = pe.RoleOnProject
+                        }).ToList(),
 
+                        // المهام التابعة للمشروع
+                  
+                    })
+                    .FirstOrDefaultAsync();
+
+                return project;
             }
             catch (Exception ex)
             {
@@ -112,6 +120,8 @@ namespace Loujico.BL
                 return null;
             }
         }
+
+    
 
 
         public async Task<List<object>> Pagintion(int id, int count)
@@ -152,6 +162,44 @@ namespace Loujico.BL
                 return new List<object>();
             }
         }
+        public async Task<List<object>> PagintionByProg(int page, int count, int employeeid)
+        {
+            try
+            {
+                var projects = await CTX.TbProjects
+                    .Where(p =>
+                        !p.IsDeleted &&
+                        p.Tasks.Any(t =>
+                            t.TaskEmployees.Any(te =>
+                                te.EmployeeId == employeeid&&
+                                !te.IsDeleted
+                                
+                            )
+                        )
+                    )
+                    .Skip((page - 1) * count)
+                    .Take(count)
+                    .Select(p => new
+                    {
+                        p.Id,
+                        p.Title,
+                        p.StartDate,
+                        p.EndDate,
+                        p.Progress,
+                        p.Price,
+                        CompanyName = p.Company.Name
+                    })
+                    .ToListAsync();
+
+                return projects.Cast<object>().ToList();
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return new List<object>();
+            }
+        }
+
 
         public async Task<bool> Add(TbProject project)
         {
@@ -193,11 +241,11 @@ namespace Loujico.BL
                 }
             
         }
-        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count)
+        public async Task<List<TbHistory>> LstEditHistory(int Pageid, int id, int count,string table)
         {
             try
             {
-                var LstProject = await ClsHistory.GetAllHistory(Pageid, id, tableName.project, count);
+                var LstProject = await ClsHistory.GetAllHistory(Pageid, id, table, count);
                 if (LstProject == null)
                 {
                     return null;
@@ -213,30 +261,41 @@ namespace Loujico.BL
                 return new List<TbHistory>();
             }
         }
-        public async Task<List<TbProject>> Search(string name, int page, int count)
+
+        public async Task<List<TbProject>> Search(string name, int page, int count, int? employeeid)
         {
             try
             {
                 var query = CTX.TbProjects
                     .AsNoTracking()
-                    .Where(a =>
-                        !a.IsDeleted &&
+                    .Where(p =>
+                        !p.IsDeleted &&
                         (
                             string.IsNullOrWhiteSpace(name) ||
-                            a.Id.ToString().Contains(name) ||
-                            EF.Functions.Like(a.Title, $"%{name}%") ||
-                            EF.Functions.Like(a.ProjectStatus, $"%{name}%") ||
-                            a.Progress.ToString().Contains(name) ||
-                            a.ProjectType.ToString().Contains(name) ||
-                            a.Price.ToString().Contains(name) ||
-                            a.StartDate.ToString().Contains(name) ||
-                            a.EndDate.ToString().Contains(name)||
-                               EF.Functions.Like(a.Company.Name, $"%{name}%")
+                            p.Id.ToString().Contains(name) ||
+                            EF.Functions.Like(p.Title, $"%{name}%") ||
+                            EF.Functions.Like(p.ProjectStatus, $"%{name}%") ||
+                            p.Progress.ToString().Contains(name) ||
+                            p.ProjectType.ToString().Contains(name) ||
+                            p.Price.ToString().Contains(name) ||
+                            p.StartDate.ToString().Contains(name) ||
+                            p.EndDate.ToString().Contains(name) ||
+                            EF.Functions.Like(p.Company.Name, $"%{name}%")
                         )
                     );
 
+                // 🔹 إذا انبعت employeeId → فلترة المشاريع حسب التاسكات
+                if (employeeid != null)
+                {
+                    query = query.Where(p =>
+                        p.Tasks.Any(t =>
+                            t.TaskEmployees.Any(te => te.EmployeeId == employeeid)
+                        )
+                    );
+                }
+
                 var pagedItems = await query
-                    .OrderByDescending(a => a.Id)
+                    .OrderByDescending(p => p.Id)
                     .Skip((page - 1) * count)
                     .Take(count)
                     .ToListAsync();
@@ -249,6 +308,7 @@ namespace Loujico.BL
                 return null;
             }
         }
+
 
         public async Task<int> CountPending()
         {
@@ -311,14 +371,9 @@ namespace Loujico.BL
                 p.UpdatedBy,
                 p.UpdatedAt,
                 p.CreatedAt,
-                Companyname= p.Company.Name,
-                Employees = p.TbProjectsEmployees.Select(pe => new
-                {
-                    pe.EmployeeId,
-                    pe.RoleOnProject,
-                    pe.Employee.FirstName,
-                    pe.Employee.LastName
-                })
+                Companyname = p.Company.Name,
+              
+                
             }).FirstOrDefaultAsync();
 
 
@@ -345,5 +400,7 @@ namespace Loujico.BL
                 return null;
             }
         }
+
+
     }
-    }
+}

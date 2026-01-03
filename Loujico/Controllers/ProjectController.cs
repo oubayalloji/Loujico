@@ -6,12 +6,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using static Loujico.Models.TaskDTO;
+using System.Net.NetworkInformation;
+using System.Security.Claims;
 
 namespace Loujico.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 
     public class ProjectController : ControllerBase
     {
@@ -33,6 +36,7 @@ namespace Loujico.Controllers
             UserManager = userManager;
             ClsCompanys = clsCompanys;
         }
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         [HttpPost("Add")]
         public async Task<IActionResult> Add([FromForm] AddProjectModel dto,[FromForm]  List<FileModel>? Data)
         {
@@ -75,7 +79,7 @@ namespace Loujico.Controllers
                 {
                     foreach (var item in Data)
                     {
-                        await ClsFiles.Add(item, "Projects", project.Id, tableName.project);
+                        await ClsFiles.Add(item, "Projects", project.Id, tableName.project, username);
                     }
                 }
                 var usename = UserManager.GetUserName(User);
@@ -98,6 +102,10 @@ namespace Loujico.Controllers
 
         }
 
+
+
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         [HttpGet("GetAllId")]
         public async Task<ActionResult<ApiResponse<List<object>>>> GetAllId()
         {
@@ -124,6 +132,8 @@ namespace Loujico.Controllers
             }
         }
 
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         [HttpPatch("Edit")]
         public async Task<ActionResult<ApiResponse<string>>> Edit(
       [FromForm] EditProjectModel dto,
@@ -162,7 +172,7 @@ namespace Loujico.Controllers
             {
                 foreach (var item in Data)
                 {
-                    await ClsFiles.Add(item, "Projects", proj.Id, tableName.project);
+                    await ClsFiles.Add(item, "Projects", proj.Id, tableName.project, username);
                 }
             }
             // 2. عُد تفعيل أو أضف الروابط الواردة في dto.Employees
@@ -203,7 +213,7 @@ namespace Loujico.Controllers
             {
                 foreach (var file in Data)
                 {
-                    await ClsFiles.Add(file, "Projects", proj.Id, tableName.project);
+                    await ClsFiles.Add(file, "Projects", proj.Id, tableName.project, username);
                     await ClsLogs.Add(
                         "CRUD",
                         $"File '{file.fileType}' added to project '{proj.Title}' by {username}.",
@@ -213,19 +223,56 @@ namespace Loujico.Controllers
 
             return Ok(new ApiResponse<string> { Message = "Done" });
         }
+
+
+
+
+
         [HttpGet("GetAll")]
         public async Task<ActionResult<ApiResponse<List<object>>>> GetAll([FromQuery] int Page, [FromQuery] int Count)
         {
-
             try
             {
-                var fin = await ClsProject.Pagintion(Page,Count);
+                var roleClaim = User.FindFirst(ClaimTypes.Role)?.Value;
 
-                return Ok(new ApiResponse<List<object>>
+                if (roleClaim==null)
                 {
-                    Data = fin
-                }) ;
+                    return Ok("you are not allowed");
+                }
+
+                if (roleClaim == "Admin"|| roleClaim == "Team_Leader")
+                {
+
+                    var fin = await ClsProject.Pagintion(Page, Count);
+
+                    return Ok(new ApiResponse<List<object>>
+                    {
+                        Data = fin
+                    });
+                }
+                else if (roleClaim == "Programmer")
+                {
+                    var employeeIdClaim = User.FindFirst("EmployeeId");
+
+                    if (employeeIdClaim == null)
+                        return Ok("EmployeeId not found in token");
+
+                    int employeeId = int.Parse(employeeIdClaim.Value);
+
+
+                    var fin = await ClsProject.PagintionByProg(Page, Count, employeeId);
+
+                    return Ok(new ApiResponse<List<object>>
+                    {
+                        Data = fin
+                    });
+                }
+                else
+                {
+                    return Ok("you are not allowed");
+                }
             }
+            
             catch (Exception ex)
             {
                 await ClsLogs.Add("Error", ex.Message, null);
@@ -237,6 +284,9 @@ namespace Loujico.Controllers
 
             }
         }
+
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         [HttpDelete("DeleteFile/{id}")]
         public async Task<ActionResult<ApiResponse<string>>> DeleteFile(int id)
         {
@@ -270,6 +320,8 @@ namespace Loujico.Controllers
 
 
         }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         [HttpDelete("Delete/{id}")]
         public async Task<ActionResult<ApiResponse<string>>> Delete(int id)
         {
@@ -302,7 +354,7 @@ namespace Loujico.Controllers
 
 
         }
-
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,Programmer,Team_Leader")]
         [HttpGet("GetById/{id}")]
         public async Task<ActionResult<ApiResponse<AddProjectModel>>> GetById(int id)
         {
@@ -327,6 +379,8 @@ namespace Loujico.Controllers
             }
 
         }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         [HttpGet("GetCount")]
         public async Task<ActionResult<ApiResponse<int>>> Count()
         {
@@ -355,12 +409,28 @@ namespace Loujico.Controllers
             }
 
         }
-         [HttpGet("EditHistory")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+        [HttpGet("EditHistory")]
         public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistory([FromQuery]int page,[FromQuery] int id,[FromQuery] int count)
         {
             try
             {
-                var history = await ClsProject.LstEditHistory(page, id, count);
+                var history = await ClsProject.LstEditHistory(page, id, count,tableName.project);
+                return Ok(new ApiResponse<List<TbHistory>> { Data = history });
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return BadRequest(new ApiResponse<List<TbHistory>> { Message = ex.Message });
+            }
+        }
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+        [HttpGet("EditHistory/tasks")]
+        public async Task<ActionResult<ApiResponse<List<TbHistory>>>> LstEditHistortyTasks([FromQuery] int page, [FromQuery] int id, [FromQuery] int count)
+        {
+            try
+            {
+                var history = await ClsProject.LstEditHistory(page, id, count, tableName.Tasks);
                 return Ok(new ApiResponse<List<TbHistory>> { Data = history });
             }
             catch (Exception ex)
@@ -370,71 +440,59 @@ namespace Loujico.Controllers
             }
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,Programmer,Team_Leader")]
         [HttpGet("Search")]
         public async Task<ActionResult<ApiResponse<object>>> Search([FromQuery] string name, [FromQuery] int page, [FromQuery] int count)
         {
             try
             {
-                var Project = await ClsProject.Search(name, page, count);
-                if (Project == null)
+                var roleClaim = User.FindFirst(ClaimTypes.Role)?.Value;
+
+                if (roleClaim == null)
                 {
-                    return NotFound(new ApiResponse<object> { Message = "No result" });
+                    return Ok("you are not allowed");
                 }
-                return Ok(new ApiResponse<object>
+
+                if (roleClaim == "Admin" || roleClaim == "Team_Leader")
                 {
-                    Data = Project
-                });
+
+                    var Project = await ClsProject.Search(name, page, count, null);
+                    if (Project == null)
+                    {
+                        return Ok(new ApiResponse<object> { Message = "No result" });
+                    }
+
+                    return Ok(new 
+                    {
+                        Data = Project
+                    });
+                }
+                else if (roleClaim == "Programmer")
+                {
+                    var employeeIdClaim = User.FindFirst("EmployeeId");
+
+                    if (employeeIdClaim == null)
+                        return Ok("EmployeeId not found in token");
+
+                    int employeeId = int.Parse(employeeIdClaim.Value);
+
+
+                    var Project = await ClsProject.Search(name, page, count, employeeId);
+                    if (Project == null)
+                    {
+                        return Ok(new ApiResponse<object> { Message = "No result" });
+                    }
+
+                    return Ok(new 
+                    {
+                        Data = Project
+                    });
+                }
+                else
+                {
+                    return Ok("you are not allowed");
+                }
+
             }
             catch (Exception ex)
             {

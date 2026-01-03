@@ -57,6 +57,8 @@ namespace Loujico.Models
         public String? CreatedBy { get; set; }
 
         public String? UpdatedBy { get; set; }
+        public virtual ICollection<TbProjectTask> Tasks { get; set; } = new List<TbProjectTask>();
+
         [JsonIgnore]
         public virtual Co_Company_Name Company { get; set; } = null!;
 

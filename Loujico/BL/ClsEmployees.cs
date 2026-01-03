@@ -17,6 +17,7 @@ namespace Loujico.BL
         public Task<List<TbEmployee>> Search(string name, int page, int count);
         public Task<int> Count();
         public Task<List<object>> GetAllEmployeesIdAndName();
+        public Task<List<object>> GetAllEmployeesIdUserid();
     }
 
     public class ClsEmployees : IEmployees
@@ -268,6 +269,30 @@ namespace Loujico.BL
             {
                 await ClsLogs.Add("Error", ex.Message, null);
                 return 0;
+            }
+        }
+
+        public async Task<List<object>> GetAllEmployeesIdUserid()
+        {
+            try
+            {
+                var result = await CTX.TbEmployees
+                    .Where(x => !x.IsDeleted && x.UserId != null)
+                    .Select(x => new
+                    {
+                        x.Id,
+                        x.FirstName,
+                        x.LastName
+                    })
+                    .ToListAsync();
+                if (result == null)
+                    return null;
+                return result.Cast<object>().ToList();
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                return null;
             }
         }
     }

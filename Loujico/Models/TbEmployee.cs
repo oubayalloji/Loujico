@@ -72,8 +72,12 @@ namespace Loujico.Models
         public String? CreatedBy { get; set; }
 
         public String? UpdatedBy { get; set; }
+        public string? UserId { get; set; }
+        public ApplicationUser? User { get; set; }
         [JsonIgnore]
         public virtual ICollection<TbProductsEmployee>? TbProductsEmployees { get; set; } = new List<TbProductsEmployee>();
+        public virtual ICollection<TbProjectTaskEmployee> TaskEmployees { get; set; }
+    = new List<TbProjectTaskEmployee>();
 
         [JsonIgnore]
         public virtual ICollection<TbProjectsEmployee>? TbProjectsEmployees { get; set; } = new List<TbProjectsEmployee>();

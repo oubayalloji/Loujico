@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.Text.Json;
 namespace Loujico.Controllers
 {
     [Route("api/[controller]")]
@@ -23,18 +24,84 @@ namespace Loujico.Controllers
         UserManager<ApplicationUser> UserManager;
         IFiles ClsFiles;
         ICompanys ClsCompanys;
-        
-        public CompanyController(CompanySystemContext cTX, Ilog clsLogs, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles, ICompanys clsCompanys)
+        private readonly IGeminiService _gemini;
+        public CompanyController(CompanySystemContext cTX, Ilog clsLogs, UserManager<ApplicationUser> userManager, IHistory clsHistory, IFiles clsFiles, ICompanys clsCompanys, IGeminiService gemini)
         {
 
             CTX = cTX;
-     //       ClsCustomers = clsCustomers;
+            //       ClsCustomers = clsCustomers;
             ClsLogs = clsLogs;
             UserManager = userManager;
             ClsHistory = clsHistory;
             ClsFiles = clsFiles;
             ClsCompanys = clsCompanys;
+            _gemini = gemini;
         }
+        [HttpGet("GetAllIdOrderedByAI")]
+        public async Task<ActionResult<ApiResponse<List<CompanyIDDto>>>> GetAllIdOrderedByAI()
+        {
+            try
+            {
+                var companies = await ClsCompanys.GetAllCustomersIdAndName();
+
+                if (companies == null || !companies.Any())
+                {
+                    return NotFound(new ApiResponse<List<CompanyIDDto>> { Message = "There is no Company" });
+                }
+
+                // تحضير البيانات
+                var payload = new
+                {
+                    Data = companies
+                };
+
+                // تحسين الـ Prompt ليكون دقيقاً جداً
+                var prompt = $@"
+You are a Business Intelligence Assistant.
+Task: Sort the list of companies in the 'data' array based on the **implied industry prestige/importance** derived from their names.
+
+**Sorting Logic (Highest Importance to Lowest):**
+1. **Tier 1 (High Priority):** Government, Legal, Financial, Medical, Enterprise Corp. (e.g., 'Law Firm', 'Bank', 'Hospital').
+2. **Tier 2 (Medium Priority):** Technology, Manufacturing, Real Estate, Education.
+3. **Tier 3 (Low Priority):** Retail, Entertainment, Gaming, Food, Personal Services (e.g., 'Game Store', 'Bakery', 'Gym').
+
+**Directives:**
+- Analyze each 'Name' to guess its industry.
+- Some data would come in arabic so you will have to guess the industry by its name
+- Sort the array so **Tier 1 comes FIRST**, then Tier 2, then Tier 3.
+- Within the same Tier, sort alphabetically.
+- Return ONLY valid JSON with the exact same structure.
+- Do NOT add any markdown or explanations.
+
+Input JSON:
+{JsonSerializer.Serialize(payload)}
+";
+
+                var aiText = await _gemini.GenerateAsync(prompt);
+
+                // استخدام إعدادات JSON متسامحة (Case Insensitive)
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+       
+
+                var orderedCompanies = JsonSerializer.Deserialize<ApiResponse<List<CompanyIDDto>>>(aiText, options);
+
+
+
+                return Ok(orderedCompanies);
+            }
+            catch (Exception ex)
+            {
+                await ClsLogs.Add("Error", ex.Message, null);
+                // إضافة الـ Exception للمسج للتطوير
+                return BadRequest(new ApiResponse<List<CompanyIDDto>> { Message = $"AI Error: {ex.Message}" });
+            }
+        }
+
+
         [HttpPost("AddCompany")]
         public async Task<ActionResult<ApiResponse<CompanyReadDto>>> AddCompany([FromForm] CompanyCreateDto dto)
         {
@@ -458,7 +525,7 @@ namespace Loujico.Controllers
                 {
                     foreach (var item in Data)
                     {
-                        await ClsFiles.Add(item, "Companys", companyId, tableName.Company);
+                        await ClsFiles.Add(item, "Companys", companyId, tableName.Company, username);
                     }
                 }
                 await CTX.SaveChangesAsync();

@@ -36,8 +36,8 @@ namespace Loujico.BL
                     TimeStamp = DateTime.Now,
 
                 };
-                CTX.AddAsync(log);
-                CTX.SaveChanges();
+              await  CTX.AddAsync(log);
+               await CTX.SaveChangesAsync();
                 return "Done";
             }
             catch (Exception ex)

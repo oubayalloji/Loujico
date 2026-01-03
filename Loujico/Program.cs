@@ -1,6 +1,8 @@
+using Google.GenAI.Types;
 using Loujico.BL;
 using Loujico.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -18,14 +20,24 @@ namespace Loujico
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddScoped<IEmployees,ClsEmployees>();
             builder.Services.AddScoped<IProject, ClsProject>();
+
             builder.Services.AddScoped<Ilog, ClsLogs>();
             builder.Services.AddScoped<IProducts, ClsProducts>();
             builder.Services.AddScoped<IHistory, ClsHistory>();
+            builder.Services.AddScoped<ITasks, ClsTasks>();
            // builder.Services.AddScoped<ICustomers, ClsCustomer>();
             builder.Services.AddScoped<ICompanys, ClsCompany>();
             builder.Services.AddScoped<Isettings, ClsSettings>();
           //  builder.Services.AddScoped<IInvoices, ClsInvoices>();
             builder.Services.AddScoped<IFiles, ClsFiles>();
+            builder.Services.AddScoped<IAuthorizationHandler, EditTaskStatusHandler>();
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("EditTaskStatus", policy =>
+                    policy.Requirements.Add(new EditTaskStatusRequirement()));
+            });
+
+
             builder.Services.AddDbContext<CompanySystemContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")),
         ServiceLifetime.Scoped);
@@ -77,7 +89,7 @@ namespace Loujico
                 options.Password.RequireUppercase = true;
                 options.Password.RequireLowercase = true;
                 options.User.RequireUniqueEmail = true;
-            }).AddEntityFrameworkStores<CompanySystemContext>();
+            }).AddEntityFrameworkStores<CompanySystemContext>().AddTokenProvider<DataProtectorTokenProvider<ApplicationUser>>("Default"); ;
             // Add services to the container.
 
             builder.Services.AddControllers();
@@ -116,7 +128,9 @@ namespace Loujico
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddMemoryCache();
-
+            builder.Services.AddScoped<IGeminiService, GeminiService>();
+            // ⁄‰œ ≈‰‘«¡ «·ÿ·»
+     
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

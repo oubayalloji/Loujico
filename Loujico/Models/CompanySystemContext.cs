@@ -30,7 +30,9 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
     public virtual DbSet<Co_CompanyEmployee> Co_CompanyEmployees { get; set; }
     public virtual DbSet<Co_Contact> Co_Contacts { get; set; }
     public virtual DbSet<Co_Legal> Co_Legals { get; set; }
-  
+    public DbSet<TbProjectTask> TbProjectTasks { get; set; }
+    public DbSet<TbProjectTaskEmployee> TbProjectTaskEmployees { get; set; }
+
     public virtual DbSet<TbCompanyProduct> TbCompanyProducts { get; set; }
 
     public virtual DbSet<TbEmployee> TbEmployees { get; set; }
@@ -59,7 +61,10 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
       
     
         base.OnModelCreating(modelBuilder);
-
+        modelBuilder.Entity<TbEmployee>()
+    .HasIndex(e => e.UserId)
+    .IsUnique()
+    .HasFilter("[UserId] IS NOT NULL");
 
         modelBuilder.Entity<Co_Company_Name>()
       .HasOne(c => c.Legal)
@@ -313,6 +318,9 @@ public partial class CompanySystemContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(d => d.ProjectId)
                 .HasConstraintName("FK_projects_employees_projects");
         });
+        modelBuilder.Entity<TbProjectTask>()
+      .HasQueryFilter(t => !t.IsDeleted)
+      .ToTable(tb => tb.HasTrigger("TRG_TbProjectTasks_History"));
 
         OnModelCreatingPartial(modelBuilder);
     }

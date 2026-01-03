@@ -81,7 +81,7 @@ namespace Loujico.Controllers
                 {
                     foreach (var item in Data)
                     {
-                        await ClsFiles.Add(item, "Products", product.Id, tableName.product);
+                        await ClsFiles.Add(item, "Products", product.Id, tableName.product, username);
                     }
                 }
                 var usename = UserManager.GetUserName(User);
@@ -314,7 +314,7 @@ namespace Loujico.Controllers
             {
                 foreach (var file in Data)
                 {
-                    await ClsFiles.Add(file, "products", prod.Id, tableName.product);
+                    await ClsFiles.Add(file, "products", prod.Id, tableName.product, username);
                     await ClsLogs.Add(
                         "CRUD",
                         $"File '{file.fileType}' added to Product '{prod.ProductName}' by {username}.",

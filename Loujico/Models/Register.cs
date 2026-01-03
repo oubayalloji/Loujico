@@ -6,11 +6,10 @@ namespace Loujico.Models
     public class Register
     {
         [Required(ErrorMessage = "Please enter the user name")]
-        [StringLength(17, ErrorMessage = "the password must be between 17 and 3", MinimumLength = 3)]
+        [StringLength(17, ErrorMessage = "the username must be between 17 and 3", MinimumLength = 3)]
 
         public string UserName { get; set; }
         [Required(ErrorMessage = "Please enter the Role")]
-        [StringLength(17, ErrorMessage = "the password must be between 17 and 3", MinimumLength = 3)]
 
         public string roles { get; set; }
  
