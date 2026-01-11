@@ -10,16 +10,28 @@
   <ItemGroup>
     <Compile Remove="wwwroot\Upload\Customers\**" />
     <Compile Remove="wwwroot\Upload\Employees\NewFolder1\**" />
+    <Compile Remove="wwwroot\Upload\Employees\NewFolder\**" />
     <Compile Remove="wwwroot\Upload\Invoices\**" />
+    <Compile Remove="wwwroot\Upload\Products\NewFolder\**" />
+    <Compile Remove="wwwroot\Upload\Projects\NewFolder\**" />
     <Content Remove="wwwroot\Upload\Customers\**" />
     <Content Remove="wwwroot\Upload\Employees\NewFolder1\**" />
+    <Content Remove="wwwroot\Upload\Employees\NewFolder\**" />
     <Content Remove="wwwroot\Upload\Invoices\**" />
+    <Content Remove="wwwroot\Upload\Products\NewFolder\**" />
+    <Content Remove="wwwroot\Upload\Projects\NewFolder\**" />
     <EmbeddedResource Remove="wwwroot\Upload\Customers\**" />
     <EmbeddedResource Remove="wwwroot\Upload\Employees\NewFolder1\**" />
+    <EmbeddedResource Remove="wwwroot\Upload\Employees\NewFolder\**" />
     <EmbeddedResource Remove="wwwroot\Upload\Invoices\**" />
+    <EmbeddedResource Remove="wwwroot\Upload\Products\NewFolder\**" />
+    <EmbeddedResource Remove="wwwroot\Upload\Projects\NewFolder\**" />
     <None Remove="wwwroot\Upload\Customers\**" />
     <None Remove="wwwroot\Upload\Employees\NewFolder1\**" />
+    <None Remove="wwwroot\Upload\Employees\NewFolder\**" />
     <None Remove="wwwroot\Upload\Invoices\**" />
+    <None Remove="wwwroot\Upload\Products\NewFolder\**" />
+    <None Remove="wwwroot\Upload\Projects\NewFolder\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -38,11 +50,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\Upload\Employees\NewFolder\" />
     <Folder Include="wwwroot\Upload\Companys\" />
+    <Folder Include="wwwroot\Upload\Employees\" />
+    <Folder Include="wwwroot\Upload\Products\" />
+    <Folder Include="wwwroot\Upload\Projects\" />
     <Folder Include="wwwroot\Upload\Tasks\" />
-    <Folder Include="wwwroot\Upload\Products\NewFolder\" />
-    <Folder Include="wwwroot\Upload\Projects\NewFolder\" />
   </ItemGroup>
 
 </Project>
